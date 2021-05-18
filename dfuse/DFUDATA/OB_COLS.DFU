@@ -1,0 +1,187 @@
+# ------------+
+# OB_COLS.DFU |  Datafile for object coloring.
+# ------------+
+#
+# If the object isn't encoded here, it will get the default object color.
+# The convention I adopted is blue for ennemies (lighter = harder)
+# and yellow for useful things (the lighter the more useful).
+# Keys and goal items are pink, and 'true spirits' are green.
+
+# -----<<<<< ENNEMIES - HUMANS >>>>>-----
+[BOBAFETT.WAX]
+COLOR=5
+
+[OFFCFIN.WAX]
+COLOR=15
+
+[COMMANDO.WAX]
+COLOR=15
+
+[STORMFIN.WAX]
+COLOR=15
+
+# -----<<<<< ENNEMIES - DARK TROOPERS >>>>>-----
+[PHASE1.WAX]
+COLOR=5
+
+[PHASE2.WAX]
+COLOR=5
+
+[PHASE3X.WAX]
+COLOR=5
+
+# -----<<<<< ENNEMIES - ROBOTS & TRAPS >>>>>-----
+[GUN.3DO]
+COLOR=15
+
+[INTDROID.WAX]
+COLOR=15
+
+# ???
+[EWOK.WAX]
+COLOR=15
+
+[LANDMINE.FME]
+COLOR=15
+
+[PROBE.WAX]
+COLOR=15
+
+[REMOTE.WAX]
+COLOR=15
+
+# -----<<<<< ENNEMIES - MONSTERS >>>>>-----
+[BOSSK.WAX]
+COLOR=15
+
+[GAMGUARD.WAX]
+COLOR=15
+
+[KELL.WAX]
+COLOR=5
+
+[REEYEES.WAX]
+COLOR=15
+
+[SEWERBUG.WAX]
+COLOR=15
+
+# -----<<<<< POWERUPS >>>>>-----
+[IARMOR.WAX]
+COLOR=22
+
+[IBATTERY.FME]
+COLOR=23
+
+[ICLEATS.FME]
+COLOR=21
+
+[IGOGGLES.FME]
+COLOR=21
+
+[IMASK.FME]
+COLOR=21
+
+[IMEDKIT.FME]
+COLOR=22
+
+# -----<<<<< WEAPONS >>>>>-----
+[IAUTOGUN.FME]
+COLOR=20
+
+[ICANNON.FME]
+COLOR=20
+
+[ICONCUS.FME]
+COLOR=20
+
+[IDET.FME]
+COLOR=22
+
+[IDETS.FME]
+COLOR=21
+
+[IENERGY.FME]
+COLOR=23
+
+[IFUSION.FME]
+COLOR=20
+
+[IMINE.FME]
+COLOR=22
+
+[IMINES.FME]
+COLOR=21
+
+[IMSL.FME]
+COLOR=22
+
+[IMSLS.FME]
+COLOR=21
+
+[IMORTAR.FME]
+COLOR=20
+
+[IPLAZMA.FME]
+COLOR=23
+
+[IPOWER.FME]
+COLOR=23
+
+[ISHELL.FME]
+COLOR=23
+
+[ISHELLS.FME]
+COLOR=23
+
+[IST-GUNI.FME]
+COLOR=19
+
+[IST-GUNU.FME]
+COLOR=19
+
+# -----<<<<< BIG POWERUPS >>>>>-----
+[ICHARGE.FME]
+COLOR=19
+
+[IINVINC.WAX]
+COLOR=19
+
+[ILIFE.WAX]
+COLOR=19
+
+[IREVIVE.WAX]
+COLOR=19
+
+# -----<<<<< KEYS >>>>>-----
+[IKEYB.FME]
+COLOR=24
+
+[IKEYR.FME]
+COLOR=24
+
+[IKEYY.FME]
+COLOR=24
+
+# -----<<<<< GOALS >>>>>-----
+[IDATA.FME]
+COLOR=24
+
+[IDPLANS.WAX]
+COLOR=24
+
+[IDTGUN.FME]
+COLOR=24
+
+[INAVA.WAX]
+COLOR=24
+
+[IPHRIK.FME]
+COLOR=24
+
+[IPILE.FME]
+COLOR=24
+
+# -----<<<<< PLAYER >>>>>-----
+[SPIRIT]
+COLOR=10

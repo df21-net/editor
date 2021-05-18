@@ -1,0 +1,402 @@
+# ------------+
+# OB_SEQS.DFU |  Datafile for automatic object sequences generator.
+# ------------+
+#
+# Data finish with a blank line or before the next '['.
+# Lines beginning with # aren't comments, they just are not read    :)
+# If first line is 'æ', there are multiple logics for the same object.
+# All will be inserted, and you will be shown that you HAVE to edit !
+#
+# Notes :
+# -----
+# LOGIC: = TYPE:
+# ITEM is optionnal
+# UPDATE = ANIM (?)
+
+# -----<<<<< ENNEMIES - HUMANS >>>>>-----
+[BOBAFETT.WAX]
+LOGIC:     BOBA_FETT
+BOSS:      TRUE
+
+[OFFCFIN.WAX]
+æ
+LOGIC:     I_OFFICER
+LOGIC:     I_OFFICERR
+LOGIC:     I_OFFICERB
+LOGIC:     I_OFFICERY
+LOGIC:     I_OFFICER1
+LOGIC:     I_OFFICER2
+LOGIC:     I_OFFICER3
+LOGIC:     I_OFFICER4
+LOGIC:     I_OFFICER5
+
+[COMMANDO.WAX]
+LOGIC:     COMMANDO
+
+[STORMFIN.WAX]
+æ
+LOGIC:     TROOP
+LOGIC:     STORM1
+
+# -----<<<<< ENNEMIES - DARK TROOPERS >>>>>-----
+[PHASE1.WAX]
+LOGIC:     D_TROOP1
+BOSS:      TRUE
+
+[PHASE2.WAX]
+LOGIC:     D_TROOP2
+BOSS:      TRUE
+
+[PHASE3X.WAX]
+LOGIC:     D_TROOP3
+BOSS:      TRUE
+
+# -----<<<<< ENNEMIES - ROBOTS & TRAPS >>>>>-----
+[GUN.3DO]
+LOGIC:     TURRET
+
+[INTDROID.WAX]
+LOGIC:     INT_DROID
+
+# ???
+[EWOK.WAX]
+LOGIC:     LAND_MINE
+
+[LANDMINE.FME]
+LOGIC:     LAND_MINE
+
+[PROBE.WAX]
+LOGIC:     PROBE_DROID
+
+[REMOTE.WAX]
+LOGIC:     REMOTE
+
+# -----<<<<< ENNEMIES - MONSTERS >>>>>-----
+[BOSSK.WAX]
+LOGIC:     BOSSK
+
+[GAMGUARD.WAX]
+LOGIC:     G_GUARD
+
+[KELL.WAX]
+LOGIC:     KELL
+
+[REEYEES.WAX]
+æ
+LOGIC:     REE_YEES
+LOGIC:     REE_YEES2
+
+[SEWERBUG.WAX]
+LOGIC:     SEWER1
+
+# -----<<<<< POWERUPS >>>>>-----
+[IARMOR.WAX]
+LOGIC:     SHIELD
+LOGIC:     ANIM
+
+[IBATTERY.FME]
+LOGIC:     BATTERY
+
+[ICLEATS.FME]
+LOGIC:     CLEATS
+
+[IGOGGLES.FME]
+LOGIC:     GOGGLES
+
+[IMASK.FME]
+LOGIC:     MASK
+
+[IMEDKIT.FME]
+LOGIC:     MEDKIT
+
+# -----<<<<< WEAPONS >>>>>-----
+[IAUTOGUN.FME]
+LOGIC:     AUTOGUN
+
+[ICANNON.FME]
+LOGIC:     CANNON
+
+[ICONCUS.FME]
+LOGIC:     CONCUSSION
+
+[IDET.FME]
+LOGIC:     DETONATOR
+
+[IDETS.FME]
+LOGIC:     DETONATORS
+
+[IENERGY.FME]
+LOGIC:     ENERGY
+
+[IFUSION.FME]
+LOGIC:     FUSION
+
+[IMINE.FME]
+LOGIC:     MINE
+
+[IMINES.FME]
+LOGIC:     MINES
+
+[IMSL.FME]
+LOGIC:     MISSILE
+
+[IMSLS.FME]
+LOGIC:     MISSILES
+
+[IMORTAR.FME]
+LOGIC:     MORTAR
+
+[IPLAZMA.FME]
+LOGIC:     PLASMA
+
+[IPOWER.FME]
+LOGIC:     POWER
+
+[ISHELL.FME]
+LOGIC:     SHELL
+
+[ISHELLS.FME]
+LOGIC:     SHELLS
+
+[IST-GUNI.FME]
+LOGIC:     RIFLE
+
+[IST-GUNU.FME]
+LOGIC:     RIFLE
+
+# -----<<<<< BIG POWERUPS >>>>>-----
+[ICHARGE.FME]
+LOGIC:     SUPERCHARGE
+
+[IINVINC.WAX]
+LOGIC:     INVINCIBLE
+LOGIC:     ANIM
+
+[ILIFE.WAX]
+LOGIC:     LIFE
+LOGIC:     ANIM
+
+[IREVIVE.WAX]
+LOGIC:     REVIVE
+LOGIC:     ANIM
+
+# -----<<<<< KEYS >>>>>-----
+[IKEYB.FME]
+LOGIC:     BLUE
+
+[IKEYR.FME]
+LOGIC:     RED
+
+[IKEYY.FME]
+LOGIC:     YELLOW
+
+# -----<<<<< 3D OBJECTS >>>>>-----
+[CARGO.3DO]
+LOGIC:     KEY
+VUE:       CARGOALL.VUE
+FRAME_RATE: 10
+RADIUS:    6
+
+[DEATH.3DO]
+LOGIC:     UPDATE
+FLAGS:     16
+D_YAW:     50
+
+[HUMAN3.3DO]
+LOGIC:     UPDATE
+FLAGS:     16
+D_YAW:     50
+
+[KYL3DO.3DO]
+æ
+LOGIC:     KEY
+PAUSE:     TRUE
+VUE:       SB_LAND.VUE "CONST01"
+#
+VUE:       TALAY_TO.VUE "KYLES"
+VUE_APPEND: TALAY_LD.VUE "KYLES"
+#
+VUE:       WEAPON_T.VUE "KYLES"
+VUE_APPEND: WEAPON_L.VUE "KYLES"
+#
+VUE:       DETEM_TO.VUE "KYLES"
+#
+VUE:       GROMAS_T.VUE "KYLES"
+VUE_APPEND: GROMAS_L.VUE "KYLES"
+#
+VUE:       ROBOT_TO.VUE "KYLES"
+VUE_APPEND: ROBOT_LD.VUE "KYLES"
+#
+VUE:       MATT.VUE "KYLES"
+#
+VUE:       IMPCIT_L.VUE "KYLES"
+
+[MOUSEBOT.3DO]
+LOGIC:     MOUSEBOT
+
+[RAMENG.3DO]
+LOGIC:     UPDATE
+D_ROLL:    999
+FLAGS:     32
+
+[TB_FAN.3DO]
+LOGIC:     UPDATE
+D_PITCH:   999
+FLAGS:     8
+
+[TIELO-3.3DO]
+LOGIC:     KEY
+VUE:       TIE.VUE  "PIT"
+VUE_APPEND: TIE.VUE  "PIT01"
+
+[WELDARM.3DO]
+LOGIC:     WELDER
+
+[WELDBASE.3DO]
+RADIUS:    2.5
+
+# -----<<<<< SCENERY >>>>>-----
+[BARREL.WAX]
+LOGIC:     BARREL
+LOGIC:     ANIM
+
+[BEERPIP.FME]
+HEIGHT:    -9
+RADIUS:    0
+
+[CFLAME.WAX]
+LOGIC:     ANIM
+RADIUS:    0
+
+[CHAIN.FME]
+RADIUS:    0
+
+[CHAIR.WAX]
+LOGIC:     SCENERY
+
+[DEDBODY1.FME]
+RADIUS:    0
+
+[DEDBODY2.FME]
+RADIUS:    0
+
+[DEDBODY3.FME]
+RADIUS:    0
+
+[DFLAME.WAX]
+LOGIC:     ANIM
+RADIUS:    0
+
+[EMSCULP.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+
+[EWOK86.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+
+[FROGBOWL.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+RADIUS:    0
+
+[GFVENTDN.FME]
+HEIGHT:    2
+
+[GFVENTUP.FME]
+HEIGHT:    -2
+
+[ICEILIT2.WAX]
+LOGIC:     SCENERY
+
+[IFLRLIT.WAX]
+LOGIC:     SCENERY
+RADIUS:    0
+
+[HANGLIT.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+HEIGHT:    -6
+RADIUS:    0
+
+[LIT1.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+
+[LIT2.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+
+[REDLIT.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+HEIGHT:    -3
+
+[ROCK.WAX]
+LOGIC:     SCENERY
+RADIUS:    0
+
+[TABLE.WAX]
+LOGIC:     SCENERY
+
+[TALLIT1.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+
+[TALLIT2.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+
+[TBLELIT.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+RADIUS:    0
+
+[TALLIT1.WAX]
+LOGIC:     SCENERY
+LOGIC:     ANIM
+
+[TRIPLT.WAX]
+LOGIC:     ANIM
+
+# -----<<<<< GOALS >>>>>-----
+[IDATA.FME]
+LOGIC:     DATATAPE
+RADIUS:    1.5
+LOGIC:     UPDATE
+
+[IDPLANS.WAX]
+LOGIC:     PLANS
+
+[IDTGUN.FME]
+LOGIC:     DT_WEAPON
+
+[INAVA.WAX]
+LOGIC:     NAVA
+LOGIC:     ANIM
+
+[IPHRIK.FME]
+LOGIC:     PHRIK
+
+[IPILE.FME]
+LOGIC:     PILE
+
+# -----<<<<< PLAYER >>>>>-----
+# This will make player the default entry for SPIRIT
+
+[SPIRIT]
+LOGIC:     PLAYER
+EYE:       TRUE
+
+# -----<<<<< DEFAULT GENERATOR >>>>>-----
+# do not use æ for multiple generators, it isn't supported !
+[GENERATOR]
+LOGIC:         GENERATOR
+DELAY:         0
+INTERVAL:      20
+NUM_TERMINATE: 3
+MAX_ALIVE:     1
+MAX_DIST:      200
+MIN_DIST:      50
+MASTER:        OFF
+

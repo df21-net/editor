@@ -1,0 +1,49 @@
+/* -------------------------------------------------------------------------- */
+/* DFUSE DEMO for DOOM level designers                                        */
+/*                                                                            */
+/* DOOM E1M1 is probably a level all of you know by heart!                    */
+/*                                                                            */
+/* This is a Dark Forces conversion of the complete level, except the THINGS. */
+/* A few textures haven't been ported and others are just plain wrong, but    */
+/* this isn't the aim of this conversion.                                     */
+/*                                                                            */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+/*                                                                            */
+/* It has been done ONLY to show you how to port your DOOM expertise to DF.   */
+/*                                                                            */
+/* Remember that this level is iD Software's property, so:                    */
+/*   * you MAY NOT add objects to this level or distribute it in any way.     */
+/*   * you MAY NOT use the DOOM textures and flats in .BM format elsewhere.   */
+/*                                                                            */
+/* Also, just in case you just returned from Alpha Centauri and haven't seen  */
+/* DOOM yet, know that iD Software's textures are much prettier than these !  */
+/* (ie my palette conversion is a bit lame!)                                  */
+/*                                                                            */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+You will find the doc for this one in its .INF file.
+
+[NEW] As I now know all the flags, the conversion is more exact that the v 0.90
+version and includes the secrets and a correct scroll_wall elevator instead of
+an approximate morph_spin.
+
+TO INSTALL IT (it take around 700K)
+=============
+
+Go to the DOS prompt, and type 'de1m1-d! -d'.
+
+DON'T FORGET THE '-d' or the level will be extracted in the wrong directory.
+
+Be careful, this is a SECBASE replacement, and you risk to destroy any work you
+have done on that level, or on the TEXT.MSG file that will also be extracted in
+your DARK directory.
+
+A lot of textures (.BM) will be extracted in your TEXTURES directory. If you
+haven't made textures that match the DOOM textures names, it won't be a
+problem. If you have created new textures and want to be sure, you can type
+
+'PKUNZIP de1m1-d!.exe dfudata\textdoom.dfu'
+
+to get a list of the files that will be extracted.
+
+(note that extracted means 'from the PKZIP exe file' here, not from a .GOB)

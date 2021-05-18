@@ -1,0 +1,114 @@
+ษออออออออออออออออออัอออัอออัอออออออออออออออออออออออออออออออออออออออออออออออออป
+บ KEY(S)           ณMODณREMณ  DESCRIPTION                                    บ
+บ                  ณ   ณ   ณ  Please be carefull on QWERTY keyboards as      บ
+บ                  ณ   ณ   ณ  Alt keys may need to be used with Alt Gr       บ
+ฬออออออออออออออออออุอออุอออุอออออออออออออออออออออออออออออออออออออออออออออออออน
+บ CURSORS          ณ   ณ$  ณ  Move the map or the screen around              บ
+บ PGUP & PGDN      ณ   ณ   ณ  Higher or lower layer                          บ
+บ Alt + R          ณ   ณ   ณ  Reverses the cursors                           บ
+บ Alt + S          ณ   ณ   ณ  Toggle Shadow ON/OFF                           บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ - +              ณ   ณ   ณ  Zoom out or in                                 บ
+บ *                ณ   ณ   ณ  Set scale to 1                                 บ
+บ /                ณ   ณ   ณ  Center map                                     บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ A,a              ณW  ณ  ๆณ  Tries to create adjoin/mirror pair(s)          บ
+บ Alt + A          ณW  ณ  ๆณ  Deletes adjoin/mirror pair(s)                  บ
+บ c,C              ณ   ณ$  ณ  Center screen on CURSOR (may also ZOOM * 4)    บ
+บ Alt + C          ณ   ณ   ณ  Show number of objects loaded and free memory  บ
+บ                  ณ   ณ   ณ  Number of TEXTURES, PODS, ... are computed     บ
+บ                  ณ   ณ   ณ  after a save or a load and are not updated     บ
+บ                  ณ   ณ   ณ  between.                                       บ
+บ D,d              ณ   ณ  ๆณ  DEFORM : Translate, Scale, Rotate selection    บ
+บ                  ณSO ณ  ๆณ  DEFORM : Flip Horizontal or Vertical           บ
+บ E,e              ณW  ณ   ณ  Extrude WL : 4 walls, doorlike                 บ
+บ F,f              ณS  ณ   ณ  Find a specific Sector by selecting its NAME   บ
+บ                  ณW  ณ   ณ  Find the MIRROR of the selected wall           บ
+บ                  ณO  ณ   ณ  Find the PLAYER START object                   บ
+บ Alt + F          ณW  ณ  ๆณ  Flip selected wall(s)                          บ
+บ g                ณ   ณ   ณ  Decrease Grid size                             บ
+บ G                ณ   ณ   ณ  Increase Grid size                             บ
+บ Alt + G          ณ   ณ   ณ  Toggle Grid ON/OFF                             บ
+บ Ctl + G          ณ   ณ   ณ  Cycle perpendiculars OFF/CURRENT/MULTIPLE      บ
+บ i                ณ   ณ*  ณ  Edit Level .INF file                           บ
+บ I                ณ   ณ*  ณ  Edit Level .GOL file                           บ
+บ J,j              ณ   ณ   ณ  Jump to a specific Sector/Wall/Vertex/Object   บ
+บ K,k              ณS  ณ   ณ  Construct Polygon                              บ
+บ Alt + K          ณS  ณ   ณ  Construct Polygon GAP                          บ
+บ Ctl + K          ณS  ณ   ณ  Construct Polygon GAP + Polygon + adjoin them  บ
+บ                  ณ   ณ   ณ    this is equivalent to a Create Subsector     บ
+บ L,l              ณ   ณ   ณ  same as W,w (old habits die hard!)             บ
+บ M,m              ณ   ณ   ณ  Edit MAP/Level Information                     บ
+บ N,n              ณSO ณ   ณ  Next Sector/Object                             บ
+บ                  ณWV ณ   ณ  Next RELATIVE Wall/Vertex                      บ
+บ Alt + N          ณSO ณ   ณ  Current SC/OB + 50                             บ
+บ                  ณWV ณ   ณ  Next ABSOLUTE Wall/Vertex                      บ
+บ O,o              ณ   ณ   ณ  Switch to Object MODE                          บ
+บ Alt + O          ณ   ณ   ณ  Toggle object layering                         บ
+บ Ctl + O          ณ   ณ   ณ  Retry only objects w/o sectors                 บ
+บ P,p              ณSO ณ   ณ  Previous Sector/Object                         บ
+บ                  ณWV ณ   ณ  Previous RELATIVE Wall/Vertex                  บ
+บ Alt + P          ณSO ณ   ณ  Current SC/OB - 50                             บ
+บ                  ณWV ณ   ณ  Previous ABSOLUTE Wall/Vertex                  บ
+บ S,s              ณ   ณ   ณ  Switch to Sector MODE                          บ
+บ T,t              ณ   ณ   ณ  same as O,o (old habits die hard!)             บ
+บ V,v              ณ   ณ   ณ  Switch to Vertex MODE                          บ
+บ W,w              ณ   ณ   ณ  Switch to Wall   MODE                          บ
+บ Z,z              ณ   ณ*  ณ  OS Shell                                       บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ ENTER            ณ   ณ   ณ  Edit SELECTED Sector/Wall/Vertex/Object        บ
+บ Alt + ENTER      ณ   ณ  ๆณ  Edit MULTIPLE Sector/Wall/Vertex/Object        บ
+บ                  ณ   ณ   ณ   - the flags will follow the same modificationsบ
+บ                  ณ   ณ   ณ     as the selected one, NOT BE COPIED !        บ
+บ                  ณ   ณ   ณ   - be careful with adjoin/mirror/walk          บ
+บ SPACE            ณ   ณ  ๆณ  Add/Remove current object to/from multiple sel.บ
+บ BACKSPACE        ณ   ณ  ๆณ  Clears multiple selection.                     บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ DEL              ณSO ณ  ๆณ  Delete SC/OB                                   บ
+บ                  ณW  ณ   ณ  Delete WL                                      บ
+บ Alt DEL          ณSO ณ  ๆณ  Undelete SC/OB                                 บ
+บ INS              ณSO ณ  ๆณ  Duplicate SC/OB                                บ
+บ                  ณW  ณ   ณ  Split a WL                                     บ
+บ Alt INS          ณS  ณ   ณ  Insert a gap in SC, at current cursor position บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ 0 1 2 3          ณO  ณ   ณ  Display all the objects, or only those         บ
+บ                  ณ   ณ   ณ  present in EASY, MED, or HARD.                 บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ F1               ณ   ณ  *ณ  Shows the levkeys.doc  file (this one!)        บ
+บ Ctl + F1         ณ   ณ  *ณ  Shows the levmap.doc   file                    บ
+บ Alt + F1         ณ   ณ  *ณ  Shows the df_specs.doc file                    บ
+บ Shf + F1         ณ   ณ  *ณ  Edits the notepad.txt  file                    บ
+บ F2               ณ   ณ   ณ  Saves the .LEV and .O files                    บ
+บ F3               ณ   ณ   ณ  Saves the .LEV and .O files AND RELOADS THEM   บ
+บ                  ณ   ณ   ณ  compressing and reallocating in the process    บ
+บ F5               ณW  ณ  ๆณ  MID TX horizontal stitching from start         บ
+บ Alt + F5         ณW  ณ  ๆณ  TOP TX horizontal stitching from start         บ
+บ Ctl + F5         ณW  ณ  ๆณ  BOT TX horizontal stitching from start         บ
+บ F6               ณW  ณ  ๆณ  MID TX horizontal stitching to end             บ
+บ Alt + F6         ณW  ณ  ๆณ  TOP TX horizontal stitching to end             บ
+บ Ctl + F6         ณW  ณ  ๆณ  BOT TX horizontal stitching to end             บ
+บ F7               ณW  ณ  ๆณ  MID TX vertical   stitching                    บ
+บ Alt + F7         ณW  ณ  ๆณ  TOP TX vertical   stitching                    บ
+บ Ctl + F7         ณW  ณ  ๆณ  BOT TX vertical   stitching                    บ
+บ F8               ณS  ณ  ๆณ  Distributes Floor and Ceiling altitudes        บ
+บ Alt + F8         ณS  ณ  ๆณ  Distributes Floor   altitudes                  บ
+บ Ctl + F8         ณS  ณ  ๆณ  Distributes Ceiling altitudes                  บ
+บ Shf + F8         ณS  ณ  ๆณ  Distributes Ambient lights                     บ
+บ F10              ณ   ณ   ณ  Level consistency checks:                      บ
+บ                  ณ   ณ   ณ   - Adjoin/Mirror/Walk consistency.             บ
+บ                  ณ   ณ   ณ   - Sector not found for object.                บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ Esc              ณ   ณ   ณ  Quits LEVMAP, asking for SAVE if needed        บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤลฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ LEFT MOUSE       ณ   ณ  ๆณ  Select SC/WL/VX/OB                             บ
+บ Ctl + LEFT MOUSE ณV  ณ  ๆณ  Select NEXT NEAREST VX                         บ
+บ Shf + LEFT MOUSE ณ   ณ  ๆณ  add/remove object to/from multi selection      บ
+บ RIGHT MOUSE      ณ   ณ  ๆณ  Move selection to cursor position              บ
+บ Alt + RIGHT MOUSEณ   ณ  ๆณ  Move selection to NEAREST VERTEX to cursor     บ
+บ                  ณ   ณ   ณ  This vertex snapping disregards the grid       บ
+ฬออออออออออออออออออุอออุอออุอออออออออออออออออออออออออออออออออออออออออออออออออน
+บ *                ณ   ณ   ณ These options may be unavailable if you don't   บ
+บ                  ณ   ณ   ณ have enough free low memory. See Alt + C.       บ
+บ $                ณ   ณ   ณ Action may depend on .INI setting               บ
+บ ๆ                ณ   ณ   ณ Can act on MULTI SELECTION                      บ
+ศออออออออออออออออออฯอออฯอออฯอออออออออออออออออออออออออออออออออออออออออออออออออผ

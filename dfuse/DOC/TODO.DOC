@@ -1,0 +1,79 @@
++==================================+
+| Dark Forces UtilitieS and Editor |
++==================================+
+
+TO DO LIST / WISH LIST
+
+Author   : Yves  BORCKMANS  (yborckmans@abcomp.be (work))
+
+If you use and like this product, feel free to contact me for suggestions.
+Don't forget to state the package version.
+
+Here is the current list, in no special order (but + means greater priority):
+
++ Complete the specs ASAP.
+  I need you all for this, if you find new info, SHARE it !
+
+  Also, if someone at LEC is reading this and is willing to help, I could use:
+   . a formal definition for the INF and O languages
+   . a description of the int values after the texture offsets
+       this is the last unknown data in the LEV file !
+   . a description of the last 128 bytes of .CMP files
+   . a description of the first header of a .FME file
+   . a full description of the .WAX files
+
+  Thanks in advance.
+
++ Implement .INF file checking:
+   . sector must exist for elevators, triggers, client and slaves.
+   . wall   must exist for triggers.
+
++ Make some menus, as we are approaching 80 key combos.
+
+* Implement a snapshot of the screen as BMP.
+
+? Implement multiple split and delete of walls. (would be VERY slow !)
+
+* Implement sector splitting.
+
+* Correct the texture stitching so that it handles the SIGNs.
+  This is difficult to do, as the user will normally set an offset for the
+  SIGN. Should I add that offset ? What about the second time the user stitches?
+
+* Texture a few walls, and propagate to all the walls of the sector,
+  with automatic offsets for MID, TOP and BOT textures. This one should
+  understand how to align TOP textures above doors, when the textures change,
+  etc. (is this a dream ?)
+
++ Implement a correct palette mapper for the BM conversions, so that we can
+  really make new textures.
+  Does somebody have a correct algorithm for this ?
+
++ Create tools to make switches and animated textures.
+  (like mksw_4_4.exe but much more user friendly, probably with text make files
+   Something like
+      SWITCH: name
+       ON:     sw1.bm
+       OFF:    sw2.bm
+   and
+      ANI_TX: name
+      SPEED:  s
+      BEGIN
+       01:     ani1.bm
+       02:     ani2.bm
+       ...
+        n:     anin.bm
+      END
+  )
+
+* Create FME <-> BMP convertor.
+
+* Create WAX <-> FME extractor and importer OR WAX generation from make files.
+
+* Make a .3DO viewer with or without texturing.
+
+* Make a 3D map viewer, without texturing, but with the possibility to
+  show or hide layers and to zoom/rotate it.
+
+If you have made one of these last two, and want to share it, email me,
+so that we can talk about integrating it in the package.

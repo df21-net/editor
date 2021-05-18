@@ -1,0 +1,30 @@
+/* -------------------------------------------------------------------------- */
+/* DFUSE DEMO 7 : how to use teleporter chutes ?                              */
+/* -------------------------------------------------------------------------- */
+
+This mini-level has been designed to demonstrate the use of teleporter chutes.
+Please see their description in the .INF file (press 'i' in LEVMAP).
+
+You fill find:
+
+Two teleporter chutes marked start00 and start01. Their respective target
+sectors are target00 and target01.
+
+To use a chute, simply place the target below the ground, but you must provide
+sufficient room to fall through (ie around 8 units will do).
+
+It is very important to note that the two part levels may occupy the
+SAME PHYSICAL place !
+
+
+TO INSTALL IT
+=============
+
+Go to the DOS prompt, and type 'demo7-d! -d'.
+
+DON'T FORGET THE '-d' or the level will be extracted in the wrong directory.
+
+Be careful, this is a SECBASE replacement, and you risk to destroy any work you
+have done on that level.
+
+(note that extracted means 'from the PKZIP exe file' here, not from a .GOB)

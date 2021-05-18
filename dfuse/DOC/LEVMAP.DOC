@@ -1,0 +1,823 @@
++==================================+
+| Dark Forces UtilitieS and Editor |
++==================================+
+
+LEVMAP.EXE : multilayered level geometry and objects editor.
+
+Author   : Yves  BORCKMANS  (yborckmans@abcomp.be (work))
+           (Please state the package version when you email me)
+Thanks to: Serge DEBROEYER
+              for beta testing of the level editor, for A LOT of very
+              useful ideas and tips, and for making a huge demo level.
+
+
+Welcome to the centerpiece of DFUSE: the level editor.
+
+You should also read the df_specs.doc and the levkeys.doc files.
+Notes: * you may access this file at any time in the level editor by hitting
+         Ctl+F1.
+       * search on the [NEW] keyword to see what's new since release 0.91
+       * also check the history.doc file.
+
++-------------------+
+| TABLE of CONTENTS |
++-------------------+
+
+ O.    OVERVIEW
+ I.    BASICS
+       1. Layout of the screen
+       2. Moving around and zooming
+       3. Changing mode
+       4. Selecting things
+       5. Changing layers
+ II.   MOVING THINGS - THE GRID
+ III.  ADDING THINGS
+       1. Adding sectors
+       2. Adding walls
+       3. Adding objects
+ IV.   DELETING THINGS
+       1. Deleting sectors
+       2. Deleting walls
+       3. Deleting objects
+ V.    ADJOIN/MIRROR/WALK
+       1. Adjoin/unadjoin
+       2. Selecting the adjoin of a wall
+       3. Flipping a wall
+ VI.   EDITING THINGS
+       1. Normal text edit
+       2. Flags
+       3. Object sequences
+       4. Textures and object pickers
+ VII.  SAVING THE LEVEL - NEW LEVEL - LEAVING LEVMAP
+       1. Saving
+       2. Creating a new level
+       3. Quitting LEVMAP
+ IX.   GOODIES
+       1. DOS Shell
+       2. Edit the .INF and .GOL files
+       3. Allocated things and free memory
+       4. Consistency checks
+       5. Automatic texture stitching - altitudes and light distribution
+       6. Deformations [NEW]
+       7. Polygons [NEW]
+  X.   MISCELLANEOUS REMARKS
+
+
+ O.    OVERVIEW
+       ========
+
+LEVMAP will permit you to:
+ * load a Dark Forces level
+ * make any modifications to - its geometry
+                             - its texturing (ie its look)
+                             - its objects
+ * save the modified level
+
+In addition to this, you will be able to edit the .INF and .GOL files as text,
+shell out to DOS, ...
+
+
+
+ I.    BASICS
+       ======
+
+[NEW] Please note that when I use the word 'thing', I mean sector, wall, vertex
+or object. This isn't to be confused with DOOM THINGS which are only objects.
+
+1. Layout of the screen
+   --------------------
+
+The top of it is divided in two panes. The left one is again divided, the top
+showing general information such as the level name, the mode, the layer, grid
+and scale values. The bottom presents information about the currently selected
+thing, focusing on its dependencies (ie If it is a wall: which sector does it
+belong to? What are its left and right vertices?).
+
+[NEW] You will also find there if it is a trigger, and possibly its FIRST
+client.
+
+The right pane displays more specific information about the thing, and also
+serves to edit it.
+[NEW] If the object is an elevator, its FIRST class will be shown.
+
+All the rest of the screen is filled by the map of the level. In the lower left
+corner, you'll also find the current position of the pointer, a reminder of the
+editing mode, and the number of 'multiselected' objects.
+
+2. Moving around and zooming
+   -------------------------
+
+When you begin a LEVMAP session, the map will be centered on the screen, and
+displayed at a 1:1 scale. However, this isn't by far the best way to work on it.
+You will need to be able to scroll the display to the point that interest you,
+and then zoom in to make details visible.
+
+Use the cursor keys to move the screen.
+[NEW] The cursor keys are also emulated with the mouse. Just put the pointer
+completely against the side of the screen, then click (and optionally hold)
+the LEFT mouse button to scroll the screen.
+Note that if you don't find this natural and would like to invert the movements
+and move the map instead, type Alt+R for reverse.
+
+To zoom, use the '+' and '-' keys.
+
+Notice how the coordinates are updated, and how the scale changes in the
+top/left pane. Two more keys: '/' will recenter the map, and '*' will reset the
+scale back to 1.
+
+To quickly setup to edit something, point to it and press the 'c' key. This
+will center the screen on the cursor AND zoom * 4.
+
+3. Changing mode
+   -------------
+
+At startup, the editing mode will be SECTORS [S]. You can change to VERTICES by
+pressing [V], to WALLS with [W], and to OBJECTS by hitting [O]. Try them all,
+and notice how the panes and the map change.
+[NEW] See how elevators, triggers and secrets are colored.
+Notice how the selected wall shows to which sector it belongs by drawing a
+perpendicular in its direction. Also note how the selected object's orientation
+is represented, and how objects are differentiated by shapes and colors. [NEW]
+
+A quick note for DEU users: you can also use [L] for walls, and [T] for objects.
+
+4. Selecting things
+   ----------------
+
+Change back to OBJECTS [O]. Move the mouse pointer near one of them, and click
+the left mouse button. The object becomes selected.
+
+[NEW]
+Change to SECTORS, try the same on a few sectors. Notice how you cannot select
+'outside' of all the sectors, or 'inside' a sector gap.
+
+Important: there is a problem when two sectors overlap ON THE SAME LAYER !
+You simply have to change the layer of one of the sectors to avoid problems in
+SC and WL selection, and also in objects layering.
+
+[NEW]
+Change to WALLS and select a few walls. Notice how clicking on both sides of
+adjoined walls selects one or the other.
+
+Then switch to VERTICES. Remember that there are very often two vertices at the
+same place. If you don't seem to be able to select the one you want, try to hold
+down the Control key when clicking with the left button. This will in effect
+select the 'next nearest' vertex, and is quite useful.
+
+You may also use the keyboard to select things. In SECTOR or OBJECT modes, the
+'N' and 'P' keys will respectively select the next and previous SC/OB. In
+VERTEX or WALL modes, they will select the next and previous VX/WL, but cycling
+INSIDE the sector.
+
+In sector mode, you have yet another possibility: if a sector has a name, you
+may press the 'F' key to obtain a sorted picklist of the sector names.
+The same key, but in wall mode, will select the adjoin of a wall.
+[NEW] In object mode, 'F' will select the PLAYER start position.
+
+[NEW] Also in object mode, you may elect to show only the difficulty level
+you want to see by using the '1', '2' and '3' keys respectively for EASY,
+MED and HARD. The '0' (zero) key will restore the display to ALL objects.
+Note that you won't be able to select hidden objects.
+
+There is another kind of selection: the MULTIPLE selection. This will allow you
+to perform some operations on many things at the same time. You may either
+hold the Shift key while selecting, or make a normal selection (including with
+the keyboard or with the Control key) and add it to the multiple selection by
+pressing the SPACEBAR. Note the different color for the selected things, the
+color change in the upper left pane, and the number of multiselected things
+that appears next to the mouse position.
+Also note that some texturing multi operations require you to select things
+IN A CERTAIN ORDER.
+
+If you multiselect one or more sectors and switch to WALL or VERTICES modes,
+the multiselection is converted to a wall or vertices multiselection.
+Idem if you multiselect walls and switch to VERTICES mode.
+Note that the reverse is NOT true.
+
+To clear a multiselection, use the BACKSPACE key.
+
+5. Changing layers
+   ---------------
+
+You may have noticed that some lines seem to be 'shadowed'. These are in fact
+on other layers. Imagine that the level is drawn on stacked transparent plastic
+sheets, and that one of them is hilighted. You can change the current layer by
+using the 'Page Up' and 'Page Down' keys. You can toggle the shadow on and off
+by hitting the Alt + S key combination.
+
+[NEW] Objects also have been given layer information, and they are drawn
+accordingly. Objects that couldn't be associated with a sector are drawn on all
+layers. The Alt + O key combo will toggle the use of object layering. It is also
+useful to do a double Alt + O toggle from times to times, because object layers
+are only updated when the OBJECT is modified, and not when the sectors, walls or
+vertices are modified (moving a wall could pass an object outside, or in another
+sector, ...) as this would be MUCH too long to check.
+Note that making the OB -> SC link is a lenghty operation in big levels, but as
+it is the default option, LEVMAP will do it a load time.
+So, if you are currently working only on the geometry, you may want to disable
+object layering in DFUSE.INI: simply set OBLAYER=0 in the [LEVMAP-OPTIONS]
+section.
+
+Also notice that if multiple keys are in the buffer, LEVMAP will stop
+drawing the shadow (and the grid) to gain some time. The last key will draw it
+correctly except if you enter an editor but this isn't really a big issue. The
+current layer is always drawn correctly.
+
+So, if you haven't done it yet, go and take a look at it. From DFUSE main menu,
+select [L]evel [C]hoose, select the level you want, then choose [M]ap.
+Try moving the map, zoom and unzoom it, center it, change the current layer,
+then try changing modes and selecting some objects.
+
+
+ II.   MOVING THINGS - THE GRID
+       ========================
+
+Once you have selected something, the most frequent operation is to move it.
+This is done with the RIGHT mouse button. For instance, select an object, then
+move the pointer, and press the right mouse button: the object moves to the
+pointer position. Note that this is 'point and click', not 'drag and drop'.
+
+Often, you have to move a vertex and place it exactly on another vertex. To do
+this, hold down the ALT key while right clicking. The vertex will be moved
+right on top of the one nearest to the pointer. This has been implemented to
+help move the vertices of adjoined walls.
+I could have moved the vertices together, but you would have lost the chance to
+"move a vertex and see what's under" (I really don't know how to explain this,
+I just know I do it when I'm a bit lost in a 'knot' of vertices !).
+
+When you move a wall or a sector, everything happens as if you moved its first
+vertex (the one that is bigger). All the other vertices undergo exactly the
+same displacement. Note that the ALT key trick also works for the walls and
+sectors, and that the adjoins are ALSO moved.
+
+A grid has also been implemented. It will help you position the things you move
+more efficiently. To activate it, press Alt + G. Notice the dots that appear on
+the screen. They mark the grid positions. If you now move something, it will
+'SNAP' to the nearest grid position. You can decrease or increase the grid size
+with the 'g' and 'G' keys. To get rid of it, press the Alt + G key again.
+
+Note that the ALT key 'drop-on-a-vertex' function will continue to function
+correctly, even with the grid on.
+
+When you have made a multiselection, you move the 'bigger' vertex (which is
+vertex 0 of the current sector or wall, or the current vertex), and all the
+others follow.
+
+Again, try to move a few things, with and without the grid. Change the grid
+settings.
+
+
+ III.  ADDING THINGS
+       =============
+
+Please note - and this is true in all the modes - that LEVMAP does NEVER
+create a thing, it ALWAYS works by duplicating something that already exists.
+
+As you will always start a new level either by modifying an existing one, or by
+using newlevl!.exe, this will never be a problem, because you'll always have
+at least one sector and one object.
+
+That may seem strange, but it has many advantages. The first of which is that
+you construct levels logically, so if you have set settings for a sector and
+its walls, a copy will inherit them all. The second advantage is that you can
+copy a very complex sector and duplicate it elsewhere. 
+
+[NEW] The only 'exception' to this is the POLYGON goodie (see).
+
+1. Adding sectors
+   --------------
+
+This is quite easy: select the sector you want to copy, then move the cursor
+to where you want the duplicate, and press the 'Insert' key. And hey presto,
+another sector. Note how it has exactly the same settings as its ancestor.
+Also note that this sector is completely independent and one of its walls will
+need to be connected (adjoined) to a wall of an other existing sector.
+
+[NEW] This also works in multiselection, with just one slight modification:
+here the relations between the selected sectors are preserved (adjoins), but
+the links to sectors OUTSIDE the multiselection are severed. Note that you will
+probably still have to edit the sector names, and the .INF file.
+During that time, the color representation will possibly be wrong, but I prefer
+to leave it that way, because it gives a visual feedback of things to change.
+You will be asked if you want to transfer the selection: this means set the
+multiselection to the copy instead of the original sectors and is quite useful,
+as you'll probably want to rotate it, or move it more precisely in place.
+
+There is another way to create a sector, and it is done at the wall level.
+It is called 'extruding' a wall, and will create another sector,
+AND adjoin/mirror it to the selected wall. This is done by pressing the 'E' key.
+This new sector has the sector settings of the sector to which belong the
+extruded wall, and its walls have the caracteristics of the extruded wall.
+Also note that it is created orthogonally to the extruded wall, the
+perpendiculars having just one quarter of the extruded wall lenght.
+
+BIG HINT: this is a very quick way to construct doors and stairs.
+
+A third thing concerning sectors: you may create a 'gap' in a sector by
+selecting it, positionning the mouse cursor somewhere inside and pressing the
+'Alt + Insert' keys. This is the base of inserting a sector inside another one.
+You just have to use the first method to create a new sector, set it in place,
+and adjoin the walls !
+
+2. Adding walls
+   ------------
+
+As we have seen just above, a wall may be extruded to create a new sector.
+There is another operation that needs to be done on a wall: splitting it.
+The 'Insert' key will do just that. The wall will be 'cut' in half, in effect
+creating a new wall (and a new vertex).
+
+Splitting adjoined wall is supported, also splitting the adjoined wall, and
+reestablishing the links. This is a bit slow (around 2 or 3 secs), as it forces
+two hard disk 'insert' operations on the walls swap file which is generally
+quite big (you have to pay somewhere for the direct access !).
+
+Please note that splitting multiple walls still isn't supported (and seeing the
+time the preceeding one takes, I don't know if it will ever be !)
+Also note that there is no vertex insertion, because the wall insertion does
+it !
+
+3. Adding objects
+   --------------
+
+This is the easiest addition: select an object, move the cursor and press the
+'Insert' key to get a copy. Note that you may have to change its altitude.
+
+[NEW] This also works in multiselection.
+You will be asked if you want to transfer the selection: this means set the
+multiselection to the copy instead of the original objects.
+
+
+ IV.   DELETING THINGS
+       ===============
+
+1. Deleting sectors
+   ----------------
+
+Just select the sector an press the 'Delete' key. Notice that the sector doesn't
+disappear, but that its color changes. This is because the sector can be
+UNDELETED (by pressing the Alt + Del key combo). This may be done until you
+quit the editor OR you use the 'save and reload' function. Also note that the
+walls of the deleted sector AREN'T unadjoined/unmirrored so that you can also
+use the undelete function as a quick UNDO.
+
+2. Deleting walls
+   --------------
+
+Again, select the wall and press 'Delete'. Be careful, as there is NO undelete
+for the walls. Notice how the other walls are affected, and how a vertex is
+also deleted. Also note that there is no vertex deletion, as the wall deletion
+does it. Try to get a feel of which wall to delete, as it is a little confusing
+at the beginning.
+
+3. Deleting objects
+   ----------------
+
+The simplest of all: you can use 'Delete' and Alt + Del.
+
+
+ V.    ADJOIN/MIRROR/WALK
+       ==================
+
+1. Adjoin/unadjoin
+   ---------------
+
+If you select a wall and press the 'A' key, the editor will search for an
+adjoin/mirror to that wall, and if it finds one, will do all the modifications
+to the adjoin, mirror and walk fields for you. Note that this will also work
+in a multiselection.
+
+On the opposite, you can UNadjoin a pair of walls by selecting one of them and
+pressing the Alt + A keys. This also works in a multiselection.
+
+2. Selecting the adjoin of a wall
+   ------------------------------
+
+This is very useful in many cases. All you have to do is press the 'F' key.
+
+3. Flipping a wall
+   ---------------
+
+Flipping a wall will swap its start and end vertices. Be careful with this, as
+a wrongly oriented wall in a sector will give you a 'Hall of Mirrors' effect,
+which DOOM level creators know very well. You should try it voluntarily once,
+just so that you know and can recognize HOMs.
+
+[NEW] Warning: it seems that some game engine quirks also give HOM like effects,
+with complicated non-convex and imbricated sectors, but also simply if the
+area is too big (> 250 units). So don't get confused !
+
+So, why is flipping useful ? Well, there is a very specific case in which this
+option may win you a lot of time. This is a little difficult to follow, so
+don't hesitate to come back to it later.
+
+Imagine you have a sector into which you must insert a very complicated other
+sector. Normally, the technique would be to insert one or more gaps (Alt + Ins),
+split the walls of the gaps and put their vertices into place, then copy one or
+more sectors, split their walls, put their vertices into place, and finally
+select all the walls that need to be adjoined, and press the 'A' key.
+
+This works perfectly well, but did you notice that exactly the same things were
+done twice ?
+So, here is a much faster solution (taking about half the time).
+
+Construct your first sector as you like it, inserting the gaps, and so on.
+Then copy THAT one, and put it on a free space on your map for now. Quickly
+switch to WALLS mode. The first wall is selected. Delete it and delete all the
+'exterior' walls, so that you stay with all the 'gaps'. Now, you could copy
+them in place, and adjoin the walls. WRONG ! Because the walls have exactly the
+same orientation as the original ones, and mirrors must be 'piggy back'.
+Switch back to SECTORS, press the spacebar to multiselect, then switch back to
+WALLS. Press Alt + F to flip all the selected walls! Now, all you have to do is
+to move all these walls into place (take note of the 'big' vertex position, and
+use the Alt + right mouse trick). Once they are, just press the 'A' key to
+create all the adjoins/mirrors.
+
+OK, it seems much longer in text, but believe me it is actually much faster on
+complicated interior sectors than the first method.
+
+
+- So, we know all we need about modifying the level geometry, except one thing:
+  "How to set the altitudes ?"
+
+- To answer this and a lot of other things as well (life, the universe, ...),
+  it is time to introduce ... the EDITORS !
+
+
+ VI.   EDITING THINGS
+       ==============
+
+There are five editors in LEVMAP: for SECTORS, WALLS, VERTICES, OBJECTS, and
+for the general level information (level name, palette, ...).
+
+The first four of them will work with multiselection, and will use the
+right pane to edit (see the specs for an explanation of all the fields).
+
+Note that you can access them two different ways:
+ - if you press the ENTER key, you'll edit the selected thing
+ - if you press Alt + ENTER and you have a multisel, you'll edit ALL the things
+
+The first field of the pane will be hilited (note that if you selected a
+multiple edit with Alt+ENTER all the LABELS will also be hilited).
+You can now use the cursor keys to move that hilite, and the ENTER key to edit
+the current field. Press the Esc key to leave the editor.
+
+You can also press the 'c' or 'C' key to change the current picklist file
+for textures when in SECTOR or WALL editing modes.
+Note that you'll have to create new textXXXX.dfu files in DFUDATA and update
+textures.dfu to use this feature. So, you'll be able to dynamically select
+picklists which you created with your own selection and sorting.
+
+[NEW]
+You can press the 's' or 'S' key to automatically generate sequences for the
+current object when in OBJECT editor mode. You can also use the 'g' or 'G' key
+to transform the current object into a generator.
+
+If different LOGICs may be associated with the chosen object, the editor will
+insert all of them, and signal it to you with a 'Choose LOGIC !' message next
+to the Seq field. When you create a generator, you will get the
+'Edit GENERATOR !' message to remind you it has default settings.
+
+Important: these operations do affect ONLY the current object, EVEN if you
+are editing a multisel with Alt + ENTER.
+To propagate the changes, you must edit the 'Seq' field.
+
+
+There are four possible types of fields:
+
+1. Normal text edit
+   ----------------
+
+These are classic edit fields. You start with the previous content, and edit by
+using Delete, Backspace, the cursor keys, Home, End and so on. Press Enter to
+accept changes, or Esc to get the original value back.
+
+2. Flags
+   -----
+
+The flags will show as a list of bits you can select or deselect at will with
+the Spacebar. Press ENTER to accept changes. LEVMAP now fully supports the 20
+bits of SC FLAG 1.
+
+Important: when editing the flags in multiple selection, you are NOT copying
+           the final flag value across the multiple selection, as is the case
+           for all the other fields. What happens is that you propagate the
+           changes made. Suppose you set the bit 2, all the bits 2 will be set,
+           but the other bits are left alone.
+
+3. Object sequences
+   ----------------
+
+The .O file contains data for the objects that is very variable and delimited
+in the file by the SEQ and ENDSEQ keywords. The 'Seq' label shows the number
+of lines between SEQ and ENDSEQ. When it is current and you try to edit it,
+your text editor will open up, with SEQ, ENDSEQ and all the lines between.
+Edit it as you like, but watch the comments on the first and last lines which
+will tell you how much lines/columns you may enter.
+When you have finished editing, save and exit from your text editor.
+
+Note: remember the automatic sequences !
+
+4. Textures and object pickers
+   ---------------------------
+
+It would be tedious to type texture or object names, so when you edit them,
+a list of values appears, as well as a graphical view. Note that you don't
+need to wait while the images are being drawn to move in the list.
+You can use the Up, Down, Page Up, PageDown, Home and End keys to move.
+Pressing ENTER will accept your choice, and ESC will cancel.
+
+Warning: if you press ESC while selecting a texture for a SIGN, its value
+         will be set to [none].
+
+Please note that the textures sizes are in the map 'scale' you have to multiply
+them by 8 to get the size of the image in pixels.
+
+[NEW] Remember you can change the picklist with the 'c' or 'C' keys.
+
+If you edit the OBJECT Class, a small list of values will also appear, and if
+you change the Class you will immediately jump into the list of values for
+that Class.
+
+
+The fifth (and less used) editor is still in a text mode 'beta' presentation,
+you can access it by pressing the 'M' key. Also note that the editing is very
+bad (a simple cscanf) and you cannot backspace, and so on. It allows you to
+alter the level name, both in the LEV and O files, the music file, the palette,
+and so on. Note that this data may be irrelevant (see the specs).
+The author information and map comments should be set in DFUSE.INI instead, as
+cscanf won't accept whitespace between words.
+
+
+ VII.  SAVING THE LEVEL - NEW LEVEL - LEAVING LEVMAP
+       =============================================
+
+1. Saving
+   ------
+
+Saving the level is easy: just press the 'F2' key. The screen will switch to
+text mode to show the progress of the save, then come back to graphics. If it
+is the first time you save in a session, a backup will also be done in the
+BACKUPS directory.
+
+An alternative is to use the 'F3' key, which will save AND RELOAD the level.
+This will have two major consequences:
+ - the deleted sectors and objects will now be TRULY deleted (no more UNDELETE)
+ - their memory and disk usage will be reclaimed
+
+2. Creating a new level
+   --------------------
+
+You'll have to quit LEVMAP and DFUSE to do this. Go to the DARK directory,
+and launch newlevl!.exe . This will create six NEWLEVEL files, with the
+extensions .LEV, .O, .INF, .GOL, .PAL, and .CMP . Now, all you have to do is
+rename them with a level name of your choice.
+It isn't laziness not to have put this in a menu, it's security !
+
+Those files contain a minimal level, with useful things already in place.
+You will find a complete sector, a start sector with the SPIRIT, and a
+'shopping center' sector containing a selection of useful objects to copy.
+The .INF file contains a complete elevator.
+
+3. Quitting LEVMAP
+   ---------------
+
+Just press the ESC key! If you have any unsaved changes, LEVMAP will ask you
+if you want to save them (F2), lose them and quit (ENTER) or return to the
+editor (any other key).
+
+
+ IX.   GOODIES
+       =======
+
+These are the features that I couldn't place anywhere else, which doesn't at all
+mean that they are not frequently used.
+
+1. DOS Shell
+   ---------
+
+Just press the 'Z' key. Type 'exit' to return to LEVMAP. This is also a quick
+way to force a refresh of the screen. Windows for instance has a bad habit of
+trashing my screen when I switch back to LEVMAP from a Windows app.
+
+2. Edit the .INF and .GOL files
+   ----------------------------
+
+Just press the 'i' key for the .INF, and the 'I' key for the .GOL .
+
+3. Allocated things and free memory
+   --------------------------------
+
+Pressing Alt + C will show you a statistics display, with the number of
+sectors, walls, vertices, objects, textures, and objects by class.
+
+It will also show you the 'far core left', which is a only a cute little name
+for 'free conventionnal memory'.
+
+4. Consistency checks
+   ------------------
+
+The 'F10' key will generate a report on level consistency.
+
+ * check all the possible adjoin/mirror/walk errors.
+ * check that number of VX and number of WL match.                 [NEW]
+ * check that Floor is not higher than Ceiling.                    [NEW]
+ * show the objects for which a sector could not be found.         [NEW]
+ * show if PLAYER start is missing, or if there are more than one. [NEW]
+ * check that items: in the .INF is the number of item:            [NEW]
+
+You really should use it after complex modifications, it is super and may help
+find a lot of 'stupid' mistakes.
+
+
+Notes:
+ * Errors of the type 'ADJOIN not CORRECT' may be detected if you change the
+   adjoins in the .INF and set the 'wrong' value in the .LEV .
+ * #VX different from #WL isn't a true 'sector closed' check, but it helps.
+   What's more, DF accept open sectors (see SECBASE SC #3).
+ * Some objects give an sector error. This occurs when two sectors overlap
+   on the same layer. Solution: change the layer!
+   If the sectors don't overlap, then the object is completely out of the map
+   or not between a floor and a ceiling.
+
+
+5. Automatic texture stitching - altitudes and light distribution
+   --------------------------------------------------------------
+
+These features all work on ORDERED multiselections which is to say that you have
+to create your multiselection in the correct order (remember SECTOR
+multiselection for 1 sector converted to WALL multiselection IS in order!).
+Here are all the keys:
+
+ F5         MID TX horizontal stitching from start
+ Alt + F5   TOP TX horizontal stitching from start
+ Ctl + F5   BOT TX horizontal stitching from start
+
+ F6         MID TX horizontal stitching to end
+ Alt + F6   TOP TX horizontal stitching to end
+ Ctl + F6   BOT TX horizontal stitching to end
+
+ F7         MID TX vertical   stitching
+ Alt + F7   TOP TX vertical   stitching
+ Ctl + F7   BOT TX vertical   stitching
+
+ F8         Distributes Floor and Ceiling altitudes
+ Alt + F8   Distributes Floor   altitudes
+ Ctl + F8   Distributes Ceiling altitudes
+
+ Shf + F8   Distributes Ambient lights
+
+
+What does this mean ?
+
+Well, texture stitching is a very important part of your level. It is only
+aesthetical, but will make all the difference between a good level and a
+beautiful level! So, texture stitching is the art (?) of choosing correct
+offsets for your textures, so that the walls look continuous.
+
+You have to know that Dark Forces will apply the chosen texture on each wall
+(this is called 'texture mapping') from the same start point.
+
+So, if you look at the lateral walls of a staircase you'll see something like
+this:
+
+   +------+
+   | **** +------+
+   |      | **** +------+
+   +------+      | **** |
+          +------+      |
+                 +------+
+
+If the texture is uniform, all will be good, but suppose there is a pattern
+in it (represented by the ****). This will look awful as the lines of stars
+won't match from step to step. The solution to this is to apply offsets to
+the textures, so that they will match. This is vertical stitching.
+
+Note that this is also the case on simple walls. Suppose the wall is mapped
+with a 16 units wide texture, and the geometry of the room asks for the
+following walls:
+
+  +----------+----+-------------+
+  |0123456789|0123|0123456789ABC|
+  |          |    |             |
+  +----------+----+-------------+
+
+Your texture will normally start at 0 at each wall, and again give an awful
+look. You must use offsets to make it look like the much better:
+
+  +----------+----+-------------+
+  |0123456789|ABCD|EF0123456789A|
+  |          |    |             |
+  +----------+----+-------------+
+
+This is horizontal texture stitching. The difference between 'from start' and
+'to end' is that the program will calculate the offsets 'from' the offset of
+the first selected wall, OR 'to' the offset of the last selected wall.
+
+Try to completely stitch a staircase manually, and you'll understand all this !
+
+While we are speaking about stairs, lets explain the altitudes distributions.
+Suppose you construct a simple staircase:
+
+  +----+----+----+----+----+----+
+  | 1  | 2  | 3  | 4  | 5  | 6  |
+  |    |    |    |    |    |    |
+  +----+----+----+----+----+----+
+
+You'll decide that the floors and the ceilings will be distributed between
+sector 1 (-3.00, 6.00) and sector 6 (5.00 and 14.00). All you have to do
+is to complete those values, multiselect all the sectors, then Distribute!
+The program will calculate all the intermediate values.
+Please note that you must do this BEFORE vertical texture stitching.
+
+Light distribution is exactly the same, to create fading ambient lights.
+
+
+A last note on texture stitching:
+there is another kind of stitching which isn't automated for now.
+Look at this door, which is surrounded by 'beautifiers' sectors.
+
+ +-------------+--------+--------------+
+ |             |  TOP   |              |
+ |             |        |              |
+ |    MID      +--------+     MID      |
+ |             |        |              |
+ |             |        |              |
+ |             |        |              |
+ +-------------+--------+--------------+
+
+The TOP texture above the beautifier sector should be aligned both horizontally
+and vertically with the MIDs on each side. You may use the value calculated
+for its MID texture x offset, but you'll have to calculate the y offset.
+This is quite easy, just make in your mind the TOP texture start at the place
+where the MID texture would!
+
+6. Deformations [NEW]
+   ------------
+
+The 'D' key will open a dialog box where you can encode values for multiple
+deformations.
+Translate, Scale and Rotate are self explanatory. The reference point for those
+last two is as usual (ie the same as for the moves).
+
+Note that the values for flip are 0 (DON'T FLIP) or 1 (FLIP).
+Flipping works in object and sector modes. Because after the flip the walls and
+vertices are completely shuffled, it is near impossible to determine which I
+can modify and which I cannot modify, so I'll allow only complete sectors to
+be flipped. And even so, it isn't clear how to rearrange the sectors with gaps.
+
+Sector flipping is still to be considered BETA, always SAVE before trying it.
+
+The dialog box will clear the fields each time you use it, but:
+ 'P' will get previous values
+ 'R' will get the reverse of the previous values
+     (note that only the inverse of a simple operation will work correctly,
+      as LEVMAP will apply the deformations in the same order the second
+      time)
+
+
+7. Polygons [NEW]
+   --------
+
+The 'K' key will open a dialog box where you can encode values for generating
+polygons. It will default to the mouse pointer position (nearest grid point if
+the grid is on) for the polygon center X and Z values, but you can of course
+choose completely different coordinates.
+The last two values are simply the radius of the polygon and the number of
+sides it will have. As in the Deformations, the 'P' key will restore the
+previous values in the dialog.
+
+By using the Alt + K key combo, you can create a polygon as a GAP INSIDE a
+sector (exactly like Alt + Ins, but prettier).
+Important: don't forget to SELECT the sector before.
+
+Ctl + K will do both operations, and adjoin all the needed walls. This in effect
+makes it a 'Create Subsector' function.
+
+Note that from times to times, some adjoins may not be made correctly because
+of some obscure rounding problems in the vertices coordinates.
+Take the offending vertex, move it, then use the Alt + RIGHT MOUSE trick to put
+it back exactly on the other, then readjoin the walls.
+
+
+  X.   MISCELLANEOUS REMARKS
+       =====================
+
+LEVMAP will read the .INF file correctly if comments are used in the following
+ways:
+
+/*   class: elevator move_floor */
+
+/*   class: elevator move_floor
+*/
+
+/*
+     class: elevator move_floor */
+
+/*
+     class: elevator move_floor
+*/
+
+Things will go very badly if you use comments embedded in a line:
+
+     class: elevator /* move_ceiling */ move_floor    [WRONG!]

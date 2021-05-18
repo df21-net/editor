@@ -1,0 +1,183 @@
+
+
+Let's begin.
+
+
+HOW DO I CREATE A COMPLETELY NEW LEVEL ?
+======================================
+
+Quit DFUSE totally.
+
+At the DOS prompt, type "cd dark" to go to the DFUSE\DARK subdirectory.
+This contains - among other things - the levels you are working upon.
+Ok, now type "newlevl!". This will create six files named NEWLEVEL.LEV,
+NEWLEVEL.O, NEWLEVEL.INF, NEWLEVEL.GOL, NEWLEVEL.CMP and NEWLEVEL.PAL. These
+six files together are a complete Dark Forces level. However, due to some
+information beeing hardcoded in the game, you have to rename them to the exact
+name of an already existing level. Let's use the first one : SECBASE.
+
+If you have already worked on a SECBASE replacement, you may want to backup
+you files. Type "md sec_back" to create a directory to save your old work.
+Then, type "move secbase.* sec_back" to move all the secbase files to this
+safe place.
+
+If you haven't already worked on a SECBASE replacement, type "del secbase.*"
+to be sure you haven't extracted the level unknowingly.
+
+Ok, now type "ren newlevel.* secbase.*". The six files will be renamed to
+SECBASE.LEV, SECBASE.O, SECBASE.INF, SECBASE.GOL, SECBASE.CMP and SECBASE.PAL.
+
+We now have a new level to work upon. Remember, this hasn't been automated
+for your own security. I wouldn't advise to create a batch file with all those
+DOS commands. Make an habit of making a ceremony of this, after all next time
+you'll be doing this you'll just have finished a level :)
+
+Right now, we are going to see what we just created, so ...
+
+
+HOW DO I LAUNCH THE MAP EDITOR ?
+==============================
+
+If you have been following along, type "cd .." to get back to the main DFUSE
+directory.
+
+Type "dfuse" to launch the main shell. If the program stops immediately with
+an error telling you that 'DFUSE is already running', then stop reading now
+and see the 'DFUSE IS ALREADY RUNNING' ERROR MESSAGE entry.
+
+You should now see DFUSE Main MENU. There are a lot of things there, but what
+interests us now is to go and see our new level, so press the "L" key to
+activate the "[L].  Levels  Menu" item.
+
+Now we are at the Levels MENU. The only relevant option is
+"[C].  Choose Level  !!", so press the "C" key. A picklist appears, with the
+first line selected. The selection is already on the level that interest us :
+SECBASE. So just press the "Enter" key to select it.
+
+We are now back at the Levels MENU. Notice how a lot of options have appeared
+since you selected a level. We are in a hurry to see our new level now, so
+press the "M" key to activate the "[M]. Edit .LEV (Map)" item.
+
+Right! A lot of things should flash on the screen, including a copyright
+notice, then progress bars. Depending on your computer speed, you may not even
+have the time to see them. Don't bother, you'll have all the time to examine
+them when your level will grow, and LEVMAP (this is the map editor) will take
+more time to load it.
+
+What you should have on the screen now is three geometric shapes : a kind of
+'C', a kind of 'O', and a square. You should also see big blue boxes on top of
+the screen, and the mouse cursor. If you don't, then you have a problem.
+
+If you own a 486sx PC, the most probable problem is that you are running the
+normal LEVMAP.EXE, and not the special 'sx' version. If this is the case, see
+the WHAT IF I HAVE A 486sx ? entry.
+
+If all is correct, but you don't see the mouse cursor, then refer to your mouse
+manual to learn how to load your mouse driver. In most cases, you just have to
+type "mouse". You must however do this out of DFUSE, so press the "Esc" key
+until you are at the DOS prompt, then do what you must to have your mouse
+driver up and running, then follow the instructions in this section again.
+
+Still here ?
+
+Now, "What's all this stuff ?" I hear you saying, "I thought we just created
+a completely new level".
+
+Well, first the 'C' thing is a "complete sector".
+This sector (named "complete") is mandatory in a DF level. Without entering
+complex INF details now, this sector is a special elevator whose position
+represent the goals accomplished in the level by the player.
+
+The 'O' thing is an object 'supermarket'. As you will rapidly see, LEVMAP
+works by creating copies of things, so this is a repository of frequently used
+objects.
+
+The square will be the first 'usable' sector in our level. It is red, which
+means that it is the currently selected thing.
+We'll come back to it in a moment, but first we'll explore a little...
+
+
+HOW DO I SWITCH MODES, AND ZOOM, AND SCROLL THE MAP ?
+===================================================
+
+First of all, what are modes ?
+
+There are a lot of things in a Dark Forces level, and LEVMAP only handles
+the geometry (LEV) and the objects (O). It also allow a visual coding of what's
+in the INF.
+
+Objects are easy to understand. They include the ennemies, the weapons,
+the powerups, and so on.
+
+The geometry is a bit more complicated. For now, remember this :
+Dark Forces levels are a 'world' in which the player will evolve. This world
+is geometrically described using VERTICES (plural of VERTEX) as points, having
+coordinates.
+
+A WALL is defined as a line between two VERTICES.
+
+A SECTOR is something more difficult to explain :
+"an horizontal (east-west and north-south) area of the
+ map where a floor height and ceiling height is defined.  It can
+ have any shape.  Any change in floor or ceiling height or texture
+ requires a new sector (and therefore separating walls)."
+ [Matt Fell, Unauthorized DOOM Specs]
+
+Let's just say for now that a SECTOR is an area enclosed by WALLS.
+
+So, back to the modes : as the OBJECTS, VERTICES, WALLS and SECTORS all have
+their properties, and different visual representations, LEVMAP has 4 states
+or MODES, being in effect 4 editors in one.
+
+Press the "O" key. Shazam! We are in OBjects mode.
+What has changed ?
+
+Well, nearly everything. The information in the big blue boxes at the top of
+the screen now refer to objects. Our square isn't red anymore because it isn't
+the selected thing anymore! Color dots have appeared, two in the square, and
+a lot in the supermarket.
+
+Tiny isn't it ? Ok, let's learn another thing here : ZOOMing. Move your mouse
+pointer roughly in the middle of the supermarket, and press the "C" key.
+This will ZOOM and CENTER the screen on the cursor. Other useful ZOOM keys
+are "+" and "-".
+
+So, what do we see ?
+
+As you already guessed, there are different colors and different shapes of
+objects.
+
+Blue ones are ennemies, the lighter the stronger.
+Browns/yellows are powerups, the lighter the more useful.
+Pinks are goal objects and keys, etc.
+Grays are neutral/scenery objects.
+
+Squares are Sprites, O are Frames, 3 are 3DO, S are Safes, V are Sounds...
+Whatdidhesay ?
+These are multiple classes of objects, we'll come back to them later.
+
+We will however learn about a very special object right now : the PLAYER.
+
+Show the square sector again. Use the cursors to bring it to the center of
+the screen. Unzoom the MAP (remember, the "-" key) a little, this will be
+easier. Zoom again on the square.
+
+There are two objects in there. Focus on the green X. If it isn't selected
+(ie if it hasn't a red circle around it) put you mouse pointer on it and
+click the LEFT button.
+
+This is a MANDATORY object. If you don't put a player start in your level,
+Dark Forces will CRASH when you load the level, and you'll have to reboot.
+This is true even if you are running some supposedly 'crash-protected' OS.
+
+By the way, observe the red line that starts at the object. It is a visual
+representation of the object's YAW (orientation). In this very special case,
+it shows the line of sight of the player when the game starts.
+
+Press the "S" key to return to SECTOR mode, because we are now going to study
+the geometry elements.
+
+WHAT GEOMETRIC REPRESENTATION DOES LEVMAP USE ?
+=============================================
+
+

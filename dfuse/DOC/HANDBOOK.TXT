@@ -1,0 +1,1845 @@
+                          T h e   U n o f f i c i a l
+        ______________________________________________________________
+        |                                                            |
+        |   W A D   D E S I G N E R S '   T I P S   H A N D B O O K  |
+        |____________________________________________________________|
+                         Release 1.0 -- February 7, 1995
+
+               written and compiled by  >> Bill J. McClendon <<
+----------------------------------------------------------------------------
+
+      Introduction
+      ~~~~~~~~~~~~
+      Hello, future WAD designer, and welcome to the release 1.0 of the WAD
+Designers' Handbook!  This publication is designed to assist aspiring WAD
+authors with the basics of what they need to know about building and creating
+levels for DOOM.  It's aimed at the complete novice -- those who have played
+DOOM and maybe some PWADs, and said, "Hey, _I_ can do that!", but aren't
+familiar with the terminology and procedures.  You know what you _want_ to do,
+right?  You just aren't sure _how_ to do it, or _where_ to begin.  This is for
+you.
+
+
+      Copyright Information
+      ~~~~~~~~~~~~~~~~~~~~~
+      This document is copyright (c) 1995 by Bill J. McClendon.  All rights
+reserved.  You may distribute this document freely under the following
+conditions:
+
+      (a) the copies are exact and complete, including this copyright
+          notice;
+      (b) the copies are in electronic form only;
+      (c) you do NOT charge any fee whatsoever for copying and/or for
+          distribution of this document, in ANY form.  (Subscription BBSs
+          and pay BBSs are exempt from this restriction.)
+
+      You may, however, print a copy of this document for your own use. 
+Actually, I highly recommend that you do so, as you may find yourself taking
+quite a few notes during the learning process.  (It worked for me.)  For best
+results, I recommend printing it at 12 cpi (10-point, for you laser printer
+people), with a left margin of 1" and top, bottom, and right margins of .5".
+
+
+      Acknowledgements
+      ~~~~~~~~~~~~~~~~
+      My education on the design and structure of WADs wouldn't be complete
+without the various amounts of assistance I received from the following
+people:
+
+Roy Ford (LaserJock):
+      For explaining what the ceiling and floor heights were for when making
+      doors, for emphasizing the need to make visible linedef lengths
+      multiples of 8, and for answering my million-and-one questions about how
+      to operate WADED, since it didn't come with docs.  Author of DREAD3,
+      WOODY, HELLPORT, and XENO_PEN, and future, as-yet-unnamed levels...
+Stephen Long (Dr. Death):
+      For being so helpful on the FidoNet DOOM echo, and for his tips on
+      sticking to a consistent theme, using DOORSTOP instead of "that hideous
+      DOORTRAK", using appropriate lighting (and special lighting effects),
+      keeping room size down whenever possible, being careful about mixing and
+      matching differing textures at the same elevation, and for non-linear
+      level-design methods.  Author of DRDEATH1 - DRDEATH9.
+Doug Bora:
+      Primarily for his explanation of pegging and unpegging textures, what it
+      looks like, and why to use it.  Author of at least one deathmatch level
+      that I know of (REVILE.WAD).
+Rick Thoma:
+      For providing an in-depth analysis of the "busy vertex" problem (known
+      as the Tesseract), and for discovering that it results from a node
+      construction error as opposed to a level-design error.  Also "for
+      directing [me] to some sources, and maybe for starting some interesting
+      threads [on the FIDO DOOM echo]."  There you go, Rick.  Just like you
+      wanted. :)
+Sean Duggan, Paul Hackathorn, Matthew Mauger, Mackey McCandlish (Avatar), Jon
+McGuire, Martin Regimbald, Eric Schreiber, and Damon Thompson (Nomad):
+      For their invaluable assistance on my FidoNet "WAD Designers Tips"
+      survey, by telling me what they like (and DON'T like) to see in a level.
+      There may be WAD authors in this group (I'm pretty sure Avatar has made
+      at least one level), but I don't know the names of their levels...
+
+      This Handbook would also not be complete without the generous assistance
+of the following "Unofficial" publication authors:
+
+Hank Leukart <ap641@cleveland.freenet.edu>:
+      Author of the DOOM FAQ, and distributor of The Unofficial DOOM Specs,
+      from whom permission was obtained to use the various monster sizes and
+      some of the definitions of terms.  Thanks, Hank!
+Matt Fell <matt.burnett@acebbs.com>:
+      Author of The Unofficial DOOM Specs, which I recommend to every serious
+      WAD author.
+Tom Neff <tneff@panix.com>:
+      Author of the DESIGN11.FAQ, an invaluable guide to questions and answers
+      for most common WAD problems and mistakes, from whom came The 10 Most
+      Common Design Errors (used with permission).
+
+(Yeah, the Acknowledgements section is kinda large, but without the help and
+advice of the people listed above, you wouldn't be reading this!)
+
+
+      Files Included In This Archive
+      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      In case this is the first thing you're reading, the files that should
+have been in the archive you downloaded are:
+
+      FILE_ID .DIZ            The i.d. file that a lot of BBSs use.
+      HANDBOOK.TXT            You're reading it.
+      WAD_AUTH.TXT            The template for WAD authors.
+      WALKTHRU.WAD            The "example" level.
+      WALKTHRU.TXT            The guide for the example level.
+
+
+      Comments from the author:
+      ~~~~~~~~~~~~~~~~~~~~~~~~~
+      Well, folks, here it is -- the first version of the WDTH.  If you have
+any comments, complaints, suggestions, or additions, I can be reached at the
+following locations:
+
+      *  The FidoNet DOOM echo (posting as BILL MCCLENDON)
+      *  Caxius BBS (1-510-895-6961 -- leave e-mail to BILL MCCLENDON)
+      *  The Cat's Meow BBS (1-510-471-0603; again, as BILL MCCLENDON)
+      *  Internet address:  bill.mcclendon@creature.com
+
+      I welcome any additions to this document, and I know there should be
+quite a few...  Let me know what you think of it!  Thanks.
+      I was very impressed with Hank Leukart's DOOM FAQs and Matt Fell's The
+Unofficial DOOM Specs, and I'd like to acknowledge their influence in this
+document's format, structure, and content.  Most of the information I've got
+about the structure of the DOOM IWAD and it's use came from release 1.3 of the
+Specs, and, though that article is more technical than a level author needs, I
+highly recommend it.
+      Have fun, and good DOOMing!         -- Bill
+
+
+--------
+Contents
+--------
+
+[0-0] Introduction
+      Copyright notice
+      Acknowledgements
+      Files Included In This Archive
+      Comments from the Author
+
+[1-0] Definitions And Terminology (Glossary)
+      [1-1]  Vertex
+      [1-2]  Linedef
+      [1-3]  Sidedef
+      [1-4]  Sector
+      [1-5]  Texture
+             [1-5-1] X and Y Offset
+             [1-5-2] Unpegging Textures
+      [1-6]  Things
+      [1-7]  Nodes
+      [1-8]  Tags
+      [1-9]  Sprites
+      [1-10] Blockmap, Ssectors, Segs
+      [1-11] Reject
+      [1-12] HOM
+
+[2-0] Designing The Level
+      [2-1] Overall Tips, Reminders, And Procedures
+            [2-1-1] The First WAD You Make Is Gonna Suck.
+            [2-1-2] Also, When Designing A Level...
+            [2-1-3] If You Can Change The Default Textures...
+            [2-1-4] Take The Time And Read The Docs.
+            [2-1-5] When Actually Building The WAD...
+            [2-1-6] Having A Procedure...
+      [2-2] Theme
+            [2-2-1] Textures
+            [2-2-2] Dimensions
+            [2-2-3] Lighting
+            [2-2-4] Monsters
+            [2-2-5] Items
+      [2-3] Style
+            [2-3-1] The Planner
+            [2-3-2] The Modifier
+            [2-3-3] The Discoverer
+
+[3-0] Building The Level -- Basic
+      [3-1] Rooms
+      [3-2] Hallways
+      [3-3] Windows
+      [3-4] Doors
+            [3-4-1] Recessing Doors
+            [3-4-2] Secret Doors
+      [3-5] Lifts
+      [3-6] Stairs
+      [3-7] Linedef Remote Events
+
+[4-0] Building The Level -- Intermediate -- Tips And Effects
+
+[5-0] Checklist
+
+[6-0] Finishing Up
+
+[APPENDIX A]  Sizes Of The Various Things
+
+[APPENDIX B]  The 10 Most Common Design Errors
+
+[APPENDIX C]  The Walk-Through
+
+[APPENDIX D]  End Notes
+
+
+
+---------------------------------------------
+[1-0]  Definitions And Terminology (Glossary)
+---------------------------------------------
+
+
+VERTEX      A vertex is simply the point at which a linedef (see below) begins
+            or ends.  Each linedef must have two vertexes.  The "points"
+            between which the linedefs are drawn.
+
+
+LINEDEF     The line between the two vertexes.  These are usually defined as
+            walls, but can be the sides (viewed from above) of doors, windows,
+            stairs, boxes, switches, ledges, overhangs, cliffs, rivers, or
+            whatever else you can think of.  There are two types of linedef:
+
+                  ->  One-sided: means that the player will only be able to
+                  see (and play by) one side of this linedef.  The most common
+                  example of a one-sided linedef is an outside wall.
+
+                  ->  Two-sided: means the player will be able to see (and
+                  play by) BOTH sides of this linedef.  Common examples are an
+                  interior window and a river/pit.
+
+            IMPORTANT:  Each linedef has a "right" side and a "left" side. 
+            The "right" side is the side that should face the player, if the
+            linedef is one-sided.  This is _very_ important!  Most, if not
+            all, level-building programs give you a visual aid to determine
+            which side of the linedef is the "right" side -- they have a small
+            perpendicular line, at the midpoint of the linedef, pointing
+            towards the "right" side of the linedef.  For example:
+
+            This linedef's "right"      |                                
+            side points to the right    |_                               
+            side of the page ----->     |                                
+            (See the little stick?)     |                                
+
+            A 2-sided linedef will also have a "right" side, but since the
+            player will be able to see and/or play on both sides of the
+            linedef, it's not as critical to have it pointing in any given
+            direction.  It is easier on you, though, if you make a habit of
+            having all the "right" sides of adjacent linedefs pointing in
+            towards the same sector.
+
+            ALSO IMPORTANT:  The "right" side is often referred to as the
+            "front", and the "left" side is often referred to as the "back" of
+            the linedef, in case the level-building program you decide upon
+            does not make the "right" and "left" distinction.
+
+
+SIDEDEF     From The Unofficial DOOM Specs:  "A sidedef is a definition of
+            what wall texture to draw along a linedef, and a group of sidedefs
+            defines a sector."  Most people I know (including myself) use the
+            terms SIDEDEF and LINEDEF interchangeably, even though they're
+            technically not the same thing.
+
+
+SECTOR      One of the most difficult concepts to explain, yet one of the most
+            important ones for a WAD author to know.  The DOOM Specs define a
+            sector as "a horizontal (east-west and north-south) area of the
+            map where a floor height and ceiling height is defined.  It can
+            have any shape.  Any change in floor or ceiling height or texture
+            requires a new sector (and therefore separating linedefs and
+            sidedefs)."  Sectors are defined by the linedefs that compose
+            them; a sector is simply a group of linedefs that enclose a given
+            area, and you have to tell DOOM which linedefs are part of which
+            sector.  It only sounds complicated because it's difficult to
+            explain; once you define a sector, you'll understand it.
+
+            What this means is every time you draw an enclosed space, no
+            matter how many sides it has, it must be defined as a sector. 
+            Also, if you put an enclosed space _inside_ another closed space,
+            they both must be defined as sectors separately, as well as
+            together.  For instance:
+
+            * Every step in a stairway must be defined as a separate sector.
+            * Each doorway must be defined as a sector.
+            * A square support must be defined as a sector, if you draw it.
+
+            An example of the "sector inside a sector", and how to define
+            them:
+             ________________________    Let's say that sector 1 is a pallet
+            |       sector 1         |   and sector 2 is a box on that pallet.
+            |       ____*___         |   Sector 1 is going to be defined as
+            |      |        |        |   all of the outside lines that form
+            |      |sector 2|        |   the square, PLUS all the lines that
+            |      *        *        |   form the outside of sector 2.  (These
+            |      |____*___|        |   are the lines with the * in them.)
+            |________________________|
+                                         Sector 2, however, is only the lines
+                                         in the box itself.
+
+            In order to see an example of this, load the WAD editor you've
+            decided to use, and view E1M1 from the original DOOM.WAD.  Don't
+            worry -- if you don't actually tell the program to save, it won't
+            change your original DOOM.WAD (though it's a good idea to have it
+            backed up in any case).  Look at the outside courtyard -- with the
+            poison pit in the center and the blue armor in it -- and highlight
+            the courtyard's sector.  Note how the outside walls of the
+            courtyard AND the outside walls of the pit are both highlighted
+            when you choose the COURTYARD's sector.  The pit is INSIDE the
+            courtyard's sector, but it is important to note that the pit is
+            not PART OF the courtyard's sector.
+
+            *  INSIDE a sector = enclosed by that sector, but not subject to
+            the ceiling height, floor height, lighting level, or special
+            effects for that sector.
+
+            *  PART OF a sector = enclosed by that sector and subject to the
+            ceiling height, floor height, lighting level, or special effects
+            for that sector.
+
+            Since the level of the poison pit is below the "floor" of the
+            courtyard, we know that the pit and the courtyard are different
+            sectors.  Since they share common linedefs, though (the walls of
+            the pit), the pit sector must be defined as INSIDE the courtyard
+            sector.
+
+            One more last important note:  every linedef you draw on the map
+            MUST BE DEFINED IN AT LEAST ONE SECTOR!  If there are "stray"
+            linedefs on the map, and you try to load DOOM, it will crash every
+            single time.
+
+
+TEXTURE     A texture is the graphic that DOOM applies to visible (to the
+            player) surfaces, both horizontal and vertical.  Vertical textures
+            (walls, doors, etc.) are selected on and applied to the linedefs,
+            while horizontal textures (floors, ceilings) are selected when you
+            define a sector.  <Also see "X- AND Y-OFFSET".>
+
+            ** Horizontal textures:  These are selected from where you define
+            your sectors when you define or edit a sector.  When they are
+            applied, they appear on the floor or ceiling as a continuous,
+            north-south oriented texture.  What this means is no matter what
+            direction the linedefs in your sector face, the floors and ceiling
+            textures will always be oriented in the same direction.  This is
+            good, in a way, because you never have to worry about your floor
+            and ceiling textures being aligned between sectors; they always
+            mesh perfectly.  This is bad, however, because there are certain
+            floor and ceiling textures (FLAT20, for instance) that have a
+            distinctive pattern that looks great when the rooms are aligned
+            with it, but not so good when the room doesn't line up with the
+            pattern.
+
+                  NOTE:  Teleport pads are the same way.  There is currently
+                  no way that I know of that you can move the floor texture to
+                  get the teleport pad texture to line up with your intended
+                  teleport pad -- you must move your teleport pad to line up
+                  with the texture.  Most (if not all) level editors will
+                  provide a grid (usually 64x64 in size) to help you align
+                  these textures.
+
+            ** Vertical textures: These are selected where you define linedefs
+            when you have drawn a linedef on the map.  I recommend that you
+            wait until you have the sector defined, and then put your chosen
+            texture on each linedef in that sector, rather than making sure
+            you have the correct texture every time you draw a line.  Vertical
+            textures differ from horizontal textures in a number of ways:
+
+                  1.  They have sizes, measured in pixels.
+                  2.  They can be "shifted" for different effects.
+                  3.  There can be more than one type of linedef texture per
+                      sector; with horizontal textures, you can only have one
+                      texture for the floor and one texture for the ceiling
+                      for each sector.
+
+            The sizes of the vertical textures vary, but they all have one
+            thing in common -- their sizes are always multiples of 8.  Some of
+            the vertical textures are contiguous (they will draw continuously
+            and smoothly, no matter the height and length of the linedef
+            they're pasted on), while others are a set size, and will put
+            "confetti" in between textures when pasted on a linedef that is
+            not the correct height and/or length.  Unfortunately, the only way
+            to discover which ones are which is through experimentation.
+
+            * A recommendation:  whenever possible, note the height and width
+            of the textures you wish to use before you start drawing your
+            level, and try to adhere to their dimensions as much as possible. 
+            This will make the textures draw more clearly and accurately and
+            make your level look as good as possible.  Yes, I know it
+            restricts you to multiples of 8 when you're designing your rooms,
+            but it's not that hard to be creative with this slight constraint.
+
+
+X- AND Y-OFFSET
+
+            These two items are related to the vertical textures, and are used
+            for `advanced' level-designers (whatever _that_ means) to be more
+            creative with their texture placement.
+
+            First, a little primer of how DOOM draws textures, from what
+            little experience I have as a WAD author.  When DOOM pastes a
+            texture on a regular wall, it starts from the top left-hand
+            corner, and goes from top to bottom and left to right when drawing
+            a texture, like this:
+             ______________________
+            | * -------->          |   This is a regular, floor-to-ceiling
+            | |                    |   unbroken wall -- note that it has no
+            | |                    |   doors, no windows, and no changes of
+            | |                    |   elevation whatsoever.  DOOM starts
+            | V                    |   drawing the texture at the "*" and
+            |                      |   goes like the arrows indicate.
+            |______________________|
+                                    
+            Every time a new linedef starts, DOOM starts drawing the texture
+            over again, from top to bottom and left to right.  With wall
+            textures that have no distinctive pattern (like BROWNHUG), this
+            isn't a problem; the whole texture looks the same no matter how
+            many times you draw the first 16 columns of pixels.
+
+            But what if you have a texture that has a distinctive, non-
+            repeating pattern, like a computer wall?  If you draw 5 linedefs
+            that are 16 pixels long, and apply this texture to it, it'll draw
+            the first 16 columns of pixels over and over and over, and it'll
+            look dumb.  An example of what the difference is between these 
+            two examples (one that has been offset, and one that hasn't) is in
+            the WALKTHRU.WAD and .TXT.
+
+            There IS a solution, though -- x-offset.  What x-offset does is
+            tell DOOM, "Instead of placing this texture on this linedef like
+            normal, start drawing it x number of pixels over".  This will have
+            the effect of creating a seamless, unbroken texture, no matter how
+            many linedefs it's pasted on.  ** NOTE: The x-offset feature is
+            vital if you want to create a secret door that you really cannot
+            see!!  
+
+            So, let's say you have 5 16-pixel long linedefs that you want to
+            put COMP2 on, but you want it to look smooth:
+
+
+                     1         3         4         6         8
+            0________6_________2_________8_________4_________0
+            |        |         |         |         |         |
+            | wall 1 | wall 2  | wall 3  | wall 4  | wall 5  |
+            |        |         |         |         |         |
+            |        |         |         |         |         |
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            
+            Use the x-offset on each linedef EXCEPT the one on the far left;
+            since DOOM starts on the left, the first one from the left is 
+            always "normal".  So the x-offset for the linedef/textures would
+            look like this:
+
+            wall 1:    x-offset =   0  (Note: x-offset can be a negative
+            wall 2:    x-offset = +16   number, too, if the texture you're
+            wall 3:    x-offset = +32   offsetting is narrow enough.  The
+            wall 4:    x-offset = +48   limit to a negative offset is 96;
+            wall 5:    x-offset = +64   there doesn't appear to be a limit
+                                        on the amount of positive offset.)
+
+            * A recommendation:  to get the amount of the x-offset for any
+            given wall texture, just add the amount of the lengths of the
+            linedefs from the place where you think the texture should be
+            drawn from; for example, wall 4 begins 48 pixels away (to the
+            right) from where wall 1 began, so the x-offset would be +48. 
+            This will work with negative offsets as well, but since I don't
+            have much experience with negative offsets, I'll leave that up to
+            the reader for experimentation.
+
+            Y-offsetting works the same way, except instead of horizontally,
+            it goes vertically.  The way the + and - in the offset affect the
+            texture goes like this:
+            _________________________
+            |          /|\          |    A "+" y-offset will move the texture
+            |           |  (-)      |    DOWN towards the bottom of the line-
+            |           |           |    def you're applying it to.
+            |                       |
+            |           |           |
+            |           |  (+)      |    A "-" y-offset moves the texture
+            |           |           |    UP towards the top of the linedef
+            |__________\|/__________|    you're applying it to.
+
+            One of the textures I find myself y-offsetting is the BIGDOOR1
+            texture (the UAC door).  By making a 64-high doorway, and 
+            y-offsetting the texture +8, the UAC symbol on the door doesn't
+            look "cut off" by the top of the doorframe.  Alternately, if you
+            y-offset this texture by more than -8, you get "confetti" at the
+            bottom of the door.
+
+
+UNPEGGING TEXTURES
+
+            This is the process of telling DOOM to draw textures backwards
+            from how it usually draws them in a given situation; i.e., bottom
+            to top instead of top to bottom.  This attribute is only handy in
+            a few situations (like windows and secret doors); therefore, this
+            attribute will be explained in detail in those sections.
+
+
+THINGS      This is a general term for any item in the game, animate or
+            inanimate.  Things are loosely grouped into 8 categories:
+
+            Player   : player 1-4, co-op, and deathmatch starting positions.
+            Weapon   : chainsaw, shotgun, chaingun, rocket launcher, etc.
+            Ammo     : single loads and boxes; all ammunition
+            Enemy    : imps, demons, spectres, etc.  All the baddies.
+            Bodies   : pools of blood, exploded bodies, dead creatures, etc.
+            Obstacles: pillars, torches, lamps, barrels, etc.
+            Power-ups: medikits, soul spheres, armor, invisibility, etc.
+            Misc.    : keys, teleport destinations, etc.
+
+            All of the Things are placed on the map by the WAD author.  Note: 
+            each Thing is 10 bytes, so 100 of them is 1k; monster-fests take
+            up quite a bit of memory!  Place Things with discretion...
+
+            When each Thing is placed, there are a number of criteria that
+            each one has that you need to be aware of:
+
+            * They can be tagged so they only appear on certain difficulty
+            levels, or only in deathmatch games, both, or neither.  This
+            applies to ALL Things, not just monsters.   This is helpful if
+            you don't want to change the monster mix when increasing the
+            difficulty levels; simply remove health and ammo by changing the
+            "levels available" flag...
+
+            * They can be tagged to face in one of 8 directions.  Obviously,
+            this only really matters with monsters and teleport destinations.
+            The 8 directions are northwest, north, northeast, east, southeast,
+            south, southwest, and west.  (This is in relation to the
+            orientation of the map, where the top of the screen is north.)  
+            From experience, I've found that monsters generally have a
+            180-degree field of vision, for activation purposes.
+
+            * They can be tagged to be "deaf".  This applies to monsters
+            only.  Monsters will become "active" (meaning they'll actively
+            search for and try to kill the player) under one of three
+            conditions:
+                  1.  They see him/her.
+                  2.  They hear a shot (including a punch!).
+                  3.  They are shot by him/her.
+            If a monster's "deaf" flag is set, option #2 will not activate the
+            monster.  In most cases, in my opinion, it is best to set the
+            "deaf" flag to ON, making the monster deaf.  Otherwise, the first
+            time the player shoots anything, half to three-quarters of the
+            level "wakes up" and starts hunting, spoiling all those wonderful
+            ambushes... This is why knowing the monsters have a 180-degree
+            field of vision is important; they have to be able to see the
+            player to become "active", and knowing which direction they have
+            to face to see him/her becomes critical.
+
+            It will take some practice for you to determine the right balance
+            of Things in your levels.  Don't be afraid to experiment!
+
+
+NODES       This is another vital concept for the level author, but, luckily,
+            the technical parts of their construction may be omitted.  If you
+            would like a detailed explanation of how nodes are built, and the
+            way they are generated, the Unofficial DOOM Specs has a lengthy
+            description.  For the level author, though, you need to know this:
+
+            Nodes are DOOM's way of determining what the player is able to see
+            from any given location.  Every WAD _MUST_ have a node-tree built
+            for the level to be able to run; otherwise, DOOM will crash when
+            you try to play your level, with a variety of fatal errors.
+
+            Most level-building programs have a node-builder built into the
+            program itself.  Some are better than others, but I personally
+            have not found a better node-builder than BSP 12x, by Colin Reed. 
+            In general, the more nodes the node-builder is able to locate and
+            "build", the more "solid" the level will be.  For reference, a
+            symptom of an inferior node-builder is the ability of the player
+            to "walk through" a solid wall; if you experience this problem
+            with the node-builder you're using, get a better one.  WADED, DEU,
+            DOOMEd, and DOOM-CAD all come with their own node-builders.  I
+            have no experience with any other level-builders, so I cannot
+            verify the existence of more than these.  In addition, there are
+            "independent" node-building programs, which means that building
+            the nodes for levels is their entire function.  There are only two
+            of these that I know of:  BSP 12x and IDBSP, which is the node-
+            builder Id uses, ported to DOS.
+
+
+TAGS        This is how DOOM links linedef activation to various sector
+            events.  A tag is simply a number that a linedef and it's linked
+            sector share, for purposes like lifts, doors, crushing ceilings,
+            etc.  More on this in later sections.
+
+
+SPRITES     The way I understand it, Sprites are the textures for various
+            items in the game.  Most often, it refers to the creatures and
+            actual items (Things), but can be used to refer to walls, floors,
+            ceilings, and even the weapons the character carries.  Sprites may
+            be modified by various programs, but that is beyond the scope of
+            this Handbook.  It is enough to say that most, if not all, of the
+            textures, creatures, and items in the game may be changed by the
+            enterprising, creative, and persistent WAD author.
+
+
+BLOCKMAP, SSECTORS, SEGS
+
+            These are various attributes used (and referenced) by node-
+            building programs to build the nodes that will enable your level
+            to be played.  Again, a more detailed explanation is available in
+            The Unofficial DOOM Specs.
+
+
+REJECT      (This next section is mostly opinion.)   A reject table is part of
+            the node-building process.  It is designed to "speed up" your DOOM
+            level by reducing the number of calculations DOOM has to perform.
+
+            Each second, DOOM must figure out where each monster is, if each
+            monster has been activated, where the player is, which monsters
+            the player has activated, etc.  It does this for EACH monster on
+            the map EVERY second.  What the reject table does is tell DOOM
+            which monsters it has to check, based on where the player is at
+            any given time.  (This is why I feel it's related to the nodes
+            function.)  A reject table tells DOOM ONLY which monsters it has
+            to check, instead of checking ALL of them, and not having to check
+            every monster every second speeds DOOM up.  This is the function
+            of a reject table.  This may or may not be correct; if anyone
+            knows differently, or can explain it better and more easily,
+            please feel free to send me some mail, and correct me!
+
+
+HOM         An abbreviation for [H]all [O]f [M]irrors effect.  This will occur
+            primarily when a linedef does not have a texture applied to it in
+            the correct place.  Also happens when textures are applied where
+            they shouldn't be (i.e., on both visible sides of a window), and
+            when a linedef is defined improperly in a sector.  Lastly, if
+            there are too many 2-sided linedefs visible (for DOOM 1, this
+            number is 16; DOOM 1.666 and higher can handle 32) you'll get
+            "texture bleed", which, for all intents and purposes, looks like a
+            HOM.  Careful building and checking will eliminate this problem.
+            Note that this is a common error for the novice level-maker.
+
+
+--------------------------
+[2-0]  Designing The Level
+--------------------------
+
+
+      Okay.  This is the part you've been (patiently, I hope) waiting for. 
+This section is going to consist of overall, general things you might want to
+know about designing a level, like theme and lighting and texture selection
+and procedures and such.  The nuts-and-bolts part of level creation, the
+actual _building_ and stuff like that, is in the next section, "Building The
+Level".  This is more of an overview and recommendation section.  Generally
+speaking, a level that is "built" without first being "designed" has less
+continuity and has a more haphazard appearance.  (Note that this feature may
+actually be an advantage if you're designing a deathmatch level!)  Most of the
+information in this section is unnecessary, really, but instead of learning it
+by trial and error (like a lot of WAD authors have, including me), you can
+just read this section and learn from _our_ mistakes.  Not a bad deal, eh?
+
+(Note: this next section is very nearly entirely opinion, based on the
+experiences I've had playing PWADS (over 250 of them), the experiences others
+have had playing PWADs (from a survey taken on the FIDO DOOM echo), and the
+experience I've had making my very own level.  If you don't agree with some of
+this, all of this, or any of this, that's more than fine.  If you've got
+opinions of your own that you'd like to have added to this file, e-mail them
+to me and I'll include them in the next version of this thing.  Sound good?)
+
+
+OVERALL TIPS, REMINDERS, AND PROCEDURES
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      This section will give you a few general tips, recommendations, and
+procedures to follow to design and build your first WAD.  This is only because
+you've probably never designed and/or built a WAD before, and it's good to
+have some sort of framework to use at first.  When you become more
+experienced, and feel more confident about building WADS, you'll probably end
+up with your _own_ way to do it, that _you_ feel most comfortable with, but
+for now, take a look at this stuff, so you have somewhere to start.
+
+      THE FIRST WAD YOU MAKE IS GONNA SUCK.  There's just no way around it. 
+You've never built a WAD before, and you don't really know what looks good and
+what doesn't, so it's gonna bite big-time.  Accept this, and then build the
+first one anyway.  Try out every single function of your WAD maker somewhere
+on this "test" level.  Learn how to make a door, a window, a damage sector,
+different lighting, stairways, ledges.  Learn how to link a linedef to a
+sector event, learn how to hide secret doors from the player, learn how to set
+up monsters for maximum ambush effect.  Learn how to unpeg textures (and what
+that looks like), learn how to use differing textures, learn how the X and Y
+offset work and what they look like when you use them, learn how to do just
+about everything... WITHOUT WORRYING ABOUT IF IT LOOKS COOL OR PLAYS WELL. 
+This first one is your experimentation level, and you're SUPPOSED to mess up
+on it.  It's not like you'll be releasing this thing for people to play; it's
+like your chalkboard, where you figure out the answers to the problems.  Plus,
+the time you spend on this first one is time you'll save later, because
+nothing is more aggravating than trying to add an effect you haven't done
+before and destroying a large portion of the level you want other people to
+see.  Trust me.  I've done it MORE than once... Practice, practice, practice.
+
+      ALSO, WHEN DESIGNING a level (the test one or any other), make it a
+habit to save as many different versions of your WAD as you can under
+different filenames.  That way, if you mess something up, you've always got a
+recent version or two to fall back on, and you won't have to spend a ton of
+time redoing a bunch of stuff that you've already perfected.  A good way to do
+this is to change the last digit of the filename sequentially every time you
+save a new version; i.e. TEST0.WAD, TEST1.WAD, TEST2.WAD, TEST3.WAD, etc. 
+When you run out of numbers, go to letters.  When you reach the end of the
+alphabet, start over -- heck, by that time you'll have 36 versions of your
+level on the hard drive, and it's safe to say that the oldest one is probably
+obsolete.  Or, you could just set up the Undelete Sentry program that DOS has
+(versions 6.0 and later, I believe), which will store all your deleted files
+for a period of time.  This is nice, but it soaks up a lot of hard drive
+space.
+
+      IF YOU CAN CHANGE the default textures in your level-builder, I strongly
+suggest that you do so.  WADED (the one I use) uses the STARTAN3 texture as a
+default when drawing new linedefs, and since I hate that texture (and will
+probably never use it), it becomes tedious to change it every time I want to
+draw something.  I don't know how other editors work, but if you can set your
+own defaults for certain things (like lighting level, floor, wall, and ceiling
+textures, sensitivity and roundoff of the mouse pointer, etc.), it will save
+you quite a bit of time in the long run.
+
+      TAKE THE TIME TO read the docs to your preferred levelmaker!  You
+absolutely have to understand how it works to make the best level possible. 
+DEU has a nice on-line tutorial that runs you through its basic functions, and
+while it might seem like kind of a pain, it's worth the time you invest in it.
+Other editors just come with the .TXT files, and the Windows version ones
+usually have a help file.  Read everything!  The time you spend on this now is
+the time you'll save later when you can't figure out exactly how something is
+supposed to work...
+
+      WHEN ACTUALLY BUILDING THE WAD, another recommendation:  make wall
+lengths, door depths, and ceiling heights multiples of 8.  While this may seem
+limiting to your creativity at first, the time you'll save lining up textures
+will be more than worth it.  Besides, the player can't tell how many pixels
+high or wide the wall is, and usually doesn't care, as long as it looks good. 
+Using multiples of 8 will make it look good.
+
+      HAVING A PROCEDURE TO actually construct the WAD is helpful to the
+novice, but once you get going on making WADs, you'll almost certainly have
+your own personal way of construction that works best for you.  For now,
+though, here's a method that you can either write down or copy so you don't
+inadvertently forget anything the first time you build a level:
+
+      1.  Draw the room the way you want it to look -- put up the walls and
+      vertexes and stuff like that.  Make sure the linedef lengths are
+      multiples of 8, for easier and more consistent texture mapping.
+
+      2.  Define the sector.  Use the automatic "Make Sector" function if your
+      level-builder has one; when you become more experienced, you can define
+      your sectors manually for greater accuracy.
+
+      3.  Check the sector.  Make sure all your linedefs are pointing in
+      towards the sector you've just defined, and make sure all the linedefs
+      that are supposed to be defined in that sector ARE defined in that
+      sector.  (This is the most common cause of errors the novice experiences
+      when designing his/her first WAD, by the way.)
+
+      4.  Modify the sector.  Define the ceiling and floor heights you want,
+      the lighting level, the floor and ceiling textures, and any special
+      lighting or damage effects you want this sector to have.
+
+      5.  Check the linedefs.  Make sure every linedef in that sector has the
+      proper texture applied to it, and in the proper place.  (Not performing
+      this task is the biggest cause of HOMs -- having linedefs without
+      textures applied to them.)
+
+      6.  (Optional)  Place the Things you want in this sector.  I recommend
+      that you do this when the entire level has been built, but I understand
+      the desire to have monsters running around when you first build your
+      level.  The time of placing monsters is a personal thing.
+
+      7.  Save the WAD.  Every single time you add a new sector, SAVE!  This
+      is something that should become habit.  If you have an "auto-save"
+      feature, enable it.  This one thing will save you more time than any
+      other thing I could recommend; if you mess something up, you'll at least
+      have what you've done correctly already saved, and you won't have to
+      waste the time re-creating a sector you had already created perfectly. 
+      NOTE:  Don't forget to increment the last digit on the saved filename!
+
+      8.  Build the nodes.  Use the node-builder built-in to your level
+      builder, or (recommended) get a copy of BSP 12x, exit to DOS, and build
+      your nodes with this program.
+
+      9.  Test it.  Fire up DOOM, enter your WAD on the command line, and
+      check your new sector.  Have a pencil and piece of paper ready, and make
+      notes to yourself to fix things that you haven't done quite right. 
+      Writing down things to fix is the best way to remember everything when
+      you get back into your level-editor.  NOTE:  DOOM, for some reason, can
+      sometimes have problems when running a WAD that is a single sector. 
+      Make sure you have at least two sectors defined the first time you run
+      your WAD, to prevent any possible crashing.  Also, make sure that you 
+      always include a Player 1 Start position, or DOOM will crash.  I
+      recommend that you make a batch file for the testing of your WAD, as
+      well; with as many times as you're going to have to test it, it'll save
+      you a bunch of keystrokes.  Mine looks like this:
+
+      ---[TEST.BAT]------------------------------------
+                  cd\doom
+                  doom -file c:\levlmakr\%1.wad
+                  cd\levlmakr
+                  waded
+      --------------------------------------[endfile]--
+
+      (WADED, my level-builder, is in a directory called C:\LEVLMAKR.  What I
+      enter on the command line is "test <filename w/o .WAD>".  The batch file
+      changes to my DOOM directory, enters the filename w/o .WAD in the
+      command line in the proper place, and, when I exit DOOM, goes right back
+      into my level-builder.  If you decide to use this batch file, modified
+      for your own directory structure, copy it as is -- besides the dashed
+      lines that have the name of the file and the "endfile" flag, and change
+      the "cd\" entries to reflect your directories.  Of course, if you know
+      what you're doing with batch files, ignore this.)
+
+
+THEME
+~~~~~
+      Every good level has to have a theme.  As a WAD author, you probably
+have some idea of what kind of theme you want already, but if you don't, I
+highly recommend that you find a theme before you start building.  Nothing is
+more annoying to a player than finding hell textures placed without reason in
+the middle of a computer room!  A plus to having a theme is that your level
+will have a logical reason for "existing"; rooms will have functions, and the
+way the level is laid out will make sense from an architectural and functional
+standpoint.  If the level has a theme, and the placement of the rooms makes
+sense, the player will understand this and the level will play better. 
+Another advantage to having a theme is that the level will practically build
+itself, in terms of room layout, size, and function.  If you know what kind of
+level you're building, you won't even have to _think_ about what to do next;
+you'll already have a mental image of what this type of structure is supposed
+to look like.
+      For example:  my first WAD is titled "Sub-Station Alpha".  What it's
+supposed to be is a "sub-station" for trans-dimensional research that was
+under construction by UAC at the time of the breakdown, and it's mostly
+underground.  Right there, you can tell that there are going to be a couple of
+"unfinished" areas, where the construction crews haven't been yet, and the
+textures will be solid rock.  The layout of the walls will not be smooth and
+even, either.  Since UAC had Marines guarding the station, there will be a
+couple of guard posts.  There will be a cargo bay, for the unloading of
+construction materials.  There will be a "checkpoint" right outside the
+entrance lift, to check in visitors and new arrivals.  And there will be a
+"testing room", where the UAC scientists conducted their experiments before
+the fateful day.  Also, there won't be many (if any) windows.  Do you see now
+how easy it is to build levels when you've got a theme?  You don't even really
+have to think about _what_ type of room to make, only how big it's going to be
+and where it's going to go.  And, of course, how many monsters you can stuff
+into it...
+
+      TEXTURES are another major factor to consider when making levels. 
+They've got to "blend" logically and consistently in order to make the best,
+most "realistic" level possible.  In other words, keep the hell textures out
+of the computer room, and don't make lifts with nukage floors!  You'll have to
+experiment with the textures to see which ones work best together.  I suggest
+making a list of the ones you think you'll be using, based on the type of
+level you'll be building, so you don't have to preview all the textures every
+time you want to use a different one.  I also suggest putting them in groups
+by category, such as "hell textures", "computer textures", "stone", "cement",
+etc.  That way, you'll be able to pick a texture based on the type of room
+you're building quickly and easily.
+
+      DIMENSIONS are also important.  Lots of big rooms are kind of fun, but
+very large rooms virtually require a lot of monsters to adequately "defend"
+them, and lots of monsters slow the game down.  Of course, making rooms too
+small may irritate the player, as there will be no room to dodge.  You've got
+to strike a balance between size and playability, here.  Also, don't forget
+the elevation changes!  Stairways, while complex, are really necessary for a
+fun level, and lifts add to the possibilities for height changes.  You could
+also go to the extreme and use nothing but "cliff-like" drop-offs with
+teleporters for the player to get back into the action, but those remove the
+players' options, so aren't really recommended.  The relative sizes of the
+various monsters and the player will be discussed later, so you know how low
+and wide to make corridors and rooms and still enable everyone to be able to
+move around.  Again, theme plays an important part in deciding the dimensions
+of rooms and corridors.
+
+      LIGHTING is the one thing that will give your level it's "feel". 
+Striking the right brightness level is also one of the more difficult things
+to do as a level-maker, as players have access to the Gamma Correction key
+(F11), the contrast and brightness controls on their monitors, and, of course,
+the IDBEHOLD-L cheat code.  The idea is to make the lighting fit the
+situation.  If the situation calls for darkness, so be it, but remember:
+everybody wants a fighting chance, and nobody likes stuff jumping them out of
+the dark.  Flickering, oscillating, and glowing lights are great "theme"
+lighting, too.  I recommend using these as much as possible, especially down
+stairs and in places where you want to lend a feeling of "instability".
+
+      MONSTERS are the name of the game.  One of the major gripes I got in the
+survey I conducted for players' likes and dislikes was that too many WAD
+authors felt the need to throw in a Cyberdemon or three at every available
+opportunity.  Surprisingly, very few people enjoy battling a big boss in every
+level they play.  The idea is to balance the monster mix, make it consistent,
+and make it tough to beat.  My rule of thumb is that the level should be
+barely survivable when you begin with just a pistol on Hurt Me Plenty.  More
+than a few levels have found this magic difficulty level, and they're levels
+that I enjoy playing again and again, simply because I truly don't know if
+I'll be able to survive any given attempt!  You'll have to adjust the
+difficulty levels as well to make sure that "Too Young To Die" is not just
+"Hurt Me Plenty" minus one imp.  Remember: you're in control.  You decide how
+many monsters there are, what types there are, and, most importantly, WHERE
+THEY START.  An incredible amount of damage can be inflicted on a player with
+just 6 (yes, six) strategically-placed imps.  Make the monsters accessible,
+too -- the player has to be able to see them and kill them.  Nothing is more
+irritating than being bombarded by shotgun-wielding sergeants from a ledge
+that is too high for the player to see.  Also, there are certain textures that
+"camouflage" some of the monsters perfectly.  The "vine" textures make the
+Imps nearly disappear, and the Spectres, being nearly invisible to begin with,
+are really difficult to see when the light level gets below 128, and the
+textures are complicated (lots of different colors and shapes; SP_ROCK1 is one
+example).  Be creative when placing monsters, too.  That way you won't have to
+place as many of them, and the players will be in for a hell of a ride.  And
+that's why we all play DOOM in the first place, isn't it?
+
+      The placement and use of ITEMS is the most determining factor in how
+easy or difficult your level is.  Sure, you've got Barons roaming all over the
+place, but when there's a cumulative total of 4000% worth of health on the
+level, how tough is it going to be?  One of the most difficult, challenging,
+and entertaining levels I've ever played had a soul sphere and the blue armor
+available right where you started, but had no more health or armor throughout
+the level.  Great idea -- it was a race against attrition to get to the exit.
+Wonderful.  Resist the temptation to put down too many stimpaks and medikits,
+and I don't advise putting more than 2 soul spheres on any one level, unless
+you discover that you really need to.  Same thing with armor.  Of course,
+individual tastes may vary.  The same thing with ammo -- too much is not a
+good thing.  Lack of ammo makes the player become more skillful, rather than
+just holding the <Ctrl> button down while walking through the level.  Personal
+choice dictates the placement and types of weapons available.  Personally, I
+don't like to give the player anything bigger than a rocket launcher, and I
+severely restrict the availability of the ammunition for _that_.  Using the
+bigger weapons just removes the challenge of killing monsters, and by using
+the smaller weapons, you can use fewer monsters for greater effect.  Avoid, at
+all costs, making it too easy for the player to get weaponry and armor!  Too
+many levels that I've played have had a backpack, enough ammo to fill it
+completely, and all the weapons (including the chainsaw) right next to the
+Player 1 start position.  Where's the challenge?
+
+
+STYLE
+~~~~~
+      After you've been working on your level for a while, you'll begin to
+develop a style of your own.  Everyone does.  It's part of the creative
+process, after all.  But since you haven't built a level yet, you really don't
+have a "style" per se.  Here are the three main "types" of style I've
+encountered so far when designing levels:
+
+      THE PLANNER:  This individual, before even firing up the level builder
+for the first time, will get all his notes together, grab a pad of graph paper
+and a pencil, and draw the whole level out.  He will indicate all the ceiling
+and floor heights, linedef lengths, items, monsters, and EVERYTHING, and then
+simply transfer the notes from the paper to the monitor.  While this can be
+time-consuming, the desired results are most often obtained, as there is no
+"creative process" once the builder actually begins construction.
+
+      THE MODIFIER: This one sketches ideas for his level as they come to him,
+in rough terms, on any scrap of paper that's handy at the time.  He usually
+has a theme to stick to, so will rough-draw a room and label it, knowing that
+he'll remember what he meant later.  This one works on the level constantly,
+modifying existing rooms as he gets new ideas, and creating new rooms based on
+the numerous sketches lying about.  More often than not, he will change the
+structure of an entire quarter of the level as inspiration strikes.  The
+level, though, does somewhat resemble the notes, and these levels, while not
+quite as structured (and usually, as linear) as The Planner's levels, do have
+a certain logic to them that can be found.
+
+      THE DISCOVERER:  This one sits down at the keyboard with a vague idea of
+what he wants to do, turns on some music as "white noise", and just starts
+building.  The level that comes out is often very non-linear.  (Very rarely do
+Discoverers build linear levels; at least, on purpose.)  Ideas come and go,
+and are as readily drawn and discarded.  This type of building style is not
+recommended for the beginner, as a working knowledge of the level builder you
+prefer is necessary to this free-style approach; however, if this is the way
+you work, go to it.  The level, when completed, is often as much a surprise to
+its creator as it is to the people who play it; nonetheless, the level of
+craftsmanship is quite high.
+
+      If you're none of these, or all of these, it doesn't matter.  As long as
+you feel comfortable with the way you're working, that's what works for you.
+
+
+----------------------------------
+[3-0]  Building The Level -- Basic
+----------------------------------
+
+      Now, on with the show.  This is the section that will actually
+demonstrate the technical part of building a level.  I will attempt to show
+you how the basic features of DOOM are built -- doors, windows, lifts,
+secret doors, linedef special functions, and all that good stuff.  Whenever
+possible, I will present a crude ASCII diagram to demonstrate a point, and to
+show you (as closely as possible) what it means.  In addition, each structure
+described and detailed in this section, as well as visuals of the most common
+errors (that won't cause DOOM to crash), will be described and demonstrated in
+the included level, WALKTHRU.WAD.  Note that the .TXT file that goes with this
+WAD will lay out what effect or feature is where on this test level.  I will
+also give you a list of the monsters and their various sizes (gleaned from The
+Unofficial DOOM Specs), so you know how high and wide to build corridors so
+the various monsters (and the player) can move through them -- see Appendix A
+for these dimensions.  Each sub-section of this Part will teach you a
+different structure in the DOOM universe.  Again, if I leave anything out, or
+you have discovered an easier, faster, or just plain better way to build a
+certain feature, please leave me e-mail so I can improve this manual.  Thanks!
+
+
+ROOMS
+~~~~~
+      These are the easiest things to design in any WAD.  All you have to do
+is make a bunch of linedefs that surround an area, define it as a sector, make
+the floor and ceiling heights, choose your lighting, and make sure the
+textures are correct.  That's it.  An empty square room is the best kind of
+room to make when you're building your first WAD.  Once you become more
+familiar with the WAD-building process, your rooms will have any number of
+sides, will be strangely-shaped, and will have lighting and sector effects. 
+You may want to build a little while you're going through this Handbook, to
+get a feel for how it works, and so you can get that horrible "first test WAD"
+out of the way.  In any case, it's easier for you, as the prospective WAD
+author, to actually _make_ the things I'm discussing while you're reading
+this, as it's easier for you to see what I'm talking about when you're
+actually _doing_ it.  And don't worry if it's not perfect; remember, your
+first WAD is going to be your rough draft.  It's _supposed_ to be ugly.
+
+
+HALLWAYS
+~~~~~~~~
+      A hallway is simply a narrow room.  That's it.  If you've built a room
+so far, go ahead and add another room onto it.  Start drawing from one of the
+"walls" of the room, and build a narrow (but at least 64 wide) rectangular
+room attached to it.  (Note that this will leave a linedef "across" the
+connection of the hallway to the room.  Don't worry -- you won't be able to
+see it when you're playing.  This "invisible linedef" is the basis for the
+trigger linedefs we'll be talking about later.)  Define it as a sector; most
+level editors will assign the same characteristics to this sector as they did
+to the one it's attached to, except for the textures on the walls.  If you
+want to change the wall textures, do it now.  Save it.  And that's it!  Now,
+if you really want to, build the nodes and run it, and there you have it --
+your first creation!  Hallways are good for making "junction rooms", which are
+hallways with multiple exits into different rooms.  Making every room
+connected by only one hallway is kind of boring, and doesn't allow the player
+many options.  If you make 5 rooms off of one hallway, then the player gets to
+choose, and it's more fun to play that way.  
+
+      A NOTE ABOUT DIMENSIONS:  the player cannot go down a hallway that's
+less than 34 wide.  Monsters and such have variable dimensions, and I'll
+discuss those later, but for now, if you want to go down the corridor you've
+just made, make it at least 34 wide.  (48 is good, as it's divisible by 8, and
+more than big enough for most monsters.)
+
+
+WINDOWS
+~~~~~~~
+      This will be the first tough thing you've got to learn.  It's not that
+difficult, really, but there's more to remember.  To make a window, say
+between two rooms:
+
+First, make the two rooms, and separate them with a sector that's 16 wide. 
+See diagram below, which is a top view -- what you'll see on the screen as you
+draw it:
+
+             __________________________   _________________________ 
+            |  sector 1                | |               sector 2  |
+            |                          | |                         |
+            |       adjacent linedef-> | | <-adjacent linedef      |
+            |                          |_|                         |
+            |                          | |                         |
+            |         window linedef-> |3| <-window linedef        |
+            |                          | |                         |
+            |                          |_|                         |
+            |                          | |                         |
+            |       adjacent linedef-> | | <-adjacent linedef      |
+            |                          | |                         |
+            |__________________________| |_________________________|
+                                                                    
+      Okay, time for a little assistance.  The numbers (1-3) above refer to
+the sectors involved that you have to define.  Note that the window sector
+itself (number 3) is drawn and defined, along with the others.  Note also that
+sectors 1 and 2 are connected _only_ by sector 3 -- there is no continuous
+line on the top and the bottom.  Define sectors 1 and 2 with a floor height of
+0 and a ceiling of 128, do your lighting, fix the textures for all visible
+surfaces, and save it.
+
+      Define sector 3, but define it with a floor of 32 and a ceiling of 96. 
+What that means in regards to the window is that the bottom sill of the window
+is 32 pixels above the floor, and the top of the window is 96 pixels above the
+floor (or, conversely, 32 lower than the ceiling.)  Define the lighting as the
+same as the two adjacent sectors (1 and 2).  Define the floor and ceiling
+textures (which will be the top and bottom sills of the window) as FLAT20 for
+now.  That's a light-grey grid, and it's not too bad for window trim.  Define
+the north and south linedefs (the vertical ones on the sides of the window)
+as, oh, COMPSPAN.  We're just trying to get a working window built.
+
+      Now comes the tricky part.  Since the floor of the window sector is
+above the floor of the adjacent sectors, and the ceiling of the window is
+below the adjacent sectors, the way the textures are applied is a bit
+different.  When you apply textures, the level maker you're using might have
+given you a box (or boxes) that kind of looks like this (without the letters
+and numbers inside it, of course):
+ ______________ 
+|              |
+|         (A)  |<- This texture is applied "above the ceiling"
+|______1_______|   (Also known as the "Upper" texture.)
+|              |
+|         (B)  |<- This texture is applied between the floor and ceiling
+|______2_______|   (Also known as the "Normal" texture.)
+|              |
+|         (C)  |<- This texture is applied "below the floor"
+|______________|   (Also known as the "Lower" texture.)
+
+Some editors will let you apply textures using a template like the above;
+others will use the Upper, Normal, and Lower labels.  What's important is that
+you understand where each texture goes, and what your level editor calls the
+positions, so you are able to apply them correctly.
+
+To remember how this works, line 1 above is the ceiling level, and line 2 is
+the floor level, so the texture you define in the (B) box is the texture that
+your normal walls are.  After all, the walls begin at the floor and end at the
+ceiling, so you want a texture applied between the floor and the ceiling,
+right?  But on a window, the texture between the floor (the bottom sill) and
+the ceiling (the top sill) has to be clear, and on both sides of the linedef
+on both sides of the window.
+
+*** YOU CANNOT HAVE A TEXTURE IN BOX (B) IN A WINDOW SECTOR! ***
+
+(There are exceptions, but more on that later.)  So, what do you do about the
+textures above and below the window?  Simple.  Just make sure that the same
+texture for the rest of the linedefs in the room matches the textures you will
+now put in boxes (A) and (C) for the linedef over the window.  Don't forget
+about the adjacent linedefs; they'll have the same texture as the rest of the
+room, too.  But it's not over yet...
+
+Now, since the window linedef's top and bottom textures are not "normal", you
+have to do something extra to them as well.  DOOM normally draws textures from
+the top down and from left to right.  BUT, when it's dealing with textures
+above and below the floor and ceiling of sectors (that are visible from
+adjacent sectors), it draws the Box-A/Upper texture from the bottom up and it
+draws the Box-C/Lower texture from the top down.  What this means is that the
+bottom of the window will have the top-of-the-wall texture, and the top of the
+window will have the bottom-of-the-wall texture by default.  They will not
+"line up" with the adjacent textures (if the texture you choose has a pattern,
+and most of them do), and it will look retarded.
+
+To correct this, simply UNPEG the textures above and below the window by
+selecting "Upper Unpegged" and "Lower Unpegged" from whatever Linedef Special
+Selection Menu your level editor has.  This will tell DOOM to draw the
+textures the "right" way, making the window look like it's supposed to.  As an
+experiment, just so you can see what it looks like, don't unpeg the textures
+at first, save the level, build the nodes, and run your level.  Examine the
+adjacent textures, and examine the textures above and below the window.  Go
+back to your level editor, unpeg both, save it, build the nodes, and run it
+again.  Examine them now, and note the difference.  A tip you may want to
+write down is ALWAYS REMEMBER TO UNPEG TEXTURES WHEN YOU MAKE WINDOWS.  It
+separates the novice from the expert level builder.  
+
+      A NOTE ABOUT DIMENSIONS: the player is 56 high, and can climb 24-pixel
+(maximum) height differences.  If you wanted the player to be able to climb
+through this window, the highest you could make the "floor" would be 24
+(because the adjacent floors are 0).  If you did make the "floor" of the
+window 24, the minimum height of the "ceiling" of the window would be 80.  Try
+making the floor of the window 16 instead of 32.  Save it, build the nodes,
+run it, and climb through the window.  Neat, huh?
+
+
+DOORS
+~~~~~
+      Basically, a door is a sector with a floor and ceiling height that are
+equal to the adjacent floor heights.  Most level builders allow you to define
+a sector, like normal, and then select a "Make Door" switch.  For those who
+don't have this feature, the procedure is:
+
+      1.    Make a sector that's between 8 and 16 deep -- most doors in the
+            WADs you've seen are this deep.  The width can be anything you
+            like, but the door textures in DOOM 1 are either 72 wide (for the
+            narrow ones) or 128 wide (for the big ones).  Make your first door
+            128, because it's easiest to work with.
+
+      2.    Make sure the linedefs are pointed in the right directions.  See
+            the following diagram; it shows what a basic door's linedefs are
+            supposed to look like.  I know this may stifle your creativity,
+            but if the door isn't created _exactly_ like this, DOOM won't
+            recognize it as a door:
+                              _____________|______________
+                              |__                      __|
+                              |__________________________|
+                                           |              
+
+            The "long" lines are the front and back of the door (the part the
+            player "uses" to open it), and the linedefs MUST be defined as
+            2-sided.  The "short" lines are the door jambs, and MUST be 1-
+            sided.  The linedefs MUST point this way for the door to work!
+
+      3.    Define the thing as a sector.  Make sure the linedefs are still
+            pointing the right way, and that the two long ones are still
+            double-sided.  IMPORTANT REQUIREMENT:  When defining the floor and
+            the ceiling heights for the door sector, the number MUST BE THE
+            SAME as the adjacent sectors' floors; i.e., if the floor height on
+            the adjacent sectors is set to 0, both the floor AND the ceiling
+            of the door sector must be 0.  Sounds weird, but it'll make sense
+            in a minute.
+
+      4.    Check your textures.  For this door, any of the BIGDOOR series
+            should be sufficient.  For the doorjambs, DOOM 1 offers two
+            options:  DOORTRAK (which is the "standard"; looks like a chain-
+            drive or something) and DOORSTOP (more of a smooth, techno look). 
+            Personally, I and others prefer DOORSTOP for "normal" doors and
+            DOORTRAK for huge doors, but it's up to you.  IMPORTANT NOTE: 
+            Since you've defined both the floor AND the ceiling at the same
+            height, and since that height is the same as the floor height in
+            the adjacent sectors, that means the ENTIRE door texture that
+            you'll be applying will be "above the ceiling", or an Upper
+            texture.  Remember which box this is supposed to go in on the
+            Texture Definition boxes?  If you don't, refer to the "Window"
+            notes above.
+
+      5.    Now for the fun part.  Go to where your level editor defines
+            Linedef Specials, in whatever menu you have.  Highlight either of
+            the long lines, and choose Special Number 1 -- this should be
+            defined as a switch-activated (i.e., player "uses" it for it to be
+            activated) opening door, which closes after 5 seconds.  Remember
+            to define EACH long linedef with this Special; otherwise, the door
+            won't be openable from one side or the other.  (Note that a one-
+            way door might be desirable later on, and now you know how to make
+            a door that only opens from one side...)
+
+            What you're doing is assigning an "event" to the activation of the
+            linedef that makes up the outside of the door, and the player
+            activating the special opens the door.  Your level editor may have
+            a different method of defining the linedef event than I've just
+            outlined, but hopefully, from the descriptions, you'll have a
+            general idea of what you're looking for in your editor, and can
+            perform the assigning of a linedef to an event.  IMPORTANT NOTE:
+            Write this procedure down for later reference!  Most of the
+            interesting things that the player can do (and that you can have
+            happen while the player is wandering around your brilliantly-
+            created level) are linedef specials, and you're going to need to
+            know how to assign linedefs to events later on.
+
+      And that's all there is to designing a door.  Later, when you become
+more proficient, you can experiment with different door sizes and shapes,
+since you now know how DOOM needs a door to look.  TEXTURE HINT:  X and Y
+offsetting works on the door textures, too, so with a little practice, and
+with a review of the different textures you have available, you can generate
+some very interesting effects with a piece of scenery that most people take
+for granted.  ALSO NOTE:  Most experienced WAD designers rarely assign the
+"door stays open" special to a door; they want the player to have to turn his
+back on the monsters if he decides to go back the way he came.  Again, only
+practice will determine which style you prefer.
+
+
+RECESSED DOORS
+~~~~~~~~~~~~~~
+      One of the more common problems when an inexperienced level creator
+makes a door is they'll have a wall 512 or so high, and the door flush with
+the wall.  What DOOM will do is put the door textures stacked up to the
+ceiling, which looks...well, retarded.  This is how to avoid that problem:
+
+      Recess the door.  Make three sectors instead of one for the door, like
+so:         ____________ ___ ___ ___ __________________
+            hall        |   |   |   |         more hall
+                        |   | D |   |
+                        | + | O | + |
+                        | + | O | + |
+                        |   | R |   |
+            ____________|___|___|___|__________________
+
+Now, let's say the hallway is 192 high, but you only want the door to be 72
+high, and you don't want the texture to climb to the ceiling.  Just make the
+ceilings of the two ++ sectors 72 high.  Paste a texture on the Upper/"above
+the ceiling" space, Unpeg Upper on it, and the wall will match the surrounding
+walls.  Plus, now your door is in a little "niche", and the textures won't
+look weird.  (Examples of recessed doors can be found in WALKTHRU.WAD.)
+
+
+SECRET DOORS
+~~~~~~~~~~~~
+
+      Now we come down to it:  "I know how to make a door now.  I want to make
+a SECRET door!  How do I do it?"  It's a three-step procedure:
+
+      1.  Make the door itself, and make it flush with the wall.  (Remember,
+      in order to be a secret door, it's gotta look like the wall, not a
+      door.)
+
+      2.  Make the texture the same as the surrounding walls, and unpeg it. 
+      This way, when the player finds the door, it'll "roll up" into the
+      ceiling instead of "lifting" like a normal door.  NOTE:  It's considered
+      sporting to offset the texture of the secret door at least a little, so
+      an attentive player has a shot at finding it!  (Thanks to Tom Neff for
+      this tip!)
+
+      3.  Now, how to hide the line?  You'll have noticed that doors have
+      their own color (yellow) line on the map screen, and since DOOM is
+      treating this secret door like any other door, how do you make it look
+      like a wall on the map?  On the Linedef Stats menu (wherever it is on
+      your editor), you'll have a couple of choices you can use to disguise
+      walls.  What they are, and what they look like and do, are:
+
+            1.  Not On Map -- this linedef will not show up on the map unless
+            the player uses the IDDT cheat.  The Computer Map will not show
+            this line at all, even if the player "sees" it.
+
+            2.  Secret -- this linedef will show up on the map if the player
+            either sees it or uses a Computer Map, or, of course, the IDDT. 
+            The beauty of the Secret stat is that all Secret lines, when
+            viewed by the player and looked at on the map, look like regular
+            old walls (a red line).
+
+      So, if you want to make your secret door look like a wall to the player,
+      select "Secret" on the Linedef menu.  Easy as that!
+
+
+LIFTS
+~~~~~
+      A lift, basically, is simply a sector that is able to descend to the
+next adjacent lower floor level when a linedef is activated.  That's the whole
+thing.  Now, since you've come this far, you should already know how to make a
+door, and you should know how to correctly apply textures to linedefs.  If you
+haven't, go back and review the "Windows" section and the "Doors" section,
+because, to reference what you already know, a lift is a reverse door.  But
+not exactly.  To make a lift:
+
+      1.    As an example, we're going to create a lift that'll drop from one
+            area to the adjacent area by simply pressing on the lift itself. 
+            Later, you can get fancy by setting up switches and walkover
+            linedefs to drop the lift.
+
+      2.    First, create three sectors in a row.  (The floor and ceiling
+            heights of each sector are labeled F## and C##, where the ## is
+            the number to set the floor and ceiling at.)  It'll look something
+            like this (it's easiest if you make this in a "blank" hallway):
+TOP VIEW:
+      ____________________________________________
+      | sector 1      | sector 2 |  sector 3     |
+      | hallway       |   lift   | more hallway  |
+      | C 128         | C 128    |    C  128     |
+      |_F___0_________|_F___0____|____F -128_____|
+
+SIDE VIEW:
+   128____________________________________________  128
+      |                                          |
+      |                                          |
+    0 |_______________.__________.               |    0
+                                 |   remember    |
+                                 |<--this line   |
+  -128 . . . . . . . . . . . . . |_______________| -128
+
+      3.    Okay.  Now that you've got the sectors built and looking like
+            this, we're gonna make the lift.  Tag the line that's marked with
+            the <--, and link it to the lift sector.  Go to your "specials"
+            menu and pick the lift type you like; for this exercise, choose
+            the linedef special that is Switch Activated and Repeatable,
+            however your editor does this.  And that's it!  Now remember,
+            since the "floor" of the lift sector is at 0, and the floor of
+            sector 3 is at -128, you're going to be able to see the texture
+            "below the floor" of the lift; specifically, the "remember this
+            line" line.  DON'T FORGET TO APPLY A TEXTURE TO THIS LINE!   
+            Otherwise, the first time you see it, it'll be a major HOM, and if
+            you "activate" it, the ceiling of the entire level will probably
+            lower itself to the floor.  A neat effect, but you won't be able
+            to move...
+
+      4.    A NOTE ABOUT DIMENSIONS: The lift in this example is kind of tall,
+            (elevation-wise), but it's just a demo for you to get used to how
+            a lift is built.  Usually, "quick" lifts are between 64 and 96 in
+            height; slow, "descending to the depths of the earth" lifts can be
+            any height; 512 is good, because if you're on the lift for too
+            long, it gets borrrring.  Also, if you've got a deep lift at the
+            end of a hallway, a nice effect is to have differing levels of
+            tunnels "branching off" the main lift.  All you have to do is
+            define the heights of the floors and ceilings of these branching
+            tunnels to anything BETWEEN the original ceiling height and the
+            floor height of the adjacent sector.  If done right, it's a neat
+            effect -- it makes getting into these sections of your level a
+            timed event.  A crude example follows:
+                                ____________
+                                |  C -64   |
+                        Hall -->|  F -128  |
+      __________________________|__________|__________
+      |                         |   Lift   |  C -128 |
+      |  Hallway  C 128  F 0    |C128  F0  |  F -256 | <-- Hall
+      |_________________________|__________|_________|
+                                |  C -256  |
+                        Hall -->|  F -320  |
+                                |__________|
+
+            Now, all of those hallways that branch off the lift are 64 high,
+            and the lift will go all the way to the "bottom" at -320.  During
+            its descent, though, it'll pass the top-most hallway first, then
+            the hallway on the right, ending up at the hallway on the bottom. 
+            You can make even more branchings if you were to make the lift
+            hexagonal (6 sides) or octagonal (8 sides).  Or you could just go
+            completely berserk and make the lift huge and dodecahedronal (12-
+            sided), with 11 branches... A bit excessive, but possible.
+
+      5.    A NOTE ABOUT TEXTURES:  SUPPORT2 and SUPPORT3 are the standard for
+            side-of-the-lift textures, but, hey -- it's YOUR level. 
+            Experiment.  Some of the "side of the door" textures look pretty
+            cool, as does COMPBLUE.
+
+
+STAIRS
+~~~~~~
+      Stairs are the other most common way to have the player change
+elevation, and they're so simple to make; time-consuming, though, unless your
+editor has an automatic-stair feature.  Since not all of them do, here's the
+laborious way:
+
+      1.  Define a series of sectors all in a row, and make them door-sized. 
+      We'll start off with a straight staircase.  See below:
+            ______ _____ _____ _____ _____ _____ _____ _________
+            hall  ||    |     |     |     |     |     |more hall
+            0     | 16  | 32  | 48  | 64  | 80  | 96  |   112
+            ______|_____|_____|_____|_____|_____|_____|_________
+
+      The numbers in the sectors are the floor heights; for the ceiling, use
+      192.  Note how the floor "rises" as you go up the stairs, and also note
+      how rapidly the elevation changes.
+
+      2.  Now that you've got your rising sectors, DON'T FORGET to apply the
+      proper textures to the risers of the stairs!  Since the risers are
+      "below the floor" of the higher sector, the texture will go in the Lower
+      section (Box-C).  (If you have the ceilings rise with the stairway,
+      you'll also have to put a texture on the Upper/"above the ceiling"
+      slot.)
+
+
+      3.  And finally, remember that the player is 56 high.  What this means
+      is that the ceiling of the lower sector must be 56 higher than the floor
+      of the higher sector, or you won't be able to get up the stairs!  Once
+      you get better at designing stairs, you can have them spiral, go around
+      corners, or have the stairs themselves be odd shapes.
+
+      4.  An example of a basic stairway is in WALKTHRU.WAD.
+
+
+-------------------------------------------------------------
+[4-0]  Building The Level -- Intermediate -- Tips And Effects
+-------------------------------------------------------------
+
+      Since this Handbook was intended as a "primer", and since I myself have
+only built one level, the "Intermediate" section will, in future, be ideas or
+demonstrations that you can try out to experiment with different effects. 
+Possibly, in future releases, this section may contain some useful tips. 
+Sometimes it's helpful to know what kinds of things _can_ be done with this
+system, so you'll get the "feel" for dinking around with your level editor's
+commands.  
+      There are many, many effects you can use, especially if you combine one
+or more of the effects outlined and described in this Handbook.  Again, this
+section is for future expansion, so send in those tips with ASCII drawings, or
+send in an actual level with your new technique demonstrated, so I can
+describe it and put it in the next release.  Good luck on designing your
+level, and good DOOMing!
+
+
+----------------
+[5-0]  Checklist
+----------------
+
+      This is included for the absolute novice who has no idea where to start,
+and may be a handy reference guide.  Or maybe not; only you can decide what
+works best for you.
+
+      [ ]   I have gotten a level editor that I am comfortable with.
+      [ ]   I have read this Handbook and understand the basic concepts.
+      [ ]   I have played around with building the basic things.
+      [ ]   I have built and played my first level, and it sucks.
+
+      [ ]   I have a theme for my first releasable level.
+
+      [ ]   Build an enclosed area of connected linedefs.
+      [ ]   Check the linedefs of the area to make sure they all point in.
+      [ ]   Define the area (stair, room, door, etc.) as a sector.
+      [ ]   Apply the textures to the walls, floor, ceiling, and all other
+            visible surfaces.
+      [ ]   Adjust the lighting.
+      [ ]   Define any special linedefs, and tag them to the appropriate
+            sector, if necessary.
+      [ ]   Define any special sector events in this sector, if necessary.
+      [ ]   Add any Things you would like in this sector, if you prefer.
+      [ ]   Save the level as E1M1 (makes for easier testing).
+      [ ]   Exit the level-editor (if it's necessary to do this to build the
+            nodes).
+      [ ]   Build the nodes with the node-builder.
+      [ ]   Exit the level-editor (if you haven't already).
+      [ ]   Get your notepad ready.
+      [ ]   Run DOOM with this command line:
+
+                  doom -file mywad.wad -warp 1 1 -nomonsters
+
+            (The -nomonsters switch is nice if you've added Things before you
+            got done with the level and don't want to fight your way through
+            every monster on the level every time you test it.)
+
+      [ ]   Go through the ENTIRE level, even if you've done so before.  (Yes,
+            you _will_ grow sick of doing this, but you'll find errors much
+            easier if you look at the whole thing every time.)
+      [ ]   Take notes on all the things that need fixing or could be
+            improved.
+      [ ]   Exit DOOM.
+      [ ]   Go back to your level-builder.
+      [ ]   Fix everything (and I mean EVERYTHING) on your list before you
+            build anything new.
+      [ ]   Go up to "build an enclosed area" and begin the cycle again.
+
+      After a while, when your proficiency increases, you'll be able to get
+away with building multiple sectors before testing... BUT YOU SHOULD SAVE THE
+WAD EVERY SINGLE TIME YOU MAKE A CHANGE!  This will save you much trouble
+later on...
+
+
+-------------------
+[6-0]  Finishing Up
+-------------------
+
+      Now your masterpiece is complete.  You've had some really good friends
+beta-test it for you (and test it and test it and test it... There is NO SUCH
+THING as "too much beta-testing"), and they like what they see (after they've
+made a bunch of suggestions, of course...), and none of you can find any flaws
+in the final production.  Now it's time to finish up.
+
+      If your WAD has a theme, and some kind of story behind it, write a
+little piece explaining the introduction, if any.  This is kind of fun (though
+most players don't read it, it's entertaining), and will provide anyone
+interested with a little background on your level.  I usually save any stories
+I include with the level as BACKGRND.TXT, just so players will know what it
+is.
+
+      Hank Leukart has established a WAD Authors' Template, for level authors
+to include with the level, and it's pretty much become a standard.  It's
+included here (with permission from the author; thanks, Hank!):
+
+WAD Authoring Template V1.4   (Clip this line)
+================================================================
+Title                   : The title of your WAD.
+Filename                : <filename>.WAD
+Author                  : Your name here
+Email Address           : 
+Misc. Author Info       : 
+
+Description             : Set the mood here, or refer to a .TXT file.
+
+Additional Credits to   : Your beta-testers and anyone who's helped.
+================================================================
+* Play Information *
+
+Episode and Level #     : ExMx (,ExMx,...)
+Single Player           : Yes/No
+Cooperative 2-4 Player  : Yes/No
+Deathmatch 2-4 Player   : Yes/No
+Difficulty Settings     : Yes/Not implemented
+New Sounds              : Yes/No
+New Graphics            : Yes/No
+New Music               : Yes/No
+Demos Replaced          : None/1/2/3/All
+
+* Construction *
+
+Base                    : New level from scratch/Modified ExMx/xxx.WAD
+Build time              : So people will know how much of your life you
+                          spent on this thing.  :)
+Editor(s) used          : Everything you used.
+Known Bugs              : Any glitches or weird stuff.
+
+* Copyright / Permissions *
+
+Authors (MAY/may NOT) use this level as a base to build additional
+levels.  
+
+(One of the following)
+
+You MAY distribute this WAD, provided you include this file, with
+no modifications.  You may distribute this file in any electronic
+format (BBS, Diskette, CD, etc) as long as you include this file 
+intact.
+
+You MAY not distribute this WAD file in any format.
+
+You may do whatever you want with this file.
+
+
+* Where to get this WAD *
+
+FTP sites:
+
+BBS numbers:
+
+Other:  Notes, thanks, acknowledgements, whatever.
+=====================================================================
+(Cut this line)
+
+      A blank template for you to use is included in this archive, and the
+file name is WAD_AUTH.TXT.  After you get done with all that, just .ZIP or
+.ARJ the thing, and start uploading it to your favorite BBSs!
+
+
+----------------------------------------
+APPENDIX A:  Sizes Of The Various Things
+----------------------------------------
+
+      This section is included so you will know how big a hallway, door, or
+room has to be for the various monsters to be able to move around in them.  It
+also has the radius of the monster, so you will know how far apart they'll
+have to be to be able to move.  NOTE:  You can get a real interesting effect
+by placing one monster on top of another -- neither will be able to move or
+fire until one of them is dead.  This also happens if they're too close
+together, so be careful where you place them!  (Credit for this section goes
+entirely to Matt Fell, author of The Unofficial DOOM Specs, release 1.3.)
+
+Radius*2 = width of monster. (Note: the radius of the player + the radius of a
+"gettable" object is how far the player can be from that object to pick it up.
+This is irrespective of intervening walls; i.e., if an object is too close to
+a wall, the player may be able to pick it up THROUGH an adjacent wall...)
+
+Height = how much ceiling space they'll need to move.  (Note the height of
+monsters is infinite, if you're trying to move over them.)
+
+Minimum width = how wide a corridor or room will have to be for the Thing to
+be able to move through it.
+
+Thing             Radius      Height      Minimum width
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Player              16          56              34  *This is why the player
+Former human        20          56              42   can fit through doorways
+Former sergeant     20          56              42   the other humans can't.
+Imp                 20          56              42
+Demon/Spectre       30          56              62
+Cacodemon           31          56              64
+Lost soul           16          56              34
+Baron of Hell       24          64              50
+Cyberdemon          40         110 (!)          82
+Spiderdemon        128 (!)     100             258
+
+Barrel              10          42             n/a   *They can't move...
+All gettable Things 20          16              42   *So they don't overlap
+Most obstacles      16          16             n/a
+Large brown tree    32          16             n/a
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Also, when placing monsters next to one another, if they are too close
+together, they will not be able to move.  The minimum distance a monster must
+be from an adjacent monster is one-half of the first monster's radius plus one
+PLUS one-half of the second monster's radius PLUS ONE.  For instance, if
+you've got two imps side by side, they must be, at a minimum, 22 apart, which
+translates into:  ((.5*10)+1) + ((.5*10)+1).  If an imp is next to a demon or
+spectre, the distance increases to 27: ((.5*10)+1) + ((.5*30)+1).  If you had
+a Baron of Hell next to a Cyberdemon (which is really overkill, but it's an
+example), the minimum distance would be 34 ((.5*24)+1) + ((.5*40)+1).  It's
+really easy to figure once you actually start doing it.
+
+
+---------------------------------------------
+APPENDIX B:  The 10 Most Common Design Errors
+---------------------------------------------
+
+(Note: This next section is borrowed from DESIGN11.FAQ, and is used with
+permission from the author.  The FAQ itself is recommended as well, as it
+explains how to identify and correct the more frequent design errors.)
+
+Some of these are show-stoppers (DOOM will crash if you try to run the level),
+others will let you run DOOM but game play is screwed up, others are just
+ugly, and a few are common stylistic complaints.  All are encountered often in
+user-written levels, or asked about in discussion forums, or both.  There is
+no particular order.
+
+
+      [B-1]  Bad Wall Effects.  
+
+      These include:
+
+            HOMs -- Caused by missing wall textures.  See Glossary for a
+            definition of this, and the body of this Handbook for solutions.
+
+            The Medusa Effect -- The look of this effect varies, depending on
+            which texture you used, but the result is always the same:  When
+            this part of the wall is in view, the DOOM engine slows WAAAAYYY
+            down.  This happens because you used a multi-patch texture on the
+            Normal area (the middle box) of a wall that you are able to walk
+            through.  A fuller explanation of patches and textures can be
+            found in the Unofficial Specs, but briefly:  Each texture (like
+            STARTAN3) is built from one or more graphic "patches" and, for
+            some reason, DOOM's engine can only draw SINGLE-patch textures on
+            passable walls; examples of single-patch textures are BROWNGRN,
+            SKINTEK2, and ASHWALL.  Examples of multi-patch textures that
+            wouldn't work are STARTAN3, COMPBLUE, and WOODSKUL.  A complete
+            list (TEXPATCH) of textures and the patches that make them up is
+            available on major DOOM archive sites.
+
+            The Tutti-Frutti Effect (also known as "Confetti") -- This effect
+            looks like strangely-colored dots and lines on some of your walls,
+            usually between sections of textures.  (CRATINY is a texture that
+            will produce this effect, if you want to see what it looks like.) 
+            This can happen for one of two reasons:
+                  1.  You used a short texture (less than 128 high) on a wall
+                  that's over 128 high.  This happens because textures are
+                  only _vertically_ tiled on 128-pixel boundaries.  If your
+                  wall is taller than your texture, and the texture is less
+                  than 128 high, DOOM fills in the extra pixels with quasi-
+                  random garbage, hence the colored Tutti-Frutti or Confetti. 
+                  You often see this effect when designers put "STEPx" on 20-
+                  24 high steps.
+                  2.  You used a "transparent" texture (like MIDGRATE) on an
+                  Upper or Lower surface (top and/or bottom box) instead of on
+                  the Normal (middle box) surface.  The upper/lower holes
+                  Tutti-Frutti effect happens because Upper and Lower surfaces
+                  actually have _nothing_ behind them.  DOOM has nothing to
+                  show through these holes; hence, random garbage.
+
+            The Long-Wall Error -- This effect causes bullets to hit an
+            invisible wall somewhere in a room (but the line doesn't show on
+            any map), or the walls sort of "jump" or slide around.  This is
+            caused by having a HUGE (thousands of units long) wall somewhere
+            in your level.  DOOM's engine has fits trying to compute and
+            display the wall's position relative to the player, creating the
+            Long-Wall error.  The blocked shots are from the "real" wall right
+            in front of you.  The solution is simple: break up long lines.  As
+            a general rule, keep them under 1,024.  Also, if you choose wall
+            segment lengths of 768 or 512 (remember those multiples of 8?),
+            you will never have a problem with X or Y offsets in the texture
+            tiling.
+
+            The Moire Error -- Also known as the "Flash of Black" error.  This
+            effect causes the whole screen (or just parts of it) to flash,
+            either in random hash or sometimes in a pattern.  This is another
+            DOOM bug/limit, triggered by getting close to a wall in a very
+            tall room.  The effect first kicks in at about 559 units high, and
+            gets worse (you see it farther from the wall, and stay in it
+            longer) as the room gets taller.  (The "pattern" you see is
+            actually your old room's ceiling texture, repeated forever at a
+            great distance above and below you, as though you were floating in
+            some vast star-gate.)  If you don't really NEED the tall room, get
+            it below 559 high.  Note:  this error is supposedly fixed in
+            versions 1.4 and later.
+
+
+      [B-2]  Wall Pegging.
+
+      Wall faces exposed by rising or lowering ceilings or floors (including
+      door side tracks) usually have the Unpeg Lower/Unpeg Upper bits set in
+      their linedef.  This keeps the side textures from "following" the
+      adjacent rising/lowering sector.  Many, many user level designers forget
+      to unpeg their door tracks.  Just cosmetic, but contributes to the sense
+      of realism -- or lack thereof.
+
+
+      [B-3]  Lines Or Vertexes That Cross Or Coincide.
+
+      A show-stopper.  If two or more vertexes occupy the same position, or if
+      two or more lines cross or lie "on top of" one another, DOOM's engine
+      will crash trying to work out the sector math.  Several editors are
+      capable of checking for this; if you get crashes often, use one.
+
+
+      [B-4]  Slowdown From Monster/2-Sided Linedef Glut.
+
+      Not a crash, but a playability issue.  Designers should try their levels
+      on less powerful PCs and/or at full-screen resolution to see whether
+      some rooms are unacceptably slow.  (A reject-table builder will tend to
+      alleviate some of this problem, but if you've got more than, say, 64
+      monsters active at once, this will become an issue on slower PCs.)
+
+
+      [B-5]  Unaligned Textures, Both X And Y.
+
+      Just cosmetic, but important for realism.  If your X textures are
+      properly aligned and you split a line or drag vertexes around, you will
+      probably need to re-align them.  A tedious job, to be sure, but some
+      editors help automate it for you.  NOTE:  It's considered polite to
+      offset secret door textures a little bit -- say, 2 pixels -- just enough
+      so that an attentive player might notice it.
+
+
+      [B-6]  Missing Player Starts, Insufficient Sectors.
+
+      Another show-stopper.  Every level MUST HAVE a minimum of two (2)
+      sectors.  It must also have a Player 1 Start (if you are going to play
+      non-deathmatch), Players 2-4 Start (if you will be playing Co-Op), and
+      four (4) Deathmatch starts if you will be playing deathmatch.  Otherwise
+      (surprise!) DOOM will crash.
+
+
+      [B-7]  Floor/Ceiling Mismatch.
+
+      Usually caused by raising or lowering a floor but forgetting the
+      associated ceiling, or vice versa.  Sometimes caused by accidentally
+      "including" an unintended sector in a floor/ceiling change, under
+      editors that support multi-sector "gang" operations.  Unless the ceiling
+      is AT LEAST 56 higher than the floor, you either can't enter or (if
+      you're already there, via teleport, floor/ceiling movement, or start of
+      play) you will be stuck.  This is sometimes an issue on stairways; the
+      LOWER ceiling must be at least 56 higher than the HIGHER floor, or you
+      won't be able to go up or down the stairs.
+
+
+      [B-8]  Missing/Wrong Tag Numbers.
+
+      When tagged operations like Lights Out or Raise Floor get the tag number
+      wrong (in the activating linedef), the results are usually awful.  The
+      whole level rises or crushes or something else you don't want.  This can
+      be tough to spot at first in gameplay.  Ideally, editors should check
+      for this.  Some editors don't assign Tag numbers, as well; they simply
+      link the linedef(s) to the sector(s) indicated.
+
+
+      [B-9]  Monsters Too Close To Each Other Or Walls.
+
+      See Appendix A for the sizes of the various monsters, and the distances
+      they have to be from each other and walls to be able to move and shoot.
+
+
+      [B-10]  Dead Ends.
+
+      Designers sometimes leave out an EXIT switch, which makes it hard to
+      play a level in Deathmatch or as part of a larger, multi-level episode. 
+      Also, perhaps this is a stylistic argument, but at least be AWARE of
+      which places (if any) have "no escape" for the unwary user who enters. 
+      Id's original levels do have a couple of these, but most users
+      (actually, nearly ALL users) don't like them.
+
+
+-----------------------------
+APPENDIX C:  The Walk-Through
+-----------------------------
+
+      Included in this archive are two files you may find useful: 
+WALKTHRU.WAD and WALKTHRU.TXT.  WALKTHRU.TXT is simply a description and
+labeling of the various effects and errors, and where you'll find them, in
+WALKTHRU.WAD.  Print out WALKTHRU.TXT and go through WALKTHRU.WAD while
+playing DOOM.  That way, you'll be able to actually SEE what we've been
+talking about in this Handbook, and you'll be able to mess around with the
+various effects without worrying about whether you're screwing up YOUR
+level... You might even want to experiment with adding Things (monsters,
+weapons, etc.) to this level to get the "feel" of it.  You can do whatever you
+want with this level, too -- if you want to build on it and improve it, go
+ahead.  Heck, you can even take all the credit for it if you want!  It's a
+play level for you, the novice WAD author, and it's yours with my compliments. 
+Of course, I _do_ expect you to upload any levels you build... :)
+
+
+----------------------
+APPENDIX D:  End notes
+----------------------
+
+      Well, folks, that's it for release 1.0 of The Unofficial WAD Authors
+Handbook!  If like what you've seen, drop me a line at:
+
+                        bill.mcclendon@creature.com
+
+Of course, if you hate what you've seen, I can still be reached there. :)  If
+you have ANY comments, suggestions, additions, modifications, deletions, or
+whatever, let me know -- if I use it, YOUR name will be in the credits for the
+next release.
+
+      Things I'd have liked to add, but didn't have the knowledge or expertise
+      or experience (something I hope some of our readers will help me with):
+
+      *  More detailed intermediate tips, and more things to try.
+      *  Common errors, and how to fix them.
+      *  Questions and answers (like "How do I make this...?").
+      *  A section of tips on making deathmatch levels.
+
+      If you have any of these types of things that I could add to the next
+release, I'd be more than grateful to have them! Until next time -- good
+DOOMing!!   -- Bill  <bill.mcclendon@creature.com>

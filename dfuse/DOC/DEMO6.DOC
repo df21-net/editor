@@ -1,0 +1,32 @@
+/* -------------------------------------------------------------------------- */
+/* DFUSE DEMO 6 : second altitudes                                            */
+/* -------------------------------------------------------------------------- */
+
+This mini-level has been designed to demonstrate the use of second altitudes.
+
+You fill find:
+
+1. A platform at 12 in height => this give its underlying sector a second
+   altitude of -12. I also made 2 gaps (the big columns from floor to ceiling)
+   this is to hide the platform extremities which aren't textured by the game.
+   Remove one of the gaps to see what I mean. A simple elevator has been created
+   for you to be able to go up there. Notice that you can walk ON the platform,
+   AND UNDER it.
+
+2. A simple river sector which has a second altitude of 4 (ie you are 4 deep).
+   Notice that this is sufficient to make it waterlike (ie the splash and
+   the weapon impacts). A little scroll_floor elevator has been created to
+   first give it a 'moving' look and second simulate current.
+
+
+TO INSTALL IT
+=============
+
+Go to the DOS prompt, and type 'demo6-d! -d'.
+
+DON'T FORGET THE '-d' or the level will be extracted in the wrong directory.
+
+Be careful, this is a SECBASE replacement, and you risk to destroy any work you
+have done on that level.
+
+(note that extracted means 'from the PKZIP exe file' here, not from a .GOB)

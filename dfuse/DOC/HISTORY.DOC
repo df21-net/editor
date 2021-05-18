@@ -1,0 +1,107 @@
+Release v 1.00 : 04/06/1995.
+
+* Added a little batch file GOB2DFU.BAT which will take a GOB and extract its
+  contents in the correct directories for DFUSE.
+  Note: pass the file name without the .GOB extension and be CAREFUL !
+
+* Implemented two checks on the sectors:
+   - #vx = #wl
+   - Floor <= Ceiling
+
+* Implemented three checks on the objects:
+   - OB not in SC
+   - OB in deleted SC
+   - NO player start, or more than 1
+
+* Implemented object layering. Toggle = Alt + O.
+  Got the sector floor_alt and ceili_alt back in main memory from the swap file,
+  as object layering made a random order use of them, and was too slow.
+  There is an entry in DFUSE.INI to completely disable object layering if you
+  are making pure geometry work.
+
+* Implemented much better sector and wall selection.
+  It is now near perfect, the only problem arising when two sectors overlap
+  ON THE SAME LAYER.
+  The select next nearest SC and next nearest WL (ie Ctl + LEFT BUTTON) have
+  been removed. Next nearest VX is still there.
+
+* Implemented POLYGON generation (key: 'K')
+  Implemented GAP-POLYGON generation. (key: Alt + K)
+  Implemented GAP-POLYGON + POLYGON in GAP generation. (key: Ctl + K)
+
+* Implemented deformations on (multi)selections (key: 'D'):
+   - Translate, Scale, Rotate OK
+   - Sector flipping still a little 'strange' :)
+
+* Implemented multiple copy of objects and sectors.
+  You may have still have to correct the INF, or at least reread it.
+
+* Implemented INF reading, both at startup and after editing it.
+  Elevators and triggers (sector and line) have different colors.
+  The doors which are coded at the flag level are marked as elevators.
+  Secrets sectors have a different color.
+  If a sector combines these, LEVMAP will use the following order :
+  line trigger, then secrets, then sector trigger, then elevator.
+  Note that this modifies DFUSE.INI !
+
+* Implemented 0 1 2 3 keys which will show : ALL / EASY / MED / HARD objects.
+
+* Added 'f' or 'F' key which will find the PLAYER start in object mode.
+
+* Objects now have different colors depending on what they are. This feature
+  uses the DFUDATA\OB_COLS.DFU file as data. Objects encoded there will have
+  their own color, others will use the default object color.
+  The file is a .INI in disguise, so it is very easy to understand.
+
+* Objects now have a different look depending on their class.
+  Spirits are 'X', safes are 'S', 3D are '3', frames are 'circles',
+  sounds are 'V' and sprites are 'squares' (except GENERATORs which are
+  noted 'G').
+
+* Implemented automatic creation of 'object sequences' and GENERATORs in the
+  OBJECT editor. This uses the DFUDATA\OB_SEQS.DFU file as data.
+
+* Added a Log: entry in the object editor. This shows the first LOGIC: in the
+  object sequences (ie in 99.9% of the cases the important one). This allows
+  important distinctions between different SPIRITS (most notably the player),
+  and between different objects type based on the same 'viewable file'
+  (most notably the GENERATORs). 
+
+* The cursor keys are now emulated with the mouse. Just put the pointer
+  completely against the side of the screen, then click (and optionally hold)
+  the LEFT mouse button.
+
+* Cleaned up the new walls when inserting a sector GAP. Copies data from wall 1
+  instead of 0 (as 0 is often a door), then clears all the flags, all the
+  offsets, and any sign.
+
+* Corrected a slight fault that gave occasional hangups when viewing the
+  ZPGRYFIL.BM texture. (That one is 1x1 !)
+
+* Corrected a bug in the 'C'hange TX list (SC and WL editors) which caused a
+  loss of the modifications made before pressing 'C'.
+
+* Corrected a slight bug that caused multiple edition display color to revert
+  to single edition display color when editing object SEQs.
+
+Release v 0.91 : 06/05/1995.
+
+* Added the DIR2GOB.EXE tool and the .gob level testing method (-u).
+  Note that this modifies DFUSE.INI !
+
+* Corrected SC FLAG 1 from unsigned to unsigned long.
+
+* Quickened the map refresh by not drawing the shadow and the grid if there are
+  keys waiting in the keyboard buffer. The current layer, multiselection and
+  selection are still always drawn. This may leave an uncomplete shadow or
+  grid on the screen when entering an editor, but the gain of speed is worth it.
+
+* Implemented splitting of wall with adjoin. (And it's a lenghty operation !)
+
+* Added multiple textures picklists.
+  This hasn't been done for objects for now, if someone finds it useful...
+
+* Corrected a little bug in LEVMAP's internal FME and WAX viewers which caused
+  incorrect display of patch FME or WAX.
+
+Release v 0.90 : 29/04/1995.

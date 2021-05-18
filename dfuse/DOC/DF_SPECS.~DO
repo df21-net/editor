@@ -1,0 +1,1303 @@
++===========================+
+| DARK FORCES SPECS v 1.10  |
++===========================+
+
+Author : Yves BORCKMANS (yborckmans@abcomp.be (work))
+         (Please state the package version when you email me)
+Credits: Serge DEBROEYER
+               for adjoin/mirror tips, some flags, some INF tips,
+                   complex sectors errors, ...
+         Don SIELKE (DSielke@aol.com)
+               for the complete flags list, the -u option, ...
+         Florian ENGELHARDT (100442.2012@compuserve.com)
+               for information on GMD files
+         Paul Nemesh (PNem@aol.com)
+               for information on VUE files
+         Randy GREENE (rgreene@val.net)
+               for information on event_masks
+         TheRedDeth@aol.com
+
+         Thanks to all of you.
+
+   +------------------------------------------------------------------------+
+   | Dark Forces is (c) LucasArts Entertainment Company                     |
+   | DOOM        is (c) iD Software                                         |
+   |                                                                        |
+   | None of these have anything to do with these totally unofficial specs, |
+   | and shouldn't be bothered with them in any way.                        |
+   +------------------------------------------------------------------------+
+
+Welcome to the "DARK FORCES SPECS" !
+
+As you will rapidly see, there are still a lot of unknown things in these specs.
+But as they are diminishing very quickly, I found it was time to write them
+down in a "formal" way, which can serve as a reference.
+
+As always, nothing is as good as seeing how professionnals do it, so don't
+hesitate to go and see how the LucasArt team did it.
+
+I will also try to explain differences with DOOM level making where applicable,
+so if you have experience in that domain, look for the DOOM markings.
+
+Note : I will frequently use the following abbreviations
+ - DF  = Dark Forces
+ - LEC = LucasArts Entertainment Company
+ - SC  = sector
+ - WL  = wall
+ - VX  = vertex
+ - OB  = object
+ - TX  = texture
+
+Changes since previous release have been marked [NEW].
+
++-------------------+
+| TABLE of CONTENTS |
++-------------------+
+
+  0. GENERAL DESCRIPTION [NEW]
+  1. GOB FILES
+  2. LEV FILES
+     2.1 Basics
+     2.2 File Description
+  3. FLAGS
+     3.1 Sector Flags
+     2.3 Wall Flags
+  4. INF FILES
+  5. GOL FILES
+  6. O   FILES
+     6.1 Basics
+     6.2 File Description
+  7. PAL FILES
+  8. CMP FILES
+  9. BM  FILES
+ 10. FME FILES
+ 11. WAX FILES
+ 12. 3DO FILES
+ 13. VOC FILES
+ 14. GMD FILES  [NEW]
+ 15. MSG FILES
+ 16. VUE FILES  [NEW]
+ 17. CHEAT CODES
+
++-------------------------+
+|  0. GENERAL DESCRIPTION |
++-------------------------+
+
+Dark Forces contains a huge amount of files, and these are grouped by type in
+what are called GOB files. These are quite similar in principle to DOOM WAD
+files, but at a higher level. They serve as containers for other files which
+in turn contain information. DOOM WADS directly contain the information.
+
+These files can be extracted from the GOB and worked upon, then be used in the
+game.
+LEC made a very good job at this :
+ 1. if you place a file in your game directory, DF will take it there before
+    looking for it in its GOB.
+ 2. if you launch DF with the -u option, it will look into the specified .gob
+    ( dark -umylevel.gob ). This is probably the best method to distribute
+    levels.
+
+[NEW] The order in which DF looks for a file is as follows :
+1) as a file in the installed directory
+2) in the GOB specified by -u...
+3) in its normal GOB in the installed dir
+4) in its normal GOB on the CD
+
+A very important file "JEDI.LVL" contains the names of all the levels in the
+game. Sadly, editing it doesn't work further than the briefing because the
+level names are hardcoded in dfbrief.lfd .
+What you CAN do however is change the levels titles there.
+
+The levels themselves are each one composed of 6 files, found in dark.gob .
+ - name.LEV : geometry (static)      (DOOM SECTORS, LINEDEFS/SIDEDEFS, VERTEXES)
+ - name.INF : workings (dynamic)     (no DOOM equivalent except the TAG concept)
+ - name.GOL : goals                  (no DOOM equivalent)
+ - name.O   : objects                (DOOM THINGS)
+ - name.PAL : palette                (DOOM PLAYPAL 0 (not the 'hit' palettes))
+ - name.CMP : palette mappings       (DOOM COLORMAP)
+
+Textures are stored in .BM  files, as are the weapons display, and so on.
+Sounds   are stored in .VOC files (normal Creative Labs format).
+
+Objects  are stored in the following files depending on their type :
+ - obj.3DO  : 3D object (real 3D)
+ - obj.FME  : FRAME     (a "one view" object)
+ - obj.WAX  : SPRITE    (ie all the ennemies)
+ - obj.VOC  : SOUND     (any sound)
+
+3D object motions are stored in VUE files (normal 3D Studio format).
+
+There are many other inexplored files, including but not limited to :
+ - briefings
+ - cutscenes
+ - fonts
+
+The following text will now become "quite technical" ...
+
+
++----------------+
+|  1. GOB FILES  |
++----------------+
+
+GOB files are a repository for many other files. They contain a header with a
+signature, a data part and an index part.
+
+Their structure follows :
+  +------------------------------------------------------------------------+
+  | 0000   GOB_MAGIC   char[4]      is 'GOB' followed by 0x0A              |
+  | 0004 +-MASTERX     long         offset to MASTERN                      |
+  |      |                          MASTERX+4 is the offset of FILE1 data  |
+  | 0008 | FILE1       bytes        data for FILE1                         |
+  | xxxx | FILE2       bytes        data for FILE2                         |
+  | .... |                          ...                                    |
+  | xxxx | FILEn       bytes        data for FILEn                         |
+  | yy   +>MASTERN     long         number of files in the GOB             |
+  | yy+4   INDEX1      GOB_INDEX    index to FILE1                         |
+  | yy+25  INDEX2      GOB_INDEX    index to FILE2                         |
+  | ....                            ...                                    |
+  | zzzz   INDEXn      GOB_INDEX    index to FILEn                         |
+  +------------------------------------------------------------------------+
+
+The GOB_INDEX format is :
+  +------------------------------------------------------------------------+
+  | 0000   IX          long         offset of the start of the file        |
+  | 0004   LEN         long         lenght of the file                     |
+  | 0008   NAME        char[13]     name of the file                       |
+  +------------------------------------------------------------------------+
+
+DOOM note : this structure is quite similar to that of a WAD file, the small
+            difference is that in WADS the MASTERN field is at the beginning
+            of the file, between WAD_MAGIC and MASTERX.
+
+UNKNOWNS  : NONE
+
++----------------+
+|  2. LEV FILES  |
++----------------+
+
+LEV files contain a complete level geometry. They are in a very understandable
+but quite complex text format. They are also huge (generally > 600K).
+This isn't a problem, as you really cannot edit them as a text file, because of
+the many dependencies between the geometry elements.
+
+2.1. BASICS
+     ______
+
+     Geometry elements are :
+
+      -VERTEX  : a point in a 2 dimension projection (X and Z)
+      -WALLS   : a line joining 2 vertices
+      -SECTOR  : a collection of walls
+                 generally closed but this isn't mandatory
+                 can contain "gaps" or other sectors
+
+     As the game works with a two dimension projection, the third (Y)
+     dimension is coded at the sector level by a floor altitude and a ceiling
+     altitude. Note that this imply that floors and ceilings are always FLAT.
+
+     Sectors can however be layered on top of one another to give a "full 3D"
+     feeling. This is a whole new concept for DOOM levels designers.
+
+     Each sector is coded with its walls and vertices, and is completely self
+     contained (there is no DOOM like vertex and linedef sharing).
+     The relation between sectors is done at the wall level by the
+     adjoin/mirror/walk mechanism.
+
+
+     1--------2      Sector 1 has 5 vertices (0 to 4) marked 0 1 2 A B
+     |        |                   5 walls    including AB (wall 3)
+     |   S1   |
+     |        |      Sector 2 has 4 vertices (0 to 3) marked 0 1 B A
+     0---B====A                   4 walls    including BA (wall 2)
+         | S2 |
+         1----0
+
+
+     It is VERY important to note that there are 2 vertices at point A,
+     two vertices at point B and 2 walls marked ==== . As I said above,
+     sectors are self contained.
+
+     So, to come back to the adjoin/mirror/walk mechanism, if S1 and S2
+     must be connected, an adjoin/mirror relation must be established.
+
+     +----1---+
+     |        |
+     0        2
+     | 4    3 |
+     +---+====+
+         1  2 3
+         +--0-+
+
+     This is quite simple : the adjoin is the number of the connected sector,
+     and the mirror is the number of the connexion wall.
+
+     So we would need to set
+      - in S1 : W3.adjoin = S2 and W3.mirror = 2    AND
+      - in S2 : W2.adjoin = S1 and W2.mirror = 3
+
+     For the walk values, we would need to set
+      - in S1 : W3.walk = S2
+      - in S2 : W2.walk = S1
+
+     Just to be complete, if there is no adjoin/mirror/walk, the value is -1.
+
+     Note to DOOM designers : there is no node building to do on these levels.
+     This is done at each load of the level by the DF exe and is very fast.
+
+     Correction to this: I'm not sure that a BSP is done at all !
+     There certainly are checks at level loading time, but a few tests on
+     complicated sectors seem to show 'errors' in texturing or HOM problems.
+     In fact, it seems that big non-convex sectors are problematic.
+     Maybe you just have to try and create a few 'more convex' sectors instead.
+     If you want to create a BSP for LEV files, don't forget you cannot split
+     elevators nor change the walls numbers (triggers), so good luck !
+     More on this later.
+
+
+     A quick note on MID, TOP and BOT textures:
+
+     When you have adjacent sectors:
+         TOP  is  ABOVE the ceiling of the other SC
+         BOT  is  BELOW the floor   of the other SC
+         MID  is  everywhere you can see through to the other SC
+
+     Of course, the MID texture is not shown when walls are adjoined, so that
+     you can see through! (Note: WL flag 3, bit 1 forces it back in place)
+
+     This is exactly the same as DOOM texturing, just note that there are two
+     different walls, not one linedef with two sidedefs.
+
+
+2.2. FILE DESCRIPTION
+     ________________
+
+     The LEV file is composed of 4 parts :
+      - magic and version number
+      - general level info
+      - texture table
+      - geometry description ie sectors, walls, vertices data
+
+     The following comments are accepted:
+
+     # comment
+     DATA # comment
+
+
+2.2.1. Magic and version number
+       ------------------------
+
+       This is trivial.
+
+     | LEV 2.1
+
+2.2.2. General Level Info
+       ------------------
+
+       This part contains the following data (sample from secbase.lev):
+
+     | LEVELNAME SECBASE
+     | PALETTE   SECBASE.PAL
+     | MUSIC     AVENGE.GMD
+     | PARALLAX  1024.0000 1024.0000
+
+       After a little testing, it seems that LEVELNAME, PALETTE and MUSIC aren't
+       used at all by DF. (I even cannot find AVENGE.GMD !)
+
+       PARALLAX determines how much the "exterior" backgrounds scroll as you
+       turn. 1024 1024 means as you turn around 360 degrees, you will see
+       1024 pixel columns of background sky. Vertical PARALLAX is similar,
+       although of course you can't pitch 360 degrees in DF.
+
+2.2.3. Texture Table
+       -------------
+
+       As there is a lot of TX information in a level, a texture table is
+       created to avoid storing TX names in full at each occurrence.
+
+       Coding sample :
+
+     | TEXTURES 85         # number of textures
+     |  TEXTURE: TEX00.BM  # texture 0
+     |  TEXTURE: TEX01.BM  # texture 1
+     |  ...
+     |  TEXTURE: TEX84.BM  # texture 84
+
+       Afterwards, all the TXs are refered to by their 0 based index in this
+       texture table.
+
+
+2.2.4. Geometry description
+       --------------------
+       The first data is the total number of sectors in the level :
+
+     | NUMSECTORS number_of_sectors
+
+       Then each sector is described, with its vertices and walls.
+       Please note that the wall data is on ONE line, but has been splitted
+       here for visual convenience.
+
+     | SECTOR scnum
+     |  NAME             sector_name
+     |  AMBIENT          20
+     |  FLOOR TEXTURE    80 -0.38 -0.06 2
+     |  FLOOR ALTITUDE    0.00
+     |  CEILING TEXTURE  0  0.00  0.00 2
+     |  CEILING ALTITUDE -12.00
+     |  SECOND ALTITUDE   0.00
+     |  FLAGS            0 0 0
+     |  LAYER            1
+     |
+     | VERTICES vxnum
+     |  X: 252.00 Z: 224.00 # a vx
+     |  ...
+     |
+     | WALLS wlnum
+     |  WALL LEFT:  0 RIGHT:  1 
+     \       MID:   0  0.00  0.00 0
+     \       TOP:   1  0.00  0.00 0
+     \       BOT:   2  0.17  0.00 0
+     \       SIGN: -1  0.00  0.00
+     \       ADJOIN: 57 MIRROR: 0 WALK: 57
+     \       FLAGS: 0 0 0
+     \       LIGHT: 5
+     |  ...
+
+
+       Hmmm... heavy information!
+       Let's take it line by line, it's not too difficult.
+
+     | SECTOR scnum
+
+       This is the sector number, it is zero based.
+
+     |  NAME             sector_name
+
+       This is both a link to the .INF file and a useful reminder.
+
+     |  AMBIENT          20
+
+       Ambient light level in this sector.
+
+     |  FLOOR TEXTURE    80 -0.38 -0.06 2
+
+       The TX to apply to the floor of the SC as an index in the TX table.
+       The following two floats are the X and Z offsets by which the TX must
+       be moved before being mapped.
+       The third (int) value is unknown.
+       It seems that floor textures must be 64x64, or the game engine does
+       strange things.
+
+     |  FLOOR ALTITUDE    0.00
+
+       The altitude of the floor of this SC. Note that the Y axis goes "down",
+       so higher altitudes have lower values.
+
+     |  CEILING TEXTURE  0  0.00  0.00 2
+     |  CEILING ALTITUDE -12.00
+
+       Same as floor.
+
+     |  SECOND ALTITUDE   0.00
+
+       This is used to indicate a second "floor" altitude in a sector.
+       For instance, a second altitude of 4 will make you "enter into the floor"
+       4 deep. It will in addition make the sector waterlike and generate a
+       splashing sound.
+       If you set a negative second altitude, you will be able to walk higher on
+       the sector, provided you also enter the sector higher. This is the way
+       platforms are created (the platform object is only a visual clue).
+
+     |  FLAGS            0 0 0
+
+       Three flags, the second of which is never used in the 14 original levels.
+       Change various things in the sector. - Described below.
+
+     |  LAYER            1
+
+       The layer on which the SC is (positive, 0 or negative).
+       This value is used in the game to make different maps corresponding to
+       zones of altitude.
+       Note that this is only a logical grouping.
+
+
+     | VERTICES vxnum
+
+       This is the number of vertices that this SC has.
+
+     |  X: 252.00 Z: 224.00 # a vx
+
+       List of the VXs. X and Z are trivial.
+
+     | WALLS wlnum
+
+       This is the number of walls that this SC has.
+
+
+     \  WALL LEFT:  0 RIGHT:  1
+
+       These are the origin and destination vertices for this wall.
+
+     \       MID:   0  0.00  0.00 0
+
+       The TX to apply to the middle of the WL as an index in the TX table.
+       The following two floats are the X and Y offsets by which the TX must
+       be moved before being mapped (remember Y goes down).
+       The third (int) value is unknown.
+
+     \       TOP:   1  0.00  0.00 0
+
+       The TX to apply to the top of the WL as an index in the TX table.
+       The following two floats are the X and Y offsets by which the TX must
+       be moved before being mapped (remember Y goes down).
+       The third (int) value is unknown.
+
+     \       BOT:   2  0.17  0.00 0
+
+       The TX to apply to the bottom of the WL as an index in the TX table.
+       The following two floats are the X and Y offsets by which the TX must
+       be moved before being mapped (remember Y goes down).
+       The third (int) value is unknown.
+
+     \       SIGN: -1  0.00  0.00
+
+       A sign is a second TX on the same WL, its main use is to place switches.
+       First is the TX to apply to a sign on the WL as an index in the TX table.
+       The following two floats are the X and Y offsets by which the TX must
+       be moved before being mapped (remember Y goes down). Also note that this
+       is relative to the texturing of the wall. So if you offset the WALL, you
+       have to add this offset to that of the SIGN.
+
+     \       ADJOIN: 57 MIRROR: 0 WALK: 57
+
+       See the BASICS section.
+
+     \       FLAGS: 0 0 0
+
+       Three flags.
+       Change various things in the wall. - Described below.
+
+     \       LIGHT: 5
+
+       Relative modification of the luminosity on this specific WL.
+
+
+       So this is it for the LEV files. As you can see, it is totally
+       impossible to edit as text, except perhaps to change a TX name in the
+       TX table, which is an ultra fast way to relook a level !
+
+
+UNKNOWNS  : the int value after textures offsets
+
++----------------+
+|  3. FLAGS      |
++----------------+
+
+These are the currently known values for the various sector and wall flags.
+
+3.1. SECTOR FLAGS
+     ------------
+
+     * FLAG 1
+
+     +-----------------------------------+
+     |      1 EXTERIOR - NO CEIL.  (SKY) |
+     |      2 DOOR                       | instant door
+     |      4 SHOT REFLEXION / MAG.SEAL  | walls reflect weapon shots
+     |      8 EXTERIOR ADJOIN            | for adjacent skys with != alt.
+     |     16 ICE FLOOR        (SKATING) |
+     |     32 SNOW FLOOR                 |
+     |     64 EXPLODING WALL/DOOR        | instant exploding door
+     |    128 EXTERIOR - NO FLOOR  (PIT) |
+     |    256 EXTERIOR FLOOR ADJOIN      | for adjacent pits with != alt.
+     |    512 CRUSHING SECTOR            |
+     |   1024 NO WALL DRAW / "HORIZON"   | horizon moves with eye level
+     |   2048 LOW  DAMAGE                |
+     |   4096 HIGH DAMAGE   (both = GAS) | both can be combined for GAS
+     |   8192 NO SMART OBJECT REACTION   |
+     |  16384 SMART OBJECT REACTION      |
+     |  32768 SUBSECTOR                  | player won't follow moving SC
+     |  65536 SAFE SECTOR                |
+     | 131072 RENDERED     (do not use!) |
+     | 262144 PLAYER       (do not use!) |
+     | 524288 SECRET SECTOR              | increments the %secret when entered
+     +-----------------------------------+
+
+     * FLAG 2 isn't used in the 14 original levels.
+
+     * FLAG 3 only serves as an extra lighting value in TALAY.
+
+
+3.2. WALL FLAGS
+     ----------
+
+     * FLAG 1
+     +-----------------------------------+
+     |     1 ADJOINING MID TX            | the MID TX is NOT removed
+     |     2 ILLUMINATED SIGN            |
+     |     4 FLIP TEXTURE HORIZONTALLY   |
+     |     8 ELEV CAN CHANGE WALL LIGHT  |
+     |    16 WALL TX ANCHORED            |
+     |    32 WALL MORPH WITH SECTOR      |
+     |    64 ALLOW SCROLL TOP  TX        |
+     |   128 ALLOW SCROLL MID  TX        |
+     |   256 ALLOW SCROLL BOT  TX        |
+     |   512 ALLOW SCROLL SIGN TX        |
+     |  1024 HIDE ON MAP                 |
+     |  2048 SHOW ON MAP                 |
+     |  4096 SIGN ANCHORED               |
+     |  8192 WALL DAMAGES PLAYER         |
+     | 16384 SHOW AS LEDGE ON MAP        |
+     | 32768 SHOW AS DOOR  ON MAP        |
+     +-----------------------------------+
+
+     * FLAG 2 is unused.
+
+     * FLAG 3
+     +-----------------------------------+
+     |     1 CAN ALWAYS WALK             |
+     |     2 CANNOT WALK THROUGH WALL    |
+     |     4 FENCE - KEEP ENNEMIES IN    |
+     |     8 CANNOT FIRE THROUGH WALL    |
+     +-----------------------------------+
+
++----------------+
+|  4. INF FILES  |
++----------------+
+
+INF files are text files written in "the INF programming language".
+They accept C like  /* */  comments.
+They are linked to the SCs via the SC names, and
+                to the WLs via the SC names and WL number.
+
+The basic items defined in the .INF are
+ - triggers  : * they trigger something in their 'clients'.
+ - elevators : * they receive messages and act upon them,
+                 possibly sending other messages, and so on.
+               * they may also have 'slaves' following their every action.
+
+Elevators are to be taken very widely :
+     elevator basic
+     elevator change_light
+     elevator change_wall_light
+     elevator door
+     elevator door_mid
+     elevator inv
+     elevator morph_move1
+     elevator morph_move2
+     elevator morph_spin1
+     elevator morph_spin2
+     elevator move_ceiling
+     elevator move_fc       (floor and ceiling together use @ stops !)
+     elevator move_floor
+     elevator rotate_wall
+     elevator scroll_ceiling
+     elevator scroll_floor
+     elevator scroll_wall
+     elevator teleporter chute
+
+The variables in the language are the positions of the elevators created by
+the programmer (a lot of them in "dummy" (ie never accessible) sectors).
+Those positions are marked by 'stop:' keywords. The values following may be
+absolute or relative in which case they are prepended with a '@'. Note that
+the 'stop' unit is dependent of the elevator type. It may be floor altitude,
+ceiling altitude, ambient or light level, degrees ...
+
+The whole thing works by triggering/sending messages across the items and
+reacting to them differently depending on the "variables". Other actions can
+also be executed, such as adjoining, terminating, pausing and waking up (OB),
+playing a sound, playing an animation, ...
+
+Here is a quick list of some of the messages :
+     [stop] [sector]
+     [stop] [sector[(wall)]] clear_bits            flagnum bitnum
+     [stop] [sector]         complete              num
+     [stop] [sector[(wall)]  done
+     [stop] [sector]         goto_stop             num
+     [stop] [sector]         master_on             [value]
+     [stop] [sector]         master_off            [value]
+     [stop] [sector[(wall)]] m_trigger             [value]
+     [stop] [sector]         next_stop
+     [stop] [sector]         prev_stop
+     [stop] [sector[(wall)]] set_bits              flagnum bitnum
+     [stop] [sector]         wakeup
+     [stop] system           lights            (in TALAY uses SC flag 3)
+     trigger                           ??      (in FUELSTAT.INF line 391)
+
+The [stop] is the stop at which the message will be send. 
+So when you look at an INF file and you see something like :
+
+   class: elevator EEEEEE
+    stop: 0
+          message: 0 MMMMMM
+    stop: 1
+          message: 1 MMMMMM
+
+it's only a visual clue, and you could group all the messages in one place and
+in any order. Important : if you add a stop, you may have to renum !
+
+Note that the elevators START at their stop 0, but the messages are send when
+the elevators ARRIVE at a stop. So the messages set up at stop 0 won't be
+send at level startup.
+
+And a list of the triggers :
+     trigger
+     trigger single
+     trigger switch1
+     trigger standard
+     trigger toggle
+
+The triggers react only to determinate events : this is called the event_mask.
+Some possible values follow :
+
+       1 WALK FROM INSIDE          ( line   trigger )
+       2 WALK FROM OUTSIDE         ( line   trigger )
+       4 ENTER SECTOR              ( sector trigger )
+       8 LEAVE SECTOR              ( sector trigger )
+      16 NUDGE FROM INSIDE         ( sector / line  )
+      32 NUDGE FROM OUTSIDE        ( sector / line  )
+      64 ??
+     128 ??
+     256 FIRE                      ( line trigger with entity_mask: 8 )
+     512 ?? used once in ARC.INF
+
+If you want to use a 'fire on it' trigger, you have to change the
+entity_mask (ie what do you use to trigger) to 8.
+If you want to both fire and nudge for instance, use entity_mask: *
+
+The programming language is a little object oriented like, as you have default
+items in which you override only the fields you need. It is very powerful, and
+lets you to a certain extent dynamically modify the level.
+
+Here are some basic values (of course, not all elevators have them all!) :
+     MASTER      (master item switch : may be on or off)
+     EVENT_MASK
+     SPEED
+     CENTER
+     ANGLE
+
+As I don't have the time to compile a formal definition of the language, I give
+you the following advise : use a GREP like utility to generate a list of
+triggers, messages and elevators from all the .INF in the game, complete with
+filename and line numbers. This will make you a "reference" very useful to go
+and see how the LEC programmers do it.
+
+Note : don't forget to change the 'items' value when you modify an INF.
+
+To DOOM level makers : this may seem complicated, but I remember a WAD of mine
+with a long corridor with 19 consecutive linedefs doing modifications to the
+look of the level... then I remember spacing the linedefs so that some actions
+where finished before some others... then the player ran in the corridor... :)
+
+
+UNKNOWNS  : FORMAL FULL DESCRIPTION
+
++----------------+
+|  5. GOL FILES  |
++----------------+
+
+GOL files contain a description of what to do to complete the levels.
+
+Sample code:
+
+     | GOL 1.0
+     | GOAL: 0       ITEM:   5       # DT weapon
+     | GOAL: 1       TRIG:   1
+
+Each GOAL: can be a TRIG: to fire or an ITEM: to take.
+
+'Goal triggers' are fired in the .INF file with the 'complete num' keyword sent
+to the complete sector (don't get confused here!).
+
+For instance,   " message: s complete complete 1 "
+will say that TRIG: 1 is complete!
+
+
+'Goal objects' fire internal triggers because of their logic. That internal
+trigger seems to be equivalent to " message: s complete next_stop "
+So, be sure that complete is at a correct hold point when the object is taken.
+Try to do nothing else in complete than handling the goals.
+If necessary, start another 'level control' elevator very early.
+
+Object numbers are in an internal table at runtime.
+The broken Dark Trooper weapon for instance has the number 5 (see TALAY.GOL).
+If you want to make the player retrieve it in a SECBASE modification, just
+change the value of item to 5 in SECBASE.GOL (don't forget to put this object
+in your .O file).
+The message on the screen will be correct because the object has
+LOGIC: DT_WEAPON, and your OBJectives screen will be updated.
+But note that it still says 'retrieve death star plans'. Changing that means
+understanding the lfd format (which is most probably graphical !).
+
+Here are the screen messages associated with the goal objects, you can patch
+them in text.msg .
+
+     | 400  1:  "Death Star Plans"       for object 0
+     | 401  1:  "Phrik Metal"            for object 1
+     | 402  1:  "Nava Card"              for object 2
+     | 405  1:  "Dark Trooper Weapon"    for object 5
+     | 406  1:  "Data Tape"              for object 4
+
+Object 6 is 'Your Gear' as used in the JABSHIP level and has the text
+
+     | 312  1:  "Your Gear"
+
+in the 'Power-Up Pickup Messages' section of the same text.msg file.
+
+
+Final note: don't assume the goals will happen in the .GOL order !
+
+
++----------------+
+|  6. O   FILES  |
++----------------+
+
+O files contain all the level objects.
+They are in a very understandable but a little complex text format.
+They accept C like  /* */  comments.
+
+6.1. BASICS
+     ______
+
+     There are many different object types in Dark Forces:
+
+      - SPIRIT : an object not linked to a viewable file (ie invisible)
+                 Its main use is for the PLAYER, but you can create other
+                 invisible items.
+      - SAFE   : a restart point after the player died.
+                 You should put SAFEs in your levels, to allow the player to
+                 restart not far from where he died, but also because it seems
+                 to be the best bet as 'player starting points' if LEC produces
+                 a multiplayer version. (Put 8+ of them so you'll be ... safe!)
+      - SPRITE : fully animated objects such as ennemies.
+      - FRAME  : "one view" objects such as energy power ups.
+      - 3D     : 3D objects such as mousebots.
+      - SOUND  : an ambient sound around the object position.
+
+6.2. FILE DESCRIPTION
+     ________________
+
+     The O file is composed of 4 parts :
+      - magic and version number
+      - level name
+      - objects tables
+      - object descriptions
+
+
+6.2.1. Magic and version number
+       ------------------------
+
+       This is trivial.
+
+     | O 1.1
+
+6.2.2. Level Name
+       ----------
+
+     | LEVELNAME SECBASE
+
+       I'm not sure this is used in DF !
+
+6.2.3. Object tables
+       -------------
+
+       As there is a lot of OB information in a level, 4 object tables are
+       created to avoid storing OB names in full at each occurrence.
+
+       Coding sample :
+
+
+     | PODS 3             # These are the "3D" objects
+     |  POD: DEATH.3DO    # 00
+     |  ...
+     |
+     | SPRS 10
+     |  SPR: OFFCFIN.WAX  # 00
+     |   ...
+     |
+     | FMES 6
+     |  FME: IENERGY.FME  # 00
+     |  ...
+     |
+     | SOUNDS 1
+     |  SOUND: BANG.VOC  #00
+     |  ...
+
+       Afterwards, all the OBs are refered to by their 0 based index in the
+       object tables. The object CLASS determines in which table to look.
+
+6.2.4. Object descriptions
+       -------------------
+
+       The first data is the total number of objects in the level :
+
+     | OBJECTS 185
+
+       Then each object is described.
+       Please note that the object data first line has been splitted here for
+       visual convenience.
+
+     | CLASS: SPIRIT       DATA:  0 X: 131.00 Y:   0.00 Z: 210.00
+                                  PCH:   0.00 YAW: 176.34 ROL:   0.00
+                                  DIFF: 1
+     |  SEQ
+     |   LOGIC:     PLAYER
+     |   EYE:       TRUE
+     |  SEQEND
+     |
+     | CLASS: SPRITE       DATA:  0 X: 320.62 Y:  20.00 Z: 275.64
+     \                            PCH:   0.00 YAW: 270.00 ROL:   0.00
+     \                            DIFF: 1
+     |  SEQ
+     |   TYPE:      I_OFFICER
+     |  SEQEND
+
+       This is quite easy : CLASS is the type of object, and DATA is the
+       offset in the corresponding object table (SPIRIT and SAFE have DATA = 0).
+
+       X, Y, Z are trivial.
+
+       PCH, YAW, ROL are classic spatial orientation, but only YAW is really
+       used (DOOM equivalent is THING orientation). It takes a value in degrees
+       where 0 is at the "top of the screen when you look at the map". The
+       value increases clockwise.
+
+       DIFF is the difficulty level at which the object appears.
+
+        +------+------------------+
+        | DIFF | EASY   MED  HARD |
+        +------+------------------+
+        |  -3  |   X     X     X  |
+        |  -2  |   X     X        |
+        |  -1  |   X              |
+        |   0  |   X     X     X  |
+        |   1  |   X     X     X  |
+        |   2  |         X     X  |
+        |   3  |               X  |
+        +------+------------------+
+
+       SEQ and SEQEND are delimiters for a series of options/modifiers to apply
+       to the object. They determine part of its behaviour ( LOGIC: ).
+       For instance, if you take a mousebot and set it the LOGIC:  of a
+       stormtrooper, you'll end up with an unmoving lifeless mousebot.
+
+       It seems that the keywords TYPE: and LOGIC: are freely swappable, as are
+       UPDATE and ANIM, and that the ITEM keyword is optional, but this has to
+       be tested fully.
+       Note that the same viewable file may be used to create 'different'
+       objects. For instance, OFFCFIN.WAX may be used with a TYPE: I_OFFICER
+       or TYPE: I_OFFICERR (note the second 'R') which will generate a red key
+       when killed.
+
+       The other use of this is to create object generators.
+       Here is a quite self explaining sample:
+
+
+     | CLASS: SPRITE       DATA:  4 X: 396.88 Y:  -2.00 Z: 217.48
+     \                            PCH:   0.00 YAW:   0.00 ROL:   0.00 DIFF: 1
+     |  SEQ
+     |   LOGIC:     GENERATOR STORM1
+     |   DELAY:     0
+     |   INTERVAL:  20
+     |   MAX_ALIVE: 1
+     |   MAX_DIST:  200
+     |   MIN_DIST:  70
+     |   NUM_TERMINATE: 3
+     |  SEQEND
+
+      What is not clear is WHEN they are generated. What I know is that they
+      are never generated while you look directly at the generator !
+      Also note that you can set MASTER: OFF on a generator, and activate it
+      by sending a message: s master_on to the sector that contains it.
+
+UNKNOWNS  : FORMAL FULL DESCRIPTION
+
+
++----------------+
+|  7. PAL FILES  |
++----------------+
+
+PAL files store a single 256 colors palette as 256 x 3 RGB bytes.
+Each level can have its own palette.
+
+UNKNOWNS  : NONE
+
+
++----------------+
+|  8. CMP FILES  |
++----------------+
+
+CMP files seem to store palette mappings (like DOOM COLORMAP).
+They contain 32 times 256 bytes for light levels 0 to 31.
+
+Note that colors from 0 to 31 are never modified. Keep this in mind if you
+design textures. They can follow the lights or not at your own convenience.
+
+There are 128 other unknown bytes at the end of the file forming a slow
+gradient from 0x00 to 0x1F. I don't know what they are for.
+
+
++----------------+
+|  9. BM  FILES  |
++----------------+
+
+Here is the C structure for the BM file header.
+
+struct BM_header
+{
+ char      MAGIC[4];
+ int       SizeX;           /* if X = 1 then multiple BM in the file */
+ int       SizeY;           
+ int       idemX;
+ int       idemY;
+ byte      transparent;     /* 0x36 for normal, 0x3E for transparent */
+ byte      logSizeY;        /* ie logSizeY = log2(SizeY)             */
+ int       Compressed;      /* 0 = not compressed, 1 = compressed    */
+ long      DataSize;        /* excluding header                      */
+ char      filler[12];
+};
+
+Please note that BMs must have a height which is a power of 2.
+
+The data follows, encoded by COLUMNS from the bottom to the top.
+
+Transparent BMs :
+---------------
+
+You can transform any BM in a 'transparent' BM by changing its transparent
+value from 0x36 to 0x3E. The color 0 will 'disappear'.
+Note that this isn't the same color as the one used in DOOM transparent
+textures (cyan in the DOOM palette).
+
+Multiple BMs    :
+------------
+
+If SizeX == 1 BM file contains idemY BMs. (EXCEPT if idemY == 1)
+There follow two bytes, the first of which permits to distinguish between
+'switches' (if == 0) and 'animated textures'. It is the speed of animation
+(maybe in frames per second). You may alter this value if you want to.
+The second is 2.
+Then follows a table of offsets to the 'sub' BMs composed of idemY BMs.
+Each 'sub' BM then has its own header WITHOUT the MAGIC field (ie 28 bytes),
+with some slight modifications (I'll check later!).
+
+Important note: for a multiple BM to work correctly, it must be made a 'SIGN',
+AND for switches there MUST also exist a corresponding trigger in the .INF
+Else, switches will be displayed wrong (as a single column) and the animated
+will display correctly, but static. This means that you cannot do animated
+floors and ceilings this way!
+
+
+Compressed BMs  :
+--------------
+
+If compressed == 1  BM is compressed.
+These existed in the DEMO (buyit.bm), but I'm not sure if there are any in the
+full game. They use a mixed direct/RLE coding. In the demo, wait.bm also used
+yet another coding, but it's a perfectly normal BM in the full game.
+ 
+Here we go. Fasten seat belts!
+
+The heart of the data is a 'columns starts' table, with the start addresses of
+each of the columns. It is at the end of the file, at offset DataSize,
+and has one long entry per column containing this column start address.
+This start address is calculated without the 32 bytes BM header
+(ie read the header in a struct, then the data in a HUGE buffer at offset 0).
+
+The coding of one column follows (in a pseudo pseudocode format!).
+
+ while(end of data for this column not reached)
+ {
+  if(buffer[adr] <= 128)
+    the FOLLOWING n bytes are direct values
+  else
+    the FOLLOWING byte is a color byte to repeat n-128 times
+ }
+
+There was an 0xFF last byte marker per column. However,I do prefer to
+calculate the end of the column data by using the start of next column, as
+this is more like the FME and WAX reading technique.
+
+A slight variation of this compression is used in the frames and the sprites.
+
+You may unfasten your seat belts!
+
+
++----------------+
+| 10. FME FILES  |
++----------------+
+
+Contains the frames, which are the "one view" objects
+(you can turn around them, and always see the same image).
+
+Here are the C structures for the FME file headers.
+
+struct FME_header1
+{
+ long  u1;
+ long  u2;
+ long  u3;
+ long  header2;         /* this is the absolute addres of header2 */
+ char  unknown[16];
+}
+
+struct FME_header2
+{
+ int   SizeX;
+ int   u1;
+ int   SizeY;
+ int   u2;
+ int   Compressed;
+ int   u3;
+ long  DataSize;
+ char  fil[8];
+};
+
+There are at least two formats for these.
+If Compressed == 0 the format it very similar to the BM format, with just the
+header rearranged.
+The header 1 is totaly unknown except for the field header2.
+The header 2 contains the X and Y sizes, and the data follows, encoded
+by COLUMNS from the bottom to the top.
+
+With Compressed == 1, the format looks like the compressed BM used in the demo
+level, also with the header modifications (see).
+
+Four differences :
+ * the 'column starts' table is at the top of the file, just after the header.
+ * you have to offset the adresses by -24 (they counted only header 1 ?)
+ * the end of column data marker isn't there.
+ * the backgroud color is always 0 (transparent) and ISN'T CODED.
+   (there was a color byte in the BM compressed format).
+
+There are two negative longs right at the beginning of header 1 that I don't
+understand, but they are linked somehow to how you view the fme.
+
+UNKNOWNS  : what's in FME_header1
+
+
++----------------+
+| 11. WAX FILES  |
++----------------+
+
+Contains the sprites.
+(samples : STORMTROOPERS, BONUS LIVES ...)
+
+These are a collection of embedded FME files. They contain a table with
+32 entries (offset to first entry = 0x000000BC). Each of these entry points to
+a table containing adresses of a complete embedded enhanced FME file.
+Take care to read that one properly (ie using the header2 offset in header1)
+as there are multiple consecutive header1 !
+
+As I began to wrote a viewer for these, I tried all the 32 first table entries
+for a few waxes. Though they followed a different path through the pointers in
+the file, I always get the same image ??? I'll try to find more later.
+
+typedef struct
+{
+	int	width;		// width in pixels
+	int	height;		// height in pixels
+	int	compression;	// compression type
+	int	size;		// total size of compressed cell
+	dword	*aOffsets;	// column byte offset table
+	dword	pad1;
+	byte	data[];		// cell data stored in columns
+} Cell;
+
+typedef struct
+{
+	fixed	xShift;		// x center point
+	fixed	yShift;		// y center point
+	int	flip;		// 0 = none, 1 = h, 2 = v
+	Cell	*pCell;		// offset to cell
+	fixed	unitwidth;	// cell width in feet
+	fixed	unitheight;	// cell height in feet
+	dword	pad3;
+	dword	pad4;
+} Frame;
+
+typedef struct
+{
+	dword	pad1;
+	dword	pad2;
+	dword	pad3;
+	dword	pad4;
+	Frame	*apFrame[32];	// Offsets to frames
+} Seq;
+
+typedef struct
+{
+	fixed	worldWidth;	// real-world width in fixed point (16/16)
+	fixed	worldHeight;	// real-world height in fixed point (16/16)
+	int	frameRate;	// frames per second
+	dword	nFrames;	// number of frames in this wax
+	dword	pad2;
+	dword	pad3;
+	dword	pad4;
+	Seq	*apSeq[32];	// View table (Offsets)
+} Wax;
+
+typedef struct
+{
+	fixed	version;	// File version control
+	int	nSeqs;		// Number of seqs
+	int	nFrames;	// Number of frames
+	int	nCells;		// Number of Cells
+	dword	xScale;		// x wax scale
+	dword	yScale;		// y wax scale
+	dword	extraLight;	// extra lighting
+	dword	pad4;
+	Wax	*apWax[32];	// Offset from file start to each wax
+} WaxHeader;
+
+
+
++----------------+
+| 12. 3DO FILES  |
++----------------+
+
+Contains the "3D" objects.
+(samples : MOUSEBOT, the DEATH STAR HOLOGRAM, ...)
+
+These are text files containing a geometric description of a full 3D object.
+I really don't have time now, but it should be quite easy to understand.
+
+UNKNOWNS  : everything!
+
++----------------+
+| 13. VOC FILES  |
++----------------+
+
+Contains the sounds.
+These are standard .VOC files in the Creative Labs format.
+
++----------------+
+| 14. GMD FILES  | [NEW]
++----------------+
+
+Contains the musics.
+
+The GMD files are SMF files type 2 (SMF = Standard Midi Files), but they've got
+a different header. If you want to convert the header, you'll have to delete
+everything BEFORE the string "MThd", so that the file begins with that string.
+After you've done that, you can play/edit the file with any type 2 compatible
+MIDI sequencer program.
+
+[NEW] You can use any General Midi file (ie with the MIDI header) to replace
+musics in DF, except for the levels musics. Those must be iMuse compatible,
+and FIGHT-01.GMD contains a "call" to STALK-01.GMD
+But you can freely replace the opening music with, for instance, a music file
+from Tie Fighter.
+
++----------------+
+| 15. MSG FILES  |
++----------------+
+
+Contains the text messages used in the game.
+
+local.msg contains error messages and should be left untouched.
+text.msg  however can be patched. The use of this is to create new messages
+          that you can use in your levels (create a trigger, use text: ttt).
+
+General format:
+
+     | MSG 1.0
+     |
+     | MSGS 119
+     |
+     | # internal game messages
+     | 0    0:  "Joystick Off"
+     | ...
+     | END
+
+MSGS is the number of messages. Don't forget to update it if you add messages.
+
+I found no problems by adding messages at 900 and more.
+
+     | 900  1:  "Hurry up !"
+
+I don't know what the second number ( ie 0: ) is for. I use 1:
+
+Here are also the 'cheat messages' from 700 onwards. Just so you know where to
+insert a few 'Cheater!' and 'Chicken Mode ON' ...
+
+
++------------------+
+| 16. VUE FILES    | [NEW]
++------------------+
+
+[Extract from VUE.TXT by Paul Nemesh]
+
+This what a sample .vue looks like:
+
+vue 1
+transform "def" #1 #2 #3 #4 #5 #6 #7 #8 #9 #10 #11 #12
+transform "def" ......
+
+vue 1 <- always use this type of .vue.  {Note:vue 201 is the same as vue 1,
+except each frame is numbered, and several different .vues are combined
+into one file, each referenced by its own name ("def" in my example)}
+
+"def" is the object name (referenced by the .o file, see below)
+
+The values for #1 thru #9 are the coefficients of the rotating and scaling
+matrix that is used by DF to determine how to draw the .3do.  Their values
+can be readily calculated by the spreadsheet that I've provided.  The 
+formulas are:
+#1: Scale x [cos(H) x cos(R)]
+#2: Scale x [-sin(H) x cos(P) + cos(H) x sin(R) x sin(P)]
+#3: Scale x [-sin(H) x sin(P) - cos(H) x sin(R) x cos(P)]
+#4: Scale x [sin(H) x cos(R)]
+#5: Scale x [cos(H) x cos(P) + sin(H) x sin(R) x sin(P)]
+#6: Scale x [cos(H) x sin(P) - sin(H) x sin(R) x cos(P)]
+#7: Scale x [sin(R)]
+#8: Scale x [-cos(R) x sin(P)]
+#9: Scale x [cos(R) x cos(P)]
+
+The values for #10 thru #12 are:
+#10: X coordinate
+#11: Z coordinate
+#12: -Y coordinate
+
+The .o file should have the following logic associated with the .3do:
+
+SEQ
+ KEY:   TRUE                    /* This always needs to be present. */
+ VUE:   TIEDEF.VUE "DEF"        /* This is the filname of the .vue, with the
+				object name in quotes. */
+ VUE_APPEND: TIEDEF2.VUE "DEF"  /* Same as the previous line, except this
+				will be run directly after the first .vue is 
+				finished. */
+ PAUSE: TRUE                    /* If this line is used, the .vue will run 
+				exactly once (like Kyle's ship taking off).
+				If this line is omitted, the .vue will 
+				continuously repeat itself. */
+SEQEND
+
+[End of extract]
+
+Apparently, the very best way to generate VUE files is to use 3D Studio, as
+.VUE is a standard 3DS file format, used to describe objects motion.
+By the way, 3DS .ASC is the base format for the 3DOs, after which the LCE team
+converted them.
+
+
++------------------+
+| 17. CHEAT CODES  |
++------------------+
+
+Just in case you haven't found them anywhere else !
+I've also shown the equivalent cheat for DOOMers.
+
+LABUG      bug mode
+LACDS      map with things               (IDDT x2)
+LADATA     coordinates & %secret         (IDMYPOS)
+LAIMLAME   total invincibility           (IDDQD)
+LANTFH     teleport to a safe
+LAPOGO     allow to climb any height     (IDSPISPOPD / IDCLIP w/o walking thru)
+LAPOSTAL   get weapons and ammo          (IDFA)
+LARANDY    weapon super charge
+LAREDLITE  freeze ennemies
+LASKIP     finishes current level
+LAUNLOCK   get all the keys              (the 'K' of IDKFA)
+
+LAlevel    jump to level                 (IDCLEV)

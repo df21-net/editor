@@ -1,0 +1,456 @@
++==================================+
+| Dark Forces UtilitieS and Editor |
++==================================+
+
+Author   : Yves  BORCKMANS  (yborckmans@abcomp.be (work))
+           (Please state the package version when you email me)
+Thanks to: Christian BROWET (browet@ibm.net)
+             for letting me use his net access to distribute this program.
+           Raphael QUINET and Brendon WYBER
+             for having made DEU and given me both a lot of fun making DOOM
+             levels and a lot of inspiration for DFUSE.
+
+   +------------------------------------------------------------------------+
+   | Dark Forces is (c) LucasArt Entertainment Company                      |
+   +------------------------------------------------------------------------+
+
+DFUSE is copyrighted and not public domain software, so that I can keep the
+right to state the following:
+
+ 1. DFUSE is FREE (see 7).
+
+ 2. You are authorized to distribute the DFUSE package, provided it is in its
+    original packaging.
+ 3. You are NOT authorized to modify and distribute the DFUSE package,
+    and more specifically the DOOM E1M1 port to Dark Forces.
+
+ 4. You are authorized to distribute levels generated with DFUSE.
+ 5. You are NOT authorized to make people pay for those levels if you don't
+    contact me before (I may write free programs, but I won't let others make
+    money of them).
+ 6. If you want to mass-distribute DFUSE for instance on CD-ROM or diskette,
+    I give you the right to do so, provided I receive a copy of it, and the
+    packaging isn't changed.
+
+ 7. If you use and like DFUSE, the only form of payment I ask is that you send
+    me email or a post-card at the following address:
+
+        Yves BORCKMANS
+        AV MOZART 8 BTE 3
+        B-1190 BRUSSELS
+        BELGIUM
+
+    Now, of course, if you think you have too much money and want to make a
+    donation, my address is just above... :)
+
+Disclaimer: As your original Dark Forces software is on CD-ROM, nothing can
+            happen to it by using DFUSE. To the best of my knowledge, DFUSE is
+            safe to use, and never accesses data in another place than its home
+            directory tree, the Dark Forces installed game directory, and the
+            Dark Forces CD-ROM. So, I cannot be held responsible for anything
+            that may happen to you while using it.
+
+
+Welcome to DFUSE !
+
++-------------------+
+| TABLE of CONTENTS |
++-------------------+
+
+ 0.    OVERVIEW
+ I.    DIRECTORY TREE
+ II.   A SHORT TOUR OF THE MENUS
+
+
+ 0.    OVERVIEW
+       ========
+
+DFUSE is a collection of utilities to modify / create Dark Forces levels.
+Its heart is the DFUSE.EXE program which is a multilevel menu system.
+As you have seen in the readme.1st file, conventionnal memory is an important
+issue, so DFUSE relies heavily on external executables. Those are:
+
+   * LEVMAP.EXE    a full featured multilayered geometry and objects editor
+                   with viewers to allow graphical texturing and object
+                   selection.
+   * GOBINFO.EXE   a GOB file directory lister, also capable of generating
+                   batches for FEXTRACT
+   * DIR2GOB.EXE   a tool to construct a GOB from the contents of a directory.
+   * GOBMAKE.EXE   a tool to reconstruct an extracted GOB from a
+                   'mygob.gom' make file and a 'MYGOB.GOX' directory.
+   * FEXTRACT.EXE  a general purpose 'part of file' extractor
+   * xxxVIEW.EXE   BM, FME and WAX viewers
+   * BM2BMP.EXE    a .BM to .BMP convertor
+
+Note that you will also find a few other utilities which haven't been
+integrated in the DFUSE menus.
+
+   * HEX.EXE       a general purpose HEX editor which lacks sophistication
+                   but does the job
+   * DARKHACK.EXE  will 'hack' your darkpilo.cfg file to give access to all
+                   the levels and give you all weapons, ...
+   * BMP2BM.EXE    will convert 256 colors .BMP files to .BM
+                   If you use .BMP extracted with BM2BMP and worked upon in a
+                   tool that 'respects' its palette (PhotoStyler is great)
+                   you won't have problems. Else, try it and see the results
+                   as my palette conversion is a bit lame.
+                   You may also try a few settings in the [BMP2BM-RGB] section
+                   of DFUSE.INI, but without any guarantee !
+                   Does somebody have an algorithm to do that correctly ?
+   * MKSW_4_4.EXE  this will create a 32x32 switch from two 32x32 BMs, and an
+                   existing switch.
+   * GOB2DFU.BAT   is a simple batch file that accept a gobfile as parameter
+                   (without the .GOB extension !) and extract it in the
+                   correct directories. This has been added quickly for
+                   convenience, and will be made into a DFUSE menu later.
+                   CAUTION : there is NO protection for any level you are
+                             working upon; if the .GOB patches the same level,
+                             your work WILL BE DESTROYED !!!
+   * OFFSTVUE.EXE  this will offset the absolute coordinates used in a .VUE
+                   file, so you will be able to use it any place. Type
+                   OFFSTVUE without any parameters to get a command line
+                   description.
+   * LFDINFO.EXE   a LFD file directory lister, also capable of generating
+                   batches for FEXTRACT. [NEW]
+   * FILMINFO.EXE  a FILM resource lister. [NEW]
+
+
+I won't take much time explaining how to use DFUSE as I think the menu items
+are quite self explanatory. You will however find a short explanation of the
+directory tree that DFUSE needs, as well as a brief description of the menus.
+You should also read the df_specs.doc file which contains essential information.
+
+
+ I.    DIRECTORY TREE
+       ==============
+
+DFUSE uses a quite complicated directory tree to try and keep a lot of data
+organized.
+Warning : DO NOT DELETE ANY OF THESE DIRECTORIES (except the .GOX) !!!
+Let's say you have installed in \DFUSE.
+
+\DFUSE
+      \DFUDATA
+      \DOC
+
+      \DARK
+      \SOUNDS
+      \SPRITES
+      \TEXTURES
+
+      \GOBDATA
+              \DARK.GOX
+              \SOUNDS.GOX
+              \SPRITES.GOX
+              \TEXTURES.GOX
+
+      \BACKUPS
+      \TEMP
+
+      \DFUTEST
+      \DFUPLUS
+
+      \DFUGRAPH
+
+
+0. DFUSE
+   -----
+   This directory contains all the executables.
+   A VERY important file here is DFUSE.INI which contains a lot of settings for
+   ALL the programs (except HEX). So, even if all is working perfectly, you may
+   want to allocate a bit more memory to vertices in the level editor, or
+   decide to have your WAX viewer in 320x200, or ...
+   You'll find a LOT of documented settings there, and the info you entered at
+   install time may be fine tuned.
+
+   A quick note on !DFUSE.BAT: as DFUSE includes a DOS Shell option, it is very
+   easy to relaunch DFUSE from the shell, or from another DOS box if using
+   Windows or OS/2. I implemented a little safeguard for those of you that
+   do that kind of things. Of course, those of you using SHARE.EXE will be
+   greeted by a 'Sharing violation on drive x:' before !
+   When DFUSE starts, it will check for a file named DFUSE.RUN and will exit
+   with a message telling you that DFUSE is already running. If it doesn't
+   find the file, then it creates it, runs normally, and destroy it at exit.
+   The problem is that DFUSE won't have the chance to clean it up if the PC
+   crashes for any reason. So the next time, the file will be there and DFUSE
+   won't start.  !DFUSE.BAT will simply remove the file and start DFUSE.EXE .
+
+
+1. DFUDATA
+   -------
+   This directory will contain data used internally by the programs. I tried to
+   use an open approach, and this will let you modify the lists of values.
+
+   This has a little drawback: if you create a new texture, it won't be in the
+   lists automatically. However, I think that sorting the data as you like it is
+   much more important. Also note that you can set things like *DOOR64x64*
+   in the lists to set headers (do not make it longer than a filename however).
+
+2. DOC
+   ---
+   All doc files, except the readme.1st file which is in the main directory.
+
+3. DARK (and SOUNDS, SPRITES and TEXTURES)
+   ----
+   These are the patch directories. What you put there will normally be copied
+   to your installed game directory when you test the level or included in
+   testlevl.gob . And, following the patch rules, will be used by the game.
+
+   DARK     may contain: levels, .3DO files, jedi.lvl and text.msg
+   SOUNDS       ''     : any .VOC or .GMD files
+   SPRITES      ''     : any .FME or .WAX files
+   TEXTURES     ''     : any .BM file
+
+   If you put something else in those directories, it won't be copied.
+   (That's the purpose of the DFUPLUS directory !)
+   Also, DFUSE will only copy the currently selected level.
+
+   Please note that the [G] Single .GOB Extract option in DFUSE will extract
+   in these directories (as opposed to the [F] Full .GOB Extract which will
+   use the GOBDATA directories).
+
+4. GOBDATA
+   -------
+   This will contain the results of the 'Full GOB Extract' option. So,
+   if you choose to fully extract say 'dark.gob', a DARK.GOX directory and a
+   DARK.GOM 'makefile' will be created. If you choose to reconstruct a GOB,
+   it will also be there.
+   Please note that .GOB are HUGE files so watch your disk space.
+
+5. BACKUPS
+   -------
+   The level editor will create a copy of the current .LEV, .O, .GOL and .INF
+   files there before saving. So if you make a big mistake...
+   Please note that the copies will be named backup.LEV, etc. so only one
+   level can be backed up.
+
+6. TEMP
+   ----
+   All the programs use this directory for temporary files. If DFUSE isn't
+   running, you may delete everything you find there (ie after a crash).
+
+7. DFUTEST
+   -------
+   DFUSE reserves DFUTEST for preparing the testlevl.gob file when testing.
+   Warning: the contents of this directory are cleared by DFUSE.
+
+7. DFUPLUS
+   -------
+   Anything you put into DFUPLUS will be either included in testlevl.gob
+   or copied to the [INSTALLED] directory when testing the level.
+   This allow you to include things DFUSE doesn't normally handle.
+
+   We could also try to use a level information file (something like GOB.NFO)
+   with a determined (text?) format, to be included in all patch 'GOB's.
+   So all of us who made GOB information programs would make a small update,
+   and the users will have level author, which level it replaces,... displayed.
+   If this interest all of you level and tools makers, mail me to discuss it!
+
+   In the mean time, I borrowed the widely available WAD_AUTH.TXT file,
+   modified it a little and renamed it GOB_AUTH.TXT . Fill it up before
+   distributing your level.
+
+   If someone in particular is responsible for WAD_AUTH, I give him full
+   credits.
+
+
+9. DFUGRAPH
+   --------
+   (please consider this one reserved for 'future extensions' as I'm planning
+    to reorganize the conversions of BM, FME and WAX to and from BMP, as well
+    as automating switches and animated textures creation)
+
+Note: if you are limited in disk space (who isn't ?) you should take a little
+      care because DFUSE sessions can generate a LOT of data. Let's say that
+      you are going to do a modification to the DTENTION level. It's your first
+      time on that one, so when you select the level DFUSE will extract it.
+      You go to the editor and make changes, then save. The editor will make a
+      copy in the BACKUPS directory. Then you exit, come back to DFUSE, and use
+      the 'Test Level' option. The level will be copied to the installed game
+      directory to serve as patch.
+
+      So? Well this makes you 3 copies of DTENTION and totals around 3 Megs.
+      And you have 14 levels in the original game !
+
+      Also, if you use 'Full .GOB Extract' know that DARK.GOB for instance
+      GOBbles up 14 Megs !
+
+
+ II.   A SHORT TOUR OF THE MENUS
+       =========================
+
+The main menu of DFUSE will present you the following screen:
+
+                     +------------------------------+
+                     |  DFUSE Main MENU version     |
+                     |         copyright            |
+                     +------------------------------+
+                     |  [F].  Full   .GOB Extract   |
+                     |  [G].  Single .GOB Extract   |
+                     |  [L].  Levels  Menu          |
+                     |  [T].  Special Text Files    |
+                     |  [V].  Viewers Menu          |
+                     |                              |
+                     |  [X].  Launch DF             |
+                     |                              |
+                     |  [Z].  OS Shell              |
+                     | [Esc]  Exit DFUSE            |
+                     +------------------------------+
+
+This is a typical DFUSE menu, and works simply by typing the letter enclosed
+in '[]' at the start of the line. Pressing Esc will exit DFUSE in this menu,
+and bring you back to the parent menu in the others.
+
+From now on, I won't repeat the OS Shell and ESC lines, nor the (c) line.
+
+1.  [F].  Full   .GOB Extract
+    -------------------------
+
+This will bring you to the full .GOB extraction menu.
+
+                     +------------------------------+
+                     |       Full .GOB Extract      |
+                     +------------------------------+
+                     | [E].  Edit GOM file          |
+                     | [I].  GOB info               |
+                     | [M].  GOB make (reconstruct) |
+                     | [X].  GOB extract            |
+                     +------------------------------+
+
+When you want to extract from a .GOB, you may get a listing of its directory
+with the GOB info function. It will present you with a list of the GOBs, and
+you choose one of them.
+
+The GOB extract function works the same, letting you choose one of the GOBs,
+then extracting it in a gobname.GOX directory under GOBDATA. This will also
+generate a gobname.GOM file, containing a snapshot of the GOB directory entries
+at extract time. This file can be edited, then used as a 'makefile' for the
+GOB make function, possibly with addons and deletions. Please note that you
+normally don't need to do this at all.
+
+
+2.  [G].  Single .GOB Extract
+    -------------------------
+
+This will bring you to the single .GOB extraction menu.
+
+                     +------------------------------+
+                     |      Single .GOB Extract     |
+                     +------------------------------+
+                     | [J].  Extract JEDI.LVL       |
+                     | [L].  Extract a Level        |
+                     | [T].  Extract TEXT.MSG       |
+                     | [X].  Extract Single File    |
+                     +------------------------------+
+
+You can use the [J] and [T] functions to reextract to important text files.
+The [L] function will (re)extract a full level.
+Warning: use it carefully as this may destroy your work on a level!
+
+Finally, the [X] function will let you extract any single file from any .GOB .
+
+
+3.  [L].  Levels menu
+    -----------------
+
+This is probably the most important menu !
+The first time you come to this menu, it will present itself this way:
+
+                     +------------------------------+
+                     |      DFUSE Levels MENU       |
+                     +------------------------------+
+                     | [C].  CHOOSE LEVEL !!        |
+                     +------------------------------+
+
+DFUSE is asking you to select a level to work upon. So press the 'C' key, and
+select in the list that appears. Afterwards, the menu will appear as this:
+
+                     +------------------------------+
+                     |      DFUSE Levels MENU       |
+                     +------------------------------+
+                     | [C].  Change from 'levelname'|
+                     | [I].  Edit .INF              |
+                     | [G].  Edit .GOL              |
+                     | [L].  Edit .LEV (Txt)        |
+                     | [M].  Edit .LEV (Map)        |
+                     | [O].  Edit .O                |
+                     | [P].  View Palette           |
+                     | [T].  Test Level             |
+                     +------------------------------+
+
+[C] will let you change to another level, possibly extracting it from DARK.GOB
+if it hasn't been extracted yet.
+
+The [I], [G], [L] and [O] functions let you edit or list the corresponding
+files, depending of the [SECURITY] section of your DFUSE.INI config file.
+
+[P] will display the palette of the currently selected level. Note that this
+correspond to levelname.PAL, and NOT to the 'PALETTE' entry in the LEV file.
+
+[T] will prepare to test the level by
+    * creating testlevl.gob and copying it to your installed game directory,
+ OR * copying all the necessary files to your installed game directory,
+
+and launching Dark Forces.
+
+The method of testing is set in DFUSE.INI in the [DFUSE-TESTMETHOD] section.
+The default is TEST_AS_GOB=1 which is the .GOB method.
+
+Note that when your level is ready, you just have to rename the testlevl.gob
+file to something more relevant (and ZIP it !) to distribute it.
+
+Finally, [M] will start the level editor (LEVMAP.EXE), so see the levmap.doc
+file for that one.
+
+4.  [T].  Special Text Files
+    ------------------------
+
+This will simply offer two choices to edit the JEDI.LVL and the TEXT.MSG files.
+
+                     +------------------------------+
+                     |       DFUSE Text MENU        |
+                     +------------------------------+
+                     | [J].  Edit JEDI.LVL          |
+                     | [T].  Edit TEXT.MSG          |
+                     +------------------------------+
+
+5.  [V].  Viewers Menu
+    ------------------
+
+This one will let you select the type of viewer, offering you to choose between
+four different viewers: BM, FME, WAX and VOC
+(of course, it's more of a 'listener' in that last case).
+Note that the first three viewers come from DFUSE itself, but for the fourth
+(VOC) you'll have to setup a VOCPLAYER in DFUSE.INI . The one that comes with
+my SoundBlaster is perfect, I don't know for other sound cards.
+
+                     +------------------------------+
+                     |     DFUSE Viewers MENU       |
+                     +------------------------------+
+                     | [B].  .BM  Menu (Textures)   |
+                     | [F].  .FME Menu (Frames)     |
+                     | [V].  .VOC Menu (Sounds)     |
+                     | [W].  .WAX Menu (Sprites)    |
+                     +------------------------------+
+
+They are all very similar, so I'll show only the .BM viewer.
+
+                     +------------------------------+
+                     |       DFUSE .BM  MENU        |
+                     +------------------------------+
+                     |Current .BM directory is :    |
+                     | (directory)                  |
+                     |Current .PAL for [V] & [2] is |
+                     | (palette)                    |
+                     | [C].  Change .BM directory   |
+                     | [I].  Edit  DFUSE.INI        |
+                     | [P].  Change .PAL            |
+                     | [V].  View .BM               |
+                     | [2].  .BM -> .BMP            |
+                     +------------------------------+
+
+I think this is all very straightforward. Just remember you can change graphic
+mode and .BGI for the viewers separately in DFUSE.INI .
+
+Note that the BM viewer has conversion to .BMP, and that the VOC 'viewer' has
+conversion to .WAV (if you have set the correct tool in DFUSE.INI).

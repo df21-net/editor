@@ -1,0 +1,2 @@
+This file will be edited when you press Shift+F1 in the level editor.
+Use this as you see fit. (I use it as a 'to do' list.)

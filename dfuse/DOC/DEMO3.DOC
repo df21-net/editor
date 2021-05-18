@@ -1,0 +1,37 @@
+/* -------------------------------------------------------------------------- */
+/* DFUSE DEMO 3 : simple elevators.                                           */
+/* -------------------------------------------------------------------------- */
+
+This mini-level has been designed to demonstrate the use of simple elevators.
+Please see their description in the .INF file (press 'i' in LEVMAP).
+
+You fill find:
+
+1. A change_light elevator (in the 'change_light' sector), which simply
+   pulsates the ambient light from 0 to 31 and back.
+
+2. A simple platform that will elevate you 16 above the floor, then stay there
+   for 10 seconds, before coming back down.
+   Please note the use of the PEG TX ON VERTI MOVING WALL flag (WL 1, 16).
+   To get a demo of its use, jump off the platform, then nudge it from outside.
+   See how the texture moves 'naturally' with the wall. Now, do the same
+   operation, but go and see the 'northen' side which has been 'forgotten'.
+   Notice how this ISN'T natural!
+
+3. Two scroll_floor elevators, the second working as a slave of the first.
+   The second also has SC flag 1, 32768 set, so you won't follw the move !
+
+4. A morph_spin2 elevator, which will allow you to spin wildly. Note that a
+   morph_spin1 would have spun, but not you !
+
+TO INSTALL IT
+=============
+
+Go to the DOS prompt, and type 'demo3-d! -d'.
+
+DON'T FORGET THE '-d' or the level will be extracted in the wrong directory.
+
+Be careful, this is a SECBASE replacement, and you risk to destroy any work you
+have done on that level.
+
+(note that extracted means 'from the PKZIP exe file' here, not from a .GOB)

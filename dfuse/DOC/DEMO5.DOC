@@ -1,0 +1,29 @@
+/* -------------------------------------------------------------------------- */
+/* DFUSE DEMO 5 : multiple classes elevators                                  */
+/* -------------------------------------------------------------------------- */
+
+This mini-level has been designed to demonstrate the use of multiple class
+elevators.
+Please also see their description in the .INF file (press 'i' in LEVMAP).
+It is based on demo3, so try that one first, as it will be easier to follow.
+
+You fill find:
+
+1. A simple platform elevator, but with TWO CLASSES. It also acts as a sector
+   TRIGGER which will enable the scroll1 elevator.
+
+2. The morphspin01 elevator now also has FOUR CLASSES, all are ELEVATORS.
+   It rotates AND its floor goes up and down AND its ceiling goes down and up
+   AND change lights (moving it in the room it too much!)
+
+TO INSTALL IT
+=============
+
+Go to the DOS prompt, and type 'demo5-d! -d'.
+
+DON'T FORGET THE '-d' or the level will be extracted in the wrong directory.
+
+Be careful, this is a SECBASE replacement, and you risk to destroy any work you
+have done on that level.
+
+(note that extracted means 'from the PKZIP exe file' here, not from a .GOB)

@@ -1,0 +1,37 @@
+/* -------------------------------------------------------------------------- */
+/* DFUSE DEMO 4 : simple triggers.                                            */
+/* -------------------------------------------------------------------------- */
+
+This mini-level has been designed to demonstrate the use of triggers.
+Please also see their description in the .INF file (press 'i' in LEVMAP).
+It is based on demo3, so try that one first, as it will be easier to follow.
+
+You fill find:
+
+1. A trigger switch1, which enables the simple_platform elevator whose MASTER
+   is OFF at startup. This is an essential thing to know.
+   [Left wall]
+
+2. A trigger switch1, which send next_stop messages to a variable_switch1
+   elevator which alternate between two positions. This one sends messages
+   to morphspin01 (master_on, master_off, master_on, ...). This in effect
+   implements a toggle, but the switch always come back to its start 'color'.
+   Note that a slight 0.25 s delay has been set up, so that you see that
+   the switch really changes !
+   [Right wall]
+
+3. A real trigger toggle, which does the same as 2, but for the scroll1
+   elevator. Here, the switch is and stays red when off, and green when on.
+   [Bottom Left wall]
+
+TO INSTALL IT
+=============
+
+Go to the DOS prompt, and type 'demo4-d! -d'.
+
+DON'T FORGET THE '-d' or the level will be extracted in the wrong directory.
+
+Be careful, this is a SECBASE replacement, and you risk to destroy any work you
+have done on that level.
+
+(note that extracted means 'from the PKZIP exe file' here, not from a .GOB)

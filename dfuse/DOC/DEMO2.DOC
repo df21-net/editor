@@ -1,0 +1,54 @@
+/* -------------------------------------------------------------------------- */
+/* DFUSE DEMO 2 : flags demo.                                                 */
+/* -------------------------------------------------------------------------- */
+
+This mini-level has been designed to demonstrate the use of the flags.
+Of course, all the flags aren't used, but you may find these :
+
+SECTOR FLAGS
+------------
+
+1. sky                     (SC flag 1, 1)
+2. normal door             (SC flag 1, 2)
+3. fire-reflective         (SC flag 1, 4)
+4. skating                 (SC flag 1, 16)
+5. exploding door          (SC flag 1, 64)
+6. killing ground slow     (SC flag 1, 2048)
+7. killing ground fast     (SC flag 1, 4096)
+8. secret                  (SC flag 1, 524288)   [NEW]
+
+To easily find these, use the [F] key while in SECTORS mode.
+
+WALL FLAGS
+----------
+
+1. force MID / transparent (WL flag 1, 1)
+   in exploding_door and
+   transparent_door
+2. illuminated sign        (WL flag 1, 2)        [NEW]
+   in illum_sign
+3. show as normal on map   (WL flag 1, 2048)
+   in exploding_door
+4. cannot walk through     (WL flag 3, 2)
+   on other/skating separation
+5. cannot fire through     (WL flag 3, 8)
+   on other/skating separation
+
+
+Try them all, then modify the level to see what happen if you don't set them.
+Also try the SC flag 1, bit 8 with different SKY sectors ceiling altitudes.
+Try it on the transparent_door sector, just to see what happens to the MID tx.
+
+Note that I have provided a few thermal detonators for the exploding_door.
+
+TO INSTALL IT
+=============
+
+Go to the DOS prompt, and type 'demo2-d! -d'.
+
+DON'T FORGET THE '-d' or the level will be extracted in the wrong directory.
+
+Be careful, this is a SECBASE replacement, and you risk to destroy any work you
+have done on that level.
+
+(note that extracted means 'from the PKZIP exe file' here, not from a .GOB)

@@ -60,7 +60,7 @@ begin
   begin
    Chdir(WDFUSEdir);
    StrPcopy(tmp, LBHidden.Items[LBExtTools.ItemIndex] + ' ' + EDParameters.Text);
-   WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOWNORMAL);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWNORMAL);
    ShowWindow(MapWindow.Handle, SW_HIDE);
    TMPHWindow := GetActiveWindow;
    ShowWindow(MapWindow.Handle, SW_SHOW);

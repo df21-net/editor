@@ -91,7 +91,7 @@ begin
   for i := 1 to MASTERN do
     begin
       FileRead(gf, gx, SizeOf(gx));
-      if AnsiString(gs.MAGIC) + AnsiString(gx.NAME) = RESName then
+      if AnsiString(gx.MAGIC) + AnsiString(gx.NAME) = RESName then
         begin
           IX    := cur_idx;
           LEN   := gx.LEN;

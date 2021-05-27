@@ -161,7 +161,7 @@ begin
  if TestLaunch then
   begin
    strPcopy(tmp, WDFUSEdir + '\DARK.PIF -u' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB'));
-   WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOWMAXIMIZED);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMIZED);
   end;
 end;
 

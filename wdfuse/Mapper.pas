@@ -3589,7 +3589,7 @@ begin
   if UpperCase(INFEditor) <> '' then
    begin
     StrPCopy(tmp, INFEditor + ' ' + LEVELPath + '\' + LEVELName + '.INF');
-    WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOW);
+    WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOW);
    end
   else
    begin

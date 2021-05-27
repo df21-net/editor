@@ -1,7 +1,11 @@
 # Editor
-Source code for Dark Forces Editor DFUSE from Summer 1995. It is the C version
+This contains two Dark Forces Editor source codes.
 
-This was provided on 5/18/2021 by Brad Oliver https://github.com/hoserama99 who used this codebase to build the Dark Forge editor for the Macintosh.
+1. Source code for Dark Forces Editor **DFUSE** from Summer 1995. It is the C version
+2. Source code for Dark Forces Editor **WDFUSE** from 1997. It is the Delphi/Pascal version.
+
+The DFUSE code was provided on 5/18/2021 by Brad Oliver https://github.com/hoserama99 who used this codebase to build the Dark Forge editor for the Macintosh.
+The WDFUSE code was provided on 5/22/2021 by Alexei Novikov https://www.linkedin.com/in/alexei-n-02313714a/ 
 
 Original Author is Yves Borckmans https://www.linkedin.com/in/deathangel/ It is kept on github for preservation purposes (and hopefully additional features). 
 

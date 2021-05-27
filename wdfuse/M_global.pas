@@ -701,8 +701,8 @@ begin
 end;
 
 begin
-  DecimalSeparator  := '.';
-  ThousandSeparator := ',';
+  //DecimalSeparator  := '.';
+  //ThousandSeparator := ',';
 
   DOOM        := FALSE;
   MAP_MODE    := MM_VX;

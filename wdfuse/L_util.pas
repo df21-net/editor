@@ -65,6 +65,13 @@ begin
      IsLFD := FALSE;
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
 
 function IsResourceInLFD(LFDname, RESName : TFileName; VAR IX, LEN : LongInt) : Boolean;
 var i       : LongInt;
@@ -84,7 +91,7 @@ begin
   for i := 1 to MASTERN do
     begin
       FileRead(gf, gx, SizeOf(gx));
-      if (gx.MAGIC + gx.NAME) = RESName then
+      if ArrayToString(gx.MAGIC) + ArrayToString(gx.NAME) = String(RESName) then
         begin
           IX    := cur_idx;
           LEN   := gx.LEN;

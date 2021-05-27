@@ -1,0 +1,360 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{8E4A68FD-EFE6-4769-9847-6F14521DF0CA}</ProjectGuid>
+        <MainSource>wdfuse32.dpr</MainSource>
+        <Base>True</Base>
+        <Config Condition="'$(Config)'==''">Debug</Config>
+        <TargetedPlatforms>1097</TargetedPlatforms>
+        <AppType>Application</AppType>
+        <FrameworkType>VCL</FrameworkType>
+        <ProjectVersion>18.8</ProjectVersion>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Android' and '$(Base)'=='true') or '$(Base_Android)'!=''">
+        <Base_Android>true</Base_Android>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='iOSDevice32' and '$(Base)'=='true') or '$(Base_iOSDevice32)'!=''">
+        <Base_iOSDevice32>true</Base_iOSDevice32>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='iOSSimulator' and '$(Base)'=='true') or '$(Base_iOSSimulator)'!=''">
+        <Base_iOSSimulator>true</Base_iOSSimulator>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Base)'=='true') or '$(Base_Win32)'!=''">
+        <Base_Win32>true</Base_Win32>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_1)'!=''">
+        <Cfg_1>true</Cfg_1>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win32)'!=''">
+        <Cfg_1_Win32>true</Cfg_1_Win32>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_2)'!=''">
+        <Cfg_2>true</Cfg_2>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='iOSDevice32' and '$(Cfg_2)'=='true') or '$(Cfg_2_iOSDevice32)'!=''">
+        <Cfg_2_iOSDevice32>true</Cfg_2_iOSDevice32>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='iOSDevice64' and '$(Cfg_2)'=='true') or '$(Cfg_2_iOSDevice64)'!=''">
+        <Cfg_2_iOSDevice64>true</Cfg_2_iOSDevice64>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
+        <Cfg_2_Win32>true</Cfg_2_Win32>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base)'!=''">
+        <DCC_E>false</DCC_E>
+        <DCC_F>false</DCC_F>
+        <DCC_K>false</DCC_K>
+        <DCC_N>true</DCC_N>
+        <DCC_S>false</DCC_S>
+        <DCC_ImageBase>00400000</DCC_ImageBase>
+        <DCC_Alignment>0</DCC_Alignment>
+        <DCC_AssertionsAtRuntime>false</DCC_AssertionsAtRuntime>
+        <DCC_DebugInformation>1</DCC_DebugInformation>
+        <DCC_LongStrings>false</DCC_LongStrings>
+        <DCC_WriteableConstants>true</DCC_WriteableConstants>
+        <DCC_StrictVarStrings>false</DCC_StrictVarStrings>
+        <DCC_SymbolReferenceInfo>1</DCC_SymbolReferenceInfo>
+        <DCC_Hints>false</DCC_Hints>
+        <DCC_Warnings>false</DCC_Warnings>
+        <DCC_Define>WDF32;$(DCC_Define)</DCC_Define>
+        <SanitizedProjectName>wdfuse32</SanitizedProjectName>
+        <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;Winapi;$(DCC_Namespace)</DCC_Namespace>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <DCC_UnitAlias>V_Util=V_Util32;C_Util=C_Util32;$(DCC_UnitAlias)</DCC_UnitAlias>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Android)'!=''">
+        <Android_LauncherIcon36>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_36x36.png</Android_LauncherIcon36>
+        <Android_LauncherIcon48>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_48x48.png</Android_LauncherIcon48>
+        <Android_LauncherIcon72>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_72x72.png</Android_LauncherIcon72>
+        <Android_LauncherIcon96>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_96x96.png</Android_LauncherIcon96>
+        <Android_LauncherIcon144>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_144x144.png</Android_LauncherIcon144>
+        <Android_SplashImage426>$(BDS)\bin\Artwork\Android\FM_SplashImage_426x320.png</Android_SplashImage426>
+        <Android_SplashImage470>$(BDS)\bin\Artwork\Android\FM_SplashImage_470x320.png</Android_SplashImage470>
+        <Android_SplashImage640>$(BDS)\bin\Artwork\Android\FM_SplashImage_640x480.png</Android_SplashImage640>
+        <Android_SplashImage960>$(BDS)\bin\Artwork\Android\FM_SplashImage_960x720.png</Android_SplashImage960>
+        <AUP_ACCESS_COARSE_LOCATION>true</AUP_ACCESS_COARSE_LOCATION>
+        <AUP_ACCESS_FINE_LOCATION>true</AUP_ACCESS_FINE_LOCATION>
+        <AUP_CALL_PHONE>true</AUP_CALL_PHONE>
+        <AUP_CAMERA>true</AUP_CAMERA>
+        <AUP_INTERNET>true</AUP_INTERNET>
+        <AUP_READ_CALENDAR>true</AUP_READ_CALENDAR>
+        <AUP_READ_EXTERNAL_STORAGE>true</AUP_READ_EXTERNAL_STORAGE>
+        <AUP_WRITE_CALENDAR>true</AUP_WRITE_CALENDAR>
+        <AUP_WRITE_EXTERNAL_STORAGE>true</AUP_WRITE_EXTERNAL_STORAGE>
+        <AUP_READ_PHONE_STATE>true</AUP_READ_PHONE_STATE>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_iOSDevice32)'!=''">
+        <iPhone_AppIcon60>$(BDS)\bin\Artwork\iOS\iPhone\FM_ApplicationIcon_60x60.png</iPhone_AppIcon60>
+        <iPhone_AppIcon120>$(BDS)\bin\Artwork\iOS\iPhone\FM_ApplicationIcon_120x120.png</iPhone_AppIcon120>
+        <iPhone_Spotlight40>$(BDS)\bin\Artwork\iOS\iPhone\FM_SpotlightSearchIcon_40x40.png</iPhone_Spotlight40>
+        <iPhone_Spotlight80>$(BDS)\bin\Artwork\iOS\iPhone\FM_SpotlightSearchIcon_80x80.png</iPhone_Spotlight80>
+        <iPad_SpotLight40>$(BDS)\bin\Artwork\iOS\iPad\FM_SpotlightSearchIcon_40x40.png</iPad_SpotLight40>
+        <iPad_SpotLight80>$(BDS)\bin\Artwork\iOS\iPad\FM_SpotlightSearchIcon_80x80.png</iPad_SpotLight80>
+        <iPad_AppIcon76>$(BDS)\bin\Artwork\iOS\iPad\FM_ApplicationIcon_76x76.png</iPad_AppIcon76>
+        <iPad_AppIcon152>$(BDS)\bin\Artwork\iOS\iPad\FM_ApplicationIcon_152x152.png</iPad_AppIcon152>
+        <iPad_Launch768x1024>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImagePortrait_768x1024.png</iPad_Launch768x1024>
+        <iPad_Launch1024x768>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImageLandscape_1024x768.png</iPad_Launch1024x768>
+        <iPad_Launch1536x2048>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImagePortrait_1536x2048.png</iPad_Launch1536x2048>
+        <iPad_Launch2048x1536>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImageLandscape_2048x1536.png</iPad_Launch2048x1536>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_iOSSimulator)'!=''">
+        <iPhone_AppIcon60>$(BDS)\bin\Artwork\iOS\iPhone\FM_ApplicationIcon_60x60.png</iPhone_AppIcon60>
+        <iPhone_AppIcon120>$(BDS)\bin\Artwork\iOS\iPhone\FM_ApplicationIcon_120x120.png</iPhone_AppIcon120>
+        <iPhone_Spotlight40>$(BDS)\bin\Artwork\iOS\iPhone\FM_SpotlightSearchIcon_40x40.png</iPhone_Spotlight40>
+        <iPhone_Spotlight80>$(BDS)\bin\Artwork\iOS\iPhone\FM_SpotlightSearchIcon_80x80.png</iPhone_Spotlight80>
+        <iPad_SpotLight40>$(BDS)\bin\Artwork\iOS\iPad\FM_SpotlightSearchIcon_40x40.png</iPad_SpotLight40>
+        <iPad_SpotLight80>$(BDS)\bin\Artwork\iOS\iPad\FM_SpotlightSearchIcon_80x80.png</iPad_SpotLight80>
+        <iPad_AppIcon76>$(BDS)\bin\Artwork\iOS\iPad\FM_ApplicationIcon_76x76.png</iPad_AppIcon76>
+        <iPad_AppIcon152>$(BDS)\bin\Artwork\iOS\iPad\FM_ApplicationIcon_152x152.png</iPad_AppIcon152>
+        <iPad_Launch768x1024>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImagePortrait_768x1024.png</iPad_Launch768x1024>
+        <iPad_Launch1024x768>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImageLandscape_1024x768.png</iPad_Launch1024x768>
+        <iPad_Launch1536x2048>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImagePortrait_1536x2048.png</iPad_Launch1536x2048>
+        <iPad_Launch2048x1536>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImageLandscape_2048x1536.png</iPad_Launch2048x1536>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Win32)'!=''">
+        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
+        <BT_BuildType>Debug</BT_BuildType>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+        <Icon_MainIcon>wdfuse32_Icon.ico</Icon_MainIcon>
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
+        <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1)'!=''">
+        <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+        <DCC_DebugInformation>0</DCC_DebugInformation>
+        <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2)'!=''">
+        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+        <DCC_Optimize>false</DCC_Optimize>
+        <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_iOSDevice32)'!=''">
+        <BT_BuildType>Debug</BT_BuildType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_iOSDevice64)'!=''">
+        <BT_BuildType>Debug</BT_BuildType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
+    </PropertyGroup>
+    <ItemGroup>
+        <DelphiCompile Include="$(MainSource)">
+            <MainSource>MainSource</MainSource>
+        </DelphiCompile>
+        <DCCReference Include="MAPPER.PAS">
+            <Form>MapWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_GLOBAL.PAS"/>
+        <DCCReference Include="_MATH.PAS"/>
+        <DCCReference Include="_FILES.PAS"/>
+        <DCCReference Include="_STRINGS.PAS"/>
+        <DCCReference Include="_UNDOC.PAS"/>
+        <DCCReference Include="R_UTIL.PAS"/>
+        <DCCReference Include="W_UTIL.PAS"/>
+        <DCCReference Include="M_IO.PAS"/>
+        <DCCReference Include="M_PROGRS.PAS">
+            <Form>ProgressWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_UTIL.PAS"/>
+        <DCCReference Include="M_WLEDIT.PAS">
+            <Form>WallEditor</Form>
+        </DCCReference>
+        <DCCReference Include="M_OBEDIT.PAS">
+            <Form>ObjectEditor</Form>
+        </DCCReference>
+        <DCCReference Include="M_SCEDIT.PAS">
+            <Form>SectorEditor</Form>
+        </DCCReference>
+        <DCCReference Include="M_NEWWDP.PAS">
+            <Form>NewProjectDialog</Form>
+        </DCCReference>
+        <DCCReference Include="M_FLAGED.PAS">
+            <Form>FlagEditor</Form>
+        </DCCReference>
+        <DCCReference Include="M_EDITOR.PAS"/>
+        <DCCReference Include="M_VXEDIT.PAS">
+            <Form>VertexEditor</Form>
+        </DCCReference>
+        <DCCReference Include="M_STAT.PAS">
+            <Form>StatWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_MAPUT.PAS"/>
+        <DCCReference Include="M_OPTION.PAS">
+            <Form>OptionsDialog</Form>
+        </DCCReference>
+        <DCCReference Include="M_FIND.PAS">
+            <Form>FindWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_SMLEDT.PAS">
+            <Form>SmallTextEditor</Form>
+        </DCCReference>
+        <DCCReference Include="M_MULTI.PAS"/>
+        <DCCReference Include="M_RESOUR.PAS">
+            <Form>ResourcePicker</Form>
+        </DCCReference>
+        <DCCReference Include="M_OBCLAS.PAS">
+            <Form>OBClassWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_OBSEQ.PAS">
+            <Form>OBSeqPicker</Form>
+        </DCCReference>
+        <DCCReference Include="M_OBSEL.PAS">
+            <Form>OBSelector</Form>
+        </DCCReference>
+        <DCCReference Include="M_TOOLS.PAS">
+            <Form>ToolsWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_MAPFUN.PAS"/>
+        <DCCReference Include="M_DIFF.PAS">
+            <Form>DIFFEditor</Form>
+        </DCCReference>
+        <DCCReference Include="M_CHECKS.PAS">
+            <Form>ChecksWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_EXTERN.PAS">
+            <Form>ExtToolsWindow</Form>
+        </DCCReference>
+        <DCCReference Include="GOBDIR.PAS">
+            <Form>GOBDIRWindow</Form>
+        </DCCReference>
+        <DCCReference Include="GOBS.PAS">
+            <Form>GOBWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_ABOUT.PAS">
+            <Form>AboutBox</Form>
+        </DCCReference>
+        <DCCReference Include="L_UTIL.PAS"/>
+        <DCCReference Include="LFDDIR.PAS">
+            <Form>LFDDIRWindow</Form>
+        </DCCReference>
+        <DCCReference Include="LFDS.PAS">
+            <Form>LFDWindow</Form>
+        </DCCReference>
+        <DCCReference Include="TOOLKIT.PAS">
+            <Form>TktWindow</Form>
+        </DCCReference>
+        <DCCReference Include="T_INFO.PAS">
+            <Form>TktInfoWindow</Form>
+        </DCCReference>
+        <DCCReference Include="T_CONVRT.PAS">
+            <Form>ConvertWindow</Form>
+        </DCCReference>
+        <DCCReference Include="T_PALOPT.PAS">
+            <Form>TktPalette</Form>
+        </DCCReference>
+        <DCCReference Include="M_WADS.PAS"/>
+        <DCCReference Include="M_WADSUT.PAS"/>
+        <DCCReference Include="M_WADMAP.PAS">
+            <Form>MapSelectWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_LEVED.PAS">
+            <Form>LevelEditorWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_QUERY.PAS">
+            <Form>QueryWindow</Form>
+        </DCCReference>
+        <DCCReference Include="M_REGIST.PAS">
+            <Form>RegisterWindow</Form>
+        </DCCReference>
+        <DCCReference Include="C_UTIL32.PAS"/>
+        <DCCReference Include="V_UTIL32.PAS"/>
+        <DCCReference Include="M_Test.pas">
+            <Form>TestWindow</Form>
+        </DCCReference>
+        <DCCReference Include="i_util.pas"/>
+        <DCCReference Include="infedit2.pas">
+            <Form>INFWindow2</Form>
+        </DCCReference>
+        <DCCReference Include="D_Util.pas"/>
+        <DCCReference Include="m_duke.pas">
+            <Form>DukeConvertWindow</Form>
+        </DCCReference>
+        <DCCReference Include="render.pas">
+            <Form>Renderer</Form>
+        </DCCReference>
+        <DCCReference Include="stitch.pas"/>
+        <DCCReference Include="ZRender.pas">
+            <Form>ZRenderer</Form>
+        </DCCReference>
+        <DCCReference Include="_3d.pas"/>
+        <DCCReference Include="_3dmath.pas"/>
+        <DCCReference Include="CNVEDIT.pas">
+            <Form>CNV_edit</Form>
+        </DCCReference>
+        <DCCReference Include="df2art.pas"/>
+        <DCCReference Include="DFFiles.pas"/>
+        <DCCReference Include="_3doCNV.pas"/>
+        <BuildConfiguration Include="Debug">
+            <Key>Cfg_2</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Base">
+            <Key>Base</Key>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Release">
+            <Key>Cfg_1</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Delphi.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Delphi.Personality>
+                <Source>
+                    <Source Name="MainSource">wdfuse32.dpr</Source>
+                </Source>
+            </Delphi.Personality>
+            <Platforms>
+                <Platform value="Android">False</Platform>
+                <Platform value="iOSDevice32">True</Platform>
+                <Platform value="iOSDevice64">True</Platform>
+                <Platform value="iOSSimulator">True</Platform>
+                <Platform value="Win32">True</Platform>
+            </Platforms>
+        </BorlandProject>
+        <ProjectFileVersion>12</ProjectFileVersion>
+    </ProjectExtensions>
+    <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
+    <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
+</Project>

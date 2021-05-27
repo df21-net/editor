@@ -777,16 +777,17 @@ for o := 0 to MAP_OBJ.Count - 1 do
 begin
     NTile:=-1;
     TheObject := TOB(MAP_OBJ.Objects[o]);
+
     if TheObject.Sec=-1 then continue; {Skip objects out of sectors}
     {For each object search all TYPE: and LOGIC: statements}
     for s := 0 to TheObject.Seq.Count - 1 do
      begin
      seq:=UpperCase(TheObject.Seq[s]);
-      p:=GetWord(seq,1,wrd);
+      { IGNORE DUKE NOT NEEDED FOR WDFUSE p:=GetWord(seq,1,wrd); }
       if (wrd='TYPE:') or (wrd='LOGIC:') then
       begin
-       p:=GetWord(seq,p,wrd);
-       if (wrd='GENERATOR') or (wrd='ITEM') then GetWord(seq,p,wrd);
+       {IGNORE DUKE NOT NEEDED FOR WDFUSE  p:=GetWord(seq,p,wrd); }
+       { IGNORE DUKE NOT NEEDED FOR WDFUSE  if (wrd='GENERATOR') or (wrd='ITEM') then GetWord(seq,p,wrd); }
        NTile:=DA.GetTileByLogic(wrd);
        if NTile <> -1 then break;
        {If object logics translates by .GetTileByLogic, proceed}

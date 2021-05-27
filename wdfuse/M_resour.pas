@@ -222,8 +222,17 @@ begin
 
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
+
 procedure TResourcePicker.LBResourcesClick(Sender: TObject);
 var tmp  : array[0..255] of Char;
+    t : PAnsiChar;
     wait : LongInt;
     TheMsg : TMsg;
 begin
@@ -301,7 +310,8 @@ begin
                              + WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.VOC '
                              + WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV');
                  SysUtils.DeleteFile(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV');
-                 WinExec(tmp, SW_HIDE);
+
+                 WinExec(PAnsiChar(ArrayToString(tmp)), SW_HIDE);
                  {On a un timing problem!!! L'autre demarre en parallel !!!}
                  Wait := 0;
                  while not FileExists(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV')

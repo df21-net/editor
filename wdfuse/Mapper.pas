@@ -3272,13 +3272,21 @@ begin
  RegisterWindow.Destroy;
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
+
 procedure TMapWindow.HelpTutorialClick(Sender: TObject);
 var tmp : array[0..127] of char;
     pas : string;
 begin
  pas := 'winhelp ' + WDFUSEDir + '\wdftutor.hlp';
  strPcopy(tmp, pas);
- WinExec(tmp, SW_SHOW);
+ WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOW);
 end;
 
 procedure TMapWindow.HelpDFSpecsClick(Sender: TObject);
@@ -3287,7 +3295,7 @@ var tmp : array[0..127] of char;
 begin
  pas := 'winhelp ' + WDFUSEDir + '\df_specs.hlp';
  strPcopy(tmp, pas);
- WinExec(tmp, SW_SHOW);
+ WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOW);
 end;
 
 procedure TMapWindow.MapDblClick(Sender: TObject);
@@ -3299,7 +3307,7 @@ begin
    if UpperCase(INFEditor) <> '' then
    begin
     StrPCopy(tmp, INFEditor + ' ' + LEVELPath + '\' + LEVELName + '.INF');
-    WinExec(tmp, SW_SHOW);
+    WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOW);
    end
   else
    begin
@@ -3581,7 +3589,7 @@ begin
   if UpperCase(INFEditor) <> '' then
    begin
     StrPCopy(tmp, INFEditor + ' ' + LEVELPath + '\' + LEVELName + '.INF');
-    WinExec(tmp, SW_SHOW);
+    WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOW);
    end
   else
    begin

@@ -106,6 +106,14 @@ begin
   DO_SetMapButtonsState;
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
+
 procedure GOB_Test_Level;
 var TheGob : TFileName;
     i      : Integer;
@@ -153,7 +161,7 @@ begin
  if TestLaunch then
   begin
    strPcopy(tmp, WDFUSEdir + '\DARK.PIF -u' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB'));
-   WinExec(tmp, SW_SHOWMAXIMIZED);
+   WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOWMAXIMIZED);
   end;
 end;
 

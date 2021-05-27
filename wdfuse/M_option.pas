@@ -151,7 +151,7 @@ begin
    DirectoryListBox1.Directory  := DarkInst
   else
    DirectoryListBox1.Directory  := 'c:\';
-  ComboDFCD.Drive              := DarkCD[1];
+  ComboDFCD.Drive              := Char(DarkCD[1]);
 
   ToolsOptionsInfEditor.Text   := INFEditor;
   ToolsOptionsVoc2Wav.Text     := Voc2Wav;
@@ -220,7 +220,7 @@ end;
 procedure TOptionsDialog.OKBtnClick(Sender: TObject);
 begin
   DarkInst      := LabelDFInstalled.Caption;
-  DarkCD[1]     := ComboDFCD.Drive;
+  DarkCD[1]     := AnsiChar(ComboDFCD.Drive);
 
   INFEditor     := ToolsOptionsINFEditor.Text;
   Voc2Wav       := ToolsOptionsVoc2Wav.Text;
@@ -230,7 +230,7 @@ begin
 
   Ini.WriteString('DARK FORCES', 'Installed', DarkInst);
   DarkCD    := '?';
-  DarkCD[1] := ComboDFCD.Drive;
+  DarkCD[1] := AnsiChar(ComboDFCD.Drive);
   Ini.WriteString('DARK FORCES', 'CD_Letter', DarkCD);
 
   Ini.WriteString('TOOLS',   'INF Editor', INFEditor);

@@ -45,6 +45,14 @@ begin
                           mb_Ok or mb_IconExclamation);
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
+
 procedure TExtToolsWindow.OKBtnClick(Sender: TObject);
 var tmp : array[0..127] of char;
 begin
@@ -52,7 +60,7 @@ begin
   begin
    Chdir(WDFUSEdir);
    StrPcopy(tmp, LBHidden.Items[LBExtTools.ItemIndex] + ' ' + EDParameters.Text);
-   WinExec(tmp, SW_SHOWNORMAL);
+   WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOWNORMAL);
    ShowWindow(MapWindow.Handle, SW_HIDE);
    TMPHWindow := GetActiveWindow;
    ShowWindow(MapWindow.Handle, SW_SHOW);

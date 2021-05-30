@@ -12,14 +12,14 @@ CONST
 
 TYPE
  GOB_BEGIN = record     {size 8}
-   GOB_MAGIC : array[1..4] of char;
+   GOB_MAGIC : array[1..4] of AnsiChar;
    MASTERX   : LongInt;
  end;
 
  GOB_INDEX = record     {size 21}
    IX        : LongInt;
    LEN       : LongInt;
-   NAME      : array[0..12] of char;
+   NAME      : array[0..12] of AnsiChar;
  end;
 
 
@@ -209,7 +209,7 @@ var i       : LongInt;
     S_NAME  : String;
     position  : LongInt;
     OldCursor : HCursor;
-    Buffer  : array[0..4095] of Char;
+    Buffer  : array[0..4095] of AnsiChar; //Char;
 begin
  OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
  gf := FileOpen(GOBName, fmOpenRead);
@@ -261,15 +261,15 @@ var i       : LongInt;
     MASTERN : LongInt;
     gs      : GOB_BEGIN;
     gx      : GOB_INDEX;
-    gf      : Integer;
+    gf      : LongInt;
     fsf     : Integer;
     fs_NAME : String;
     S_NAME  : String;
     position  : LongInt;
-    tmp,tmp2  : array[0..127] of Char;
+    tmp,tmp2  : array[0..127] of char;
     go        : Boolean;
     OldCursor : HCursor;
-    Buffer  : array[0..4095] of Char;
+    Buffer  : array[0..4095] of AnsiChar;
     XList   : TStrings;
 begin
  OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
@@ -302,6 +302,7 @@ begin
  FileRead(gf, gs, SizeOf(gs));
  FileSeek(gf, gs.MASTERX, 0);
  FileRead(gf, MASTERN, 4);
+
  for i := 1 to MASTERN do
    begin
      FileRead(gf, gx, SizeOf(gx));

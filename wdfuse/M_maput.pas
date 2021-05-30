@@ -381,7 +381,8 @@ begin
   DO_GetMapLimits(minX, minY, minZ, maxX, maxY, maxZ);
   Xoffset := Round((minX + maxX) / 2);
   Zoffset := Round((minZ + maxZ) / 2);
-  DO_Set_ScrollBars_Ranges(round(minX), round(maxX), round(minZ), round(maxZ));
+  // TODO(azurda): This does not play nicely.
+  // DO_Set_ScrollBars_Ranges(round(minX), round(maxX), round(minZ), round(maxZ));
   MapWindow.Map.Invalidate;
 end;
 
@@ -396,10 +397,11 @@ begin
  MapWindow.HScrollBar.SetParams(XOffset, HLeft, HRight);
  MapWindow.VScrollBar.SetParams(-ZOffset, Vup, Vbottom);
  MapWindow.LScrollBar.SetParams(-LAYER, -LAYER_MAX, -LAYER_MIN);
- MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
- MapWindow.HScrollBar.LargeChange := Trunc(1+100/scale);
- MapWindow.VScrollBar.SmallChange := Trunc(1+25/scale);
- MapWindow.VScrollBar.LargeChange := Trunc(1+100/scale);
+
+ MapWindow.HScrollBar.SmallChange := SmallInt(Trunc(1+25/scale));
+ MapWindow.HScrollBar.LargeChange := SmallInt(Trunc(1+100/scale));
+ MapWindow.VScrollBar.SmallChange := SmallInt(Trunc(1+25/scale));
+ MapWindow.VScrollBar.LargeChange := SmallInt(Trunc(1+100/scale));
 end;
 
 procedure DO_GetMapLimits(VAR minX, minY, minZ, maxX, maxY, maxZ : Real);

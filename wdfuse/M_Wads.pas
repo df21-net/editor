@@ -404,13 +404,13 @@ begin
                  MapSelectWindow.ED_W2GSwitches.Text +
                  'doom_res.lst ' +
                  IWAD);
-   WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOWNORMAL);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWNORMAL);
   end;
 
  if MapSelectWindow.CBShowLog.Checked then
   begin
    strPcopy(tmp, 'notepad ' + ChangeFileExt(ProjectFile, '.LOG'));
-   WinExec(PAnsiChar(ArrayToString(tmp)), SW_SHOWMAXIMIZED);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMIZED);
   end;
 
  MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : SECTORS';

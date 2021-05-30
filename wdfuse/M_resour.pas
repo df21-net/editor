@@ -311,7 +311,7 @@ begin
                              + WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV');
                  SysUtils.DeleteFile(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV');
 
-                 WinExec(PAnsiChar(ArrayToString(tmp)), SW_HIDE);
+                 WinExec(PAnsiChar(AnsiString(tmp)), SW_HIDE);
                  {On a un timing problem!!! L'autre demarre en parallel !!!}
                  Wait := 0;
                  while not FileExists(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV')

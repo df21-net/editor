@@ -1,2 +1,6 @@
 __history/
 __recovery/
+*.exe
+*.wdp
+*.gob
+*.txt

@@ -1,0 +1,302 @@
+unit DragDrop;
+
+interface
+uses Windows,OLE2, shlObj, SysUtils;
+
+procedure DoDrag;
+
+implementation
+Type
+
+FileDragSource=class(IDropSource)
+ refcount:integer;
+ Constructor Create;
+ function QueryInterface(const iid: TIID; var obj): HResult; override; stdcall;
+ function AddRef: Longint; override; stdcall;
+ function Release: Longint; override; stdcall;
+ function QueryContinueDrag(fEscapePressed: BOOL; grfKeyState: Longint): HResult; override;stdcall;
+ function GiveFeedback(dwEffect: Longint): HResult; override; stdcall;
+ Destructor Destroy; override;
+end;
+
+IFileDataEnum=class(IEnumFormatEtc)
+    refcount:integer;
+     function QueryInterface(const iid: TIID; var obj): HResult; override; stdcall;
+     function AddRef: Longint; override; stdcall;
+     function Release: Longint; override; stdcall;
+     function Next(celt: Longint; var elt;
+      pceltFetched: PLongint): HResult; override; stdcall; 
+    function Skip(celt: Longint): HResult; override; stdcall; 
+    function Reset: HResult; override; stdcall; 
+    function Clone(var enum: IEnumFormatEtc): HResult; override; stdcall;
+
+end;
+
+IFileData=class(IDataObject)
+    refCount:Integer;
+    function QueryInterface(const iid: TIID; var obj): HResult; override; stdcall;
+    function AddRef: Longint; override; stdcall;
+    function Release: Longint; override; stdcall;
+    function GetData(var formatetcIn: TFormatEtc; var medium: TStgMedium):
+      HResult; override; stdcall;
+    function GetDataHere(var formatetc: TFormatEtc; var medium: TStgMedium):
+      HResult; override; stdcall;
+    function QueryGetData(var formatetc: TFormatEtc): HResult;
+      override; stdcall;
+    function GetCanonicalFormatEtc(var formatetc: TFormatEtc;
+      var formatetcOut: TFormatEtc): HResult; override; stdcall;
+    function SetData(var formatetc: TFormatEtc; var medium: TStgMedium;
+      fRelease: BOOL): HResult; override; stdcall;
+    function EnumFormatEtc(dwDirection: Longint; var enumFormatEtc:
+      IEnumFormatEtc): HResult; override; stdcall;
+    function DAdvise(var formatetc: TFormatEtc; advf: Longint;
+      advSink: IAdviseSink; var dwConnection: Longint): HResult; override; stdcall;
+    function DUnadvise(dwConnection: Longint): HResult; override; stdcall;
+    function EnumDAdvise(var enumAdvise: IEnumStatData): HResult;
+      override; stdcall;
+end;
+
+Constructor FileDragSource.Create;
+begin
+ CoLockObjectExternal(self,true,true);
+end;
+
+Destructor FileDragSource.Destroy;
+begin
+ CoLockObjectExternal(self,false,true);
+end;
+
+function FileDragSource.QueryContinueDrag(fEscapePressed: BOOL; grfKeyState: Longint): HResult;
+begin
+ if fEscapePressed then result:=DRAGDROP_S_CANCEL
+ else result:=S_OK;
+end;
+
+function FileDragSource.GiveFeedback(dwEffect: Longint): HResult;
+begin
+ Result:=S_OK;
+end;
+
+function FileDragSource.QueryInterface(const iid: TIID; var obj): HResult;
+begin
+ Result:=S_OK;
+ if IsEqualIID(iid,IID_IUnknown) then
+ begin
+  pointer(obj):=self;
+  AddRef;
+  exit;
+ end;
+ if IsEqualIID(iid,IID_IDropSource) then
+ begin
+  Pointer(obj):=self;
+  AddRef;
+  exit;
+ end;
+ result:=E_NOINTERFACE;
+end;
+
+function FileDragSource.AddRef: Longint;
+begin
+ Inc(refCount);
+ Result:=refcount;
+end;
+
+function FileDragSource.Release: Longint;
+begin
+ dec(refcount);
+ if refcount=0 then Free;
+end;
+
+function IFileDataEnum.QueryInterface(const iid: TIID; var obj): HResult;
+begin
+ Result:=S_OK;
+ if IsEqualIID(iid,IID_IUnknown) then
+ begin
+  pointer(obj):=self;
+  AddRef;
+  exit;
+ end;
+ if IsEqualIID(iid,IID_IEnumFormatEtc) then
+ begin
+  Pointer(obj):=self;
+  AddRef;
+  exit;
+ end;
+ result:=S_False;
+end;
+
+function IFileDataEnum.AddRef: Longint;
+begin
+ Inc(refCount);
+ Result:=refcount;
+end;
+
+function IFileDataEnum.Release: Longint;
+begin
+ dec(refcount);
+ if refcount=0 then Free;
+end;
+
+
+function IFileDataEnum.Next(celt: Longint; var elt;
+      pceltFetched: PLongint): HResult;
+begin
+ with TFormatEtc(elt) do
+ begin
+  cfFormat:=CF_HDROP;
+  ptd:=nil;
+  dwAspect:=DVASPECT_CONTENT;
+  lindex:=-1;
+  tymed:=TYMED_HGLOBAL;
+ end;
+ Result:=S_OK;
+ pceltFetched^:=1;
+end;
+
+function IFileDataEnum.Skip(celt: Longint): HResult;
+begin
+ result:=S_OK;
+end;
+
+function IFileDataEnum.Reset: HResult;
+begin
+ Result:=S_OK;
+end;
+
+function IFileDataEnum.Clone(var enum: IEnumFormatEtc): HResult;
+begin
+ Result:=E_Fail;
+end;
+
+
+function IFileData.QueryInterface(const iid: TIID; var obj): HResult;
+begin
+ Result:=S_OK;
+ if IsEqualIID(iid,IID_IUnknown) then
+ begin
+  pointer(obj):=self;
+  AddRef;
+  exit;
+ end;
+ if IsEqualIID(iid,IID_IDataObject) then
+ begin
+  Pointer(obj):=self;
+  AddRef;
+  exit;
+ end;
+ result:=S_False;
+end;
+
+function IFileData.AddRef: Longint;
+begin
+ Inc(refCount);
+ Result:=refcount;
+end;
+
+function IFileData.Release: Longint;
+begin
+ dec(refcount);
+ if refcount=0 then Free;
+end;
+
+Function PrepareData:Integer;
+var
+    hdf:Integer;
+    pdf:PDropFiles;
+    s:String;
+    ps:Pchar;
+begin
+ s:='c:\rr\a.txt';
+ hdf:=GlobalAlloc(GMEM_Moveable or GMEM_ZEROINIT,Sizeof(pdf^)+length(s)+2);
+ pdf:=GlobalLock(hdf);
+ with pdf^ do
+ begin
+  pFiles:=sizeof(pdf^);
+  pt.X:=0;
+  pt.Y:=0;
+  fNC:=true;
+  fWide:=false;
+ end;
+ ps:=pchar(pdf)+sizeof(pdf^);
+ StrPCopy(ps,s);
+ GlobalUnlock(hdf);
+ Result:=hdf;
+end;
+
+function IFileData.GetData(var formatetcIn: TFormatEtc; var medium: TStgMedium):
+      HResult;
+begin
+ result:=S_False;
+ if formatetcIn.cfFormat<>CF_HDROP then exit;
+ medium.hGlobal:=PrepareData;
+ medium.unkforrelease:=nil;
+ Result:=S_OK;
+end;
+
+function IFileData.GetDataHere(var formatetc: TFormatEtc; var medium: TStgMedium):
+      HResult;
+begin
+ Result:=GetData(formatetc,medium);
+end;
+
+function IFileData.QueryGetData(var formatetc: TFormatEtc): HResult;
+begin
+ result:=S_False;
+ if formatetc.cfFormat<>CF_HDROP then exit;
+ result:=S_OK;
+end;
+
+function IFileData.GetCanonicalFormatEtc(var formatetc: TFormatEtc;
+      var formatetcOut: TFormatEtc): HResult;
+begin
+ result:=S_False;
+end;
+
+function IFileData.SetData(var formatetc: TFormatEtc; var medium: TStgMedium;
+      fRelease: BOOL): HResult;
+begin
+ Result:=E_Fail;
+end;
+
+function IFileData.EnumFormatEtc(dwDirection: Longint; var enumFormatEtc:
+      IEnumFormatEtc): HResult;
+begin
+ enumFormatEtc:=IFileDataEnum.Create;
+ enumFormatEtc.AddRef;
+ Result:=S_OK;
+end;
+
+function IFileData.DAdvise(var formatetc: TFormatEtc; advf: Longint;
+      advSink: IAdviseSink; var dwConnection: Longint): HResult;
+begin
+ result:=E_Fail;
+end;
+
+function IFileData.DUnadvise(dwConnection: Longint): HResult;
+begin
+ result:=E_Fail;
+end;
+
+function IFileData.EnumDAdvise(var enumAdvise: IEnumStatData): HResult;
+begin
+ result:=E_Fail;
+end;
+
+procedure DoDrag;
+var DObj:IDataObject;
+    DSrc:FileDragSource;
+    hres:HResult;
+    Fmt:TFormatEtc;
+    Sm:TSTGMEDIUM;
+    effect:Longint;
+begin
+ Dobj:=IFileData.Create;
+ Dobj.AddRef;
+ DSrc:=FileDragSource.Create;
+ OleInitialize(nil);;
+ hres:=DoDragDrop(Dobj,DSrc,DROPEFFECT_COPY,effect);
+ if SUCCEEDED(hres) then;
+ OleUninitialize;
+ end;
+
+end.

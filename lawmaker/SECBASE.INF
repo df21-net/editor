@@ -1,0 +1,115 @@
+INF 1.0
+
+LEVELNAME SECBASE
+
+items 11
+
+ item: sector            name: complete
+        seq
+           class: elevator move_floor
+           stop: 1 hold
+           stop: 2 complete
+           speed: 0
+	seqend
+
+ item: sector		name: release
+	seq
+	 class: elevator scroll_wall
+	 angle:0
+	 speed:0
+	 stop: 0 hold
+	 stop: 1 hold
+	  message: 1 door1 next_stop
+	  message: 1 switch(8) done
+	 stop: 2 hold
+	  message: 2 door2 next_stop
+	  message: 2 switch(8) done
+	 stop: 3 hold
+	  message: 3 door3 next_stop
+	  message: 3 switch(8) done
+	 stop: 4 hold
+	  message: 4 door4 next_stop
+	  message: 4 switch(8) done
+	 stop: 5 hold
+	  message: 5 door5 next_stop
+	  message: 5 switch(8) done
+	 stop: 6 hold
+	  message: 6 door6 next_stop
+	  message: 6 switch(8) done
+	 stop: 7 hold
+	  page: 7 phase3a.voc
+	seqend
+
+ item: line		name: switch num: 8
+	seq
+	 class: trigger switch1
+	 even_mask: 16
+	 message: next_stop
+	 client: release
+	seqend
+
+ item: 	sector		name: door1
+	seq
+	 class: elevator move_ceiling
+	 speed: 0
+	 stop: 2 hold
+	 stop: 32 terminate
+	seqend
+
+ item: 	sector		name: door2
+	seq
+	 class: elevator move_ceiling
+	 speed: 0
+	 stop: 2 hold
+	 stop: 32 terminate
+	seqend
+
+ item: 	sector		name: door3
+	seq
+	 class: elevator move_ceiling
+	 speed: 0
+	 stop: 2 hold
+	 stop: 32 terminate
+	seqend
+
+ item: 	sector		name: door4
+	seq
+	 class: elevator move_ceiling
+	 speed: 0
+	 stop: 2 hold
+	 stop: 32 terminate
+	seqend
+
+ item: 	sector		name: door5
+	seq
+	 class: elevator move_ceiling
+	 speed: 0
+	 stop: 2 hold
+	 stop: 32 terminate
+	seqend
+
+ item: 	sector		name: door6
+	seq
+	 class: elevator move_ceiling
+	 speed: 0
+	 stop: 2 hold
+	 stop: 32 terminate
+	seqend
+
+
+ item: sector		name: mohc
+	seq
+	 class: elevator move_floor
+	 speed: 0
+	 stop: 0 hold
+	 stop: 1 hold
+	  message: 1 complete complete
+	seqend
+
+ item: sector		name: boss
+	seq
+	 class: elevator move_floor
+	 speed: 0
+	 stop: 0 hold
+	 stop: 1 hold
+	seqend

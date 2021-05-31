@@ -1,0 +1,17 @@
+Constructor TSysLview.Create(F:TForm);
+var r:TRect;
+begin
+ GetClientRect(f.handle,r);
+ 	Fhandle := CreateWindowEx( 0,
+		WC_LISTVIEW,
+		'',
+		WS_VISIBLE or WS_CHILD or WS_BORDER or LVS_ICON,
+                r.left, r.top,
+                r.right-r.left, r.bottom-r.top,
+		f.handle,
+		1,
+		hInstance,
+		Nil );
+ ShowWindow(FHandle,sw_show);
+
+end;

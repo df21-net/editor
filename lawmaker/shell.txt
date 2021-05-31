@@ -1,0 +1,38 @@
+procedure TForm1.FormCreate(Sender: TObject);
+Var tn:TTreeNode;
+  Desktop, Folder:IShellFolder;
+  EnumIDList  : IEnumIDList;
+  Result      : hResult;
+  Dummy       : ULong;
+  ItemIDList  : TItemIDList;
+  Pntr        : PItemIDList;
+  StrRet      : TStrRet;
+  PopupMenu   : hMenu;
+  ItemID      : Integer;
+  Pos         : TPoint;
+  s:array[0..255] of char;
+  a:Integer;
+
+begin
+ Pntr := @ItemIDList;
+ SHGetDesktopFolder(Desktop);
+ SHGetSpecialFolderLocation(Handle,CSIDL_CONTROLS,Pntr);
+ Desktop.BindToObject(Pntr, nil, IID_IShellFolder, Pointer(Folder));
+ Folder.EnumObjects(Handle,SHCONTF_NONFOLDERS,EnumIDList);
+ With DirOutline do
+ begin
+ Add(0,'Desktop');
+ a := EnumIDList.Next(1,Pntr,Dummy);
+  While (a = NoError) do Begin
+    Folder.GetDisplayNameOf(Pntr,SHGDN_NORMAL,StrRet);
+    case StrRet.utype of
+     STRRET_CSTR:Add(0,Strret.Cstr);
+     STRRET_Offset:AddChild(0,Pchar(pntr)+StrRet.uoffset);
+     STRRET_WSTR:AddChild(0,WideCharToString(StrRet.pOleStr));
+    end;
+    a:= EnumIDList.Next(1,Pntr,Dummy);
+  End;
+  EnumIDList.Release;
+  Folder.Release;
+ end;
+end;

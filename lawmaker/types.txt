@@ -1,0 +1,53 @@
+TFCAttribs=record
+ Altitude: double;
+ texture:Integer; {property}
+ offsx,offxy: double;
+ extra: integer;
+end;
+
+TOverlayAttribs=record
+ texture: integer;
+ offsx,offsy:double;
+ extra: integer;
+end;
+
+TSector=class
+id:Integer; {property}
+Name:String;
+Ambient: byte;
+Palette: String; {property}
+ColorMap: String; {property}
+Friction: Integer;
+Gravity: Integer;
+Elasticity: Double;
+Velocity: Vector;
+VAdjoin: Integer;
+Floor_Sound: String;
+Floor_Y,
+Ceiling_Y: TFCAttributes;
+F_Overlay,
+C_Overlay: TOverlayAttribs;
+floor_offsets: Integer;
+Flags: Longint;
+Layer: integer;
+end;
+
+TVertex=class
+ X,Z:Double;
+end;
+
+TTexture=record
+ Tx:Integer;
+ offsx,offsy: double;
+end;
+
+TWall=class
+ id: Integer; {Property}
+ V1,V2: Integer;
+ MID,TOP,BOT:TTexture;
+ Overlay:TTexture;
+ Adjoin,Mirror,
+ DAdjoin, Dmirror:Integer;
+ Flags: Longint;
+ Light: Byte;
+end;

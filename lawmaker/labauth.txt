@@ -1,0 +1,76 @@
+================================================================
+Title                   :    
+Filename                : xxxxxxxx.ZIP
+Author                  : Your name here
+Email Address           : 
+Misc. Author Info       : 
+
+Description             : Set the mood here.
+
+Additional Credits to   : 
+================================================================
+
+* Play Information *
+
+
+3DFX Compatible         : Yes/No/NotTested
+Mission type            : Single Player/Historic/Multiplayer
+Difficulty Settings     : Yes/Not implemented
+New PCXs                : Yes/No
+New NWXs                : Yes/No
+New WAVs                : Yes/No
+New 3DOs                : Yes/No
+New ITMs                : Yes/No
+New Cutscenes           : Yes/No
+
+ * Multiplayer Modes*
+
+Kill fool with chicken  : Yes/No
+DeathMatch              : Yes/No
+Capture the Flag        : Yes/No
+Team Play               : Yes/No
+Secret Document         : Yes/No
+Tag n/u ?               : Yes/No
+
+ * Multiplayer Security Files *
+
+CHK                     : Yes/No
+ITM                     : Yes/No
+
+Note: For the level to be considered secure for tournament use in
+multiplayer it must contain .CHK and .ITM files in the Lab.The name
+of the file should contain a "S" as the last character to denote a
+secure level.   EG: mylevel02S.lab
+
+
+* Construction *
+
+Base                    : New level from scratch/Modified levelname
+Editor(s) used          : LawMaker ver 1.0 beta
+Known Bugs              :
+
+
+* Copyright / Permissions *
+
+Authors (MAY/may NOT) use this level as a base to build additional
+levels.  
+
+(One of the following)
+
+You MAY distribute this level, provided you include this file, with
+no modifications.  You may distribute this file in any electronic
+format (BBS, Diskette, CD, etc) as long as you include this file 
+intact.
+
+You MAY not distribute this level in any format.
+
+You may do whatever you want with this file.
+
+
+* Where to get this level *
+
+FTP sites:
+
+BBS numbers:
+
+Other:

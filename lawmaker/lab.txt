@@ -1,0 +1,11 @@
+LAB Header
+char[4] Magic = 'LABN'
+long	?	= 64K
+long	NItems
+long	?
+
+LAB Entry
+long Nameoffset // from the bginning of the name pool
+long offset	//absolute from the beginning of the file
+long ?
+char[4] ResType //

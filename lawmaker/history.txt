@@ -1,0 +1,76 @@
+LawMaker revision history notes:
+
+Ver 0.1 Beta - First released version.
+
+Ver 0.7 Beta
+- Redone object layering for much more accurate layering, account for
+  slopes and multiple overlapping sectors on one layer. 
+- Fixed muliple object layering bug.
+- Added multiselection editing
+- Added saving "Stay On Top" state of Sector/Wall/Vertex/Object editors
+- Fixed layer change bug
+- Added sector/sector multiselection copying
+- Added multiple object copying
+- Fixed "clipped grid" bug
+- Added rectangular select
+- Added consistency checker
+- Added Sector/Wall/Object find tool
+- Added Tools dialog
+- Added level header editor
+- Added Backup
+- Added Dark Forces LEV import
+- Added statistics
+- Added Copy/Paste
+- Added resource picker preview
+- Added jump to sector/wall/object tool
+- Changed "Publish" and "Test" function to avoid putting junk 
+  in your LAB file.
+
+Ver 0.7 Beta 2
+- Modified wall and vertex deletion to handle bad sectors cleanly
+- Added multiple wall/vertex deletion
+- Added custom lists ability to resource picker
+- Fixed adjoin bug appearing at times when forming double adjoins.
+- Fixed polygon generator to generate clockwise sectors (for 3DFX Outlaws)
+- Added automatic fix of vertex order in consistency checker
+
+ver 1.0 Beta
+- Added "Find Next"
+- Fixed bug in sector pasting
+- Fixed funny behaviour in large font video modes
+- Added recent documents menu
+- Added Script Editor (editor for ATX, INF, ITM, etc).
+- Fixed a bug that caused 100% CPU usage when Resource Picker is active.
+- Refined object/geometry dragging in "snap to grid" mode
+- Lower grid limit is now 0.25
+- Fixed floor/ceiling height distribution bug
+- Added option to log the test session to testlog.txt
+- Added Mission Editor
+- "Publish" function now checks for existance of critical files 
+- Fixed clipped text labels in some video modes
+- Fixed a bug that caused "list index out of bounds" when rotating/scaling walls/vertices
+- Added help buttons in many places
+- Added checks for invalid wall flags and adjoin order (both cause Outlaws to crash when loading level)
+- Added some searchable fields in Find dialogs.
+- Fixed comparison bug in Find
+
+ver 1.0 beta 2
+- Fixed Consistency Checker bug when fixing incorrect double adjoins.
+- Added "Put on Floor" function (Shift+P). Objects copied with INS are now put on floor
+- Script Editor now shows the name of edited file.
+- Added check for level names longer than 8 characters
+- Added "Stick to Ceiling" function in Tools dialog
+- Added NWX preview in Resource Picker
+- Added/corrected flag descriptions for object flags2 and event mask.
+- Added check and autofix for empty music in level header (error that crashes Outlaws)
+- Added olpatch1&2 to the Resource Picker lists
+- Fixed Script Editor blank-outs.
+- Added "Find" function in text message picker
+- Refined wall selection - "non-selectable" walls should now be gone
+
+ver 1.0 beta 3
+- Added ability to create new GOB, LFD and LAB files in Container Manager
+- Added Add/Delete file capability to Container Manager
+- Added Copy/Paste and Drag/Drop capability to Container Manager
+- Added check and fix for improper flags on MP player starts
+- Fixed Script Editor font saving bug.

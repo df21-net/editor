@@ -2052,11 +2052,6 @@ begin
                    END;
       $4D {VK_M} : ;
       $4E {VK_N} : ;
-      $50 {VK_P} : begin
-                    DO_ApplyUndo;
-                    //MAP_SEC.Objects[MAP_SEC.IndexOfObject(MAP_DEBUG)].Free;
-                    //MAP_SEC.Delete(MAP_SEC.IndexOfObject(MAP_DEBUG) - 1);
-                   end;
 
 {Shift+R complete renderer exists only in WDFUSE 32}
 {$IFDEF WDF32}

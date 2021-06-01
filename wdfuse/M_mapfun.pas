@@ -94,6 +94,7 @@ var s,w        : Integer;
     RVertex2   : TVertex;
     found      : Boolean;
 begin
+  DO_StoreUndo;
   MakeAdjoin := FALSE;
   TheSector1 := TSector(MAP_SEC.Objects[sc]);
   TheWall1   := TWall(TheSector1.Wl.Objects[wl]);
@@ -146,6 +147,7 @@ var s,w        : Integer;
     RVertex2   : TVertex;
     found      : Boolean;
 begin
+  DO_StoreUndo;
   MakeLayerAdjoin := FALSE;
   TheSector1 := TSector(MAP_SEC.Objects[sc]);
   TheWall1   := TWall(TheSector1.Wl.Objects[wl]);
@@ -195,6 +197,7 @@ var TheSector1 : TSector;
     TheWall1   : TWall;
     TheWall2   : TWall;
 begin
+  DO_StoreUndo;
   UnAdjoin := FALSE;
   TheSector1 := TSector(MAP_SEC.Objects[sc]);
   TheWall1   := TWall(TheSector1.Wl.Objects[wl]);
@@ -227,6 +230,7 @@ function MultiMakeAdjoin : Integer;
 var m, s, w  : Integer;
     OldCursor : HCursor;
 begin
+DO_StoreUndo;
 Result := 0;
 OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
 if WL_MULTIS.Count <> 0 then
@@ -245,6 +249,7 @@ function MultiUnAdjoin : Integer;
 var m, s, w  : Integer;
     OldCursor : HCursor;
 begin
+DO_StoreUndo;
 Result := 0;
 OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
 if WL_MULTIS.Count <> 0 then
@@ -280,6 +285,7 @@ var s, w, v, m : Integer;
     OldCursor  : HCursor;
     XZero,
     ZZero      : Real;
+    debug : Integer;
 begin
  if CONFIRMMultiInsert and (SC_MULTIS.Count <> 0) then
   begin
@@ -398,8 +404,10 @@ begin
 
       TheSector2.Wl.AddObject('WL', TheWall2);
      end;
-
    MAP_SEC.AddObject('SC', TheSector2);
+   MAP_DEBUG := TheSector2;
+   //debug := MAP_SEC.IndexOfObject(TheSector2);
+   //MAP_SEC.Delete(debug - 1);
   end;
 
  { Recreate the Adjoins wall by wall, but look only in the new sectors,
@@ -471,6 +479,7 @@ var i,j,k     : Integer;
     TheWall   : TWall;
     TheObject : TOB;
 begin
+  DO_StoreUndo;
   {Free the Sector}
   TheSector := TSector(MAP_SEC.Objects[sc]);
   for j := 0 to TheSector.InfClasses.Count - 1 do
@@ -757,6 +766,7 @@ function  DeleteOB(ob : Integer) : Boolean;
 var
     TheObject : TOB;
 begin
+  DO_StoreUndo;
   TheObject := TOB(MAP_OBJ.Objects[ob]);
   TheObject.Free;
   MAP_OBJ.Delete(ob);
@@ -769,6 +779,7 @@ procedure MultiDeleteOB;
 var m, s, mm, ss  : Integer;
     TheObject : TOB;
 begin
+DO_StoreUndo;
 TheObject := TOB(MAP_OBJ.Objects[OB_HILITE]);
 m := OB_MULTIS.IndexOf(Format('%4d%4d', [TheObject.Sec, OB_HILITE]));
 {add the Selection to the MultiSelection if necessary}
@@ -810,6 +821,7 @@ procedure ShellDeleteOB;
 var
     OldCursor : HCursor;
 begin
+  DO_StoreUndo;
  if (OB_MULTIS.Count = MAP_OBJ.Count) or (MAP_OBJ.Count = 1) then
   begin
    Application.MessageBox('YOU CANNOT DELETE ALL OBJECTS !',
@@ -873,7 +885,7 @@ var w          : Integer;
     deltaz     : Real;
     newsector  : Integer;
 begin
-
+ DO_StoreUndo;
  newsector := MAP_SEC.Count;
  TheSector := TSector(MAP_SEC.Objects[sc]);
  TheWall   := TWall(TheSector.Wl.Objects[wl]);
@@ -1206,6 +1218,7 @@ var w,k,c      : Integer;
     delvx      : Integer;
     nxtwl      : Integer;
 begin
+ DO_StoreUndo;
  seccycles  := SetSectorCycles(sc);
  TheSector  := TSector(MAP_SEC.Objects[sc]);
  TheWall    := TWall(TheSector.Wl.Objects[wl]);
@@ -1403,6 +1416,7 @@ var w, ww     : Integer;
     TheWall   : TWall;
     curcycle  : Integer;
 begin
+  DO_StoreUndo;
   TheSector := TSector(MAP_SEC.Objects[sc]);
 
   { Exit in case of problem

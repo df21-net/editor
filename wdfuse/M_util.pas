@@ -2043,6 +2043,7 @@ var i,j,k     : Integer;
     NewWall   : TWall;
     NewVertex : TVertex;
     NewObject : TOB;
+    debug : Integer;
 begin
  DO_FreeUndo;
 
@@ -2167,7 +2168,7 @@ begin
    NewObject.Seq.AddStrings(TheObject.Seq);
    MAP_OBJ_UNDO.AddObject('OB', newObject);
   end;
-
+  debug := MAP_OBJ_UNDO.Count;
 end;
 
 procedure DO_FreeUndo;

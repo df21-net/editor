@@ -452,6 +452,7 @@ VAR
 DOOM          : Boolean;
 MAP_RECT      : TRect;
 MAP_SEC       : TStringList;
+MAP_DEBUG     : TSector;
 MAP_OBJ       : TStringList;
 TX_LIST       : TStringList;
 POD_LIST      : TStringList;

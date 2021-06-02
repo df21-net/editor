@@ -1946,6 +1946,7 @@ begin
                    END;
       VK_INSERT  : begin
                     {Compute cursor position. If grid is on, must paste on a grid point!}
+                    DO_StoreUndo;
                     GetCursorPos(ThePoint);
                     MapPoint := MapWindow.Map.ScreenToClient(ThePoint);
                     px := S2MX(MapPoint.X);
@@ -2051,7 +2052,6 @@ begin
                    END;
       $4D {VK_M} : ;
       $4E {VK_N} : ;
-      $50 {VK_P} : ;
 
 {Shift+R complete renderer exists only in WDFUSE 32}
 {$IFDEF WDF32}
@@ -2165,7 +2165,8 @@ begin
                               DO_PasteObjects(px, pz);
                              end;
                     END;
-                   end;
+                  end;
+      $5A {VK_Z} : DO_ApplyUndo;
       VK_F5      : if WL_MULTIS.Count > 1 then
                     DO_StitchHorizontal(FALSE, FALSE, TRUE)
                    else

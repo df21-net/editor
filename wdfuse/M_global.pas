@@ -511,7 +511,7 @@ MAP_GLOBAL_UNDO : TList<TStringList>;
 MAP_GLOBAL_UNDO_INDEX : Integer;
 MAP_SEC_UNDO     : TStringList;
 MAP_OBJ_UNDO     : TStringList;
-MAP_GUI_UNDO     : TList<Integer>;
+MAP_GUI_UNDO     : TStringList;
 
 MAP_MODE_UNDO    : Integer;
 SC_HILITE_UNDO,
@@ -562,6 +562,7 @@ COLtable     : array[0..1023] of Byte;
 tmpWalls     : TStringList;
 
 MAP_MARKERS  : TStringList;
+
 
 DUKE_CEILIPIC : Integ16;
 DUKE_FLOORPIC : Integ16;

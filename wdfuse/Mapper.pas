@@ -2428,7 +2428,8 @@ begin
       if (Shift = [ssCtrl] + [ssLeft]) or (Shift = [ssCtrl] + [ssShift] + [ssLeft]) then
        begin
          IsDRAG := TRUE;
-         DO_StoreUndo;
+         if FirstDRAG then
+          DO_StoreUndo;
          case MAP_MODE of
           MM_SC : begin
                    TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);

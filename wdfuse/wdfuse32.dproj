@@ -155,7 +155,7 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="Mapper.pas">
+        <DCCReference Include="MAPPER.PAS">
             <Form>MapWindow</Form>
         </DCCReference>
         <DCCReference Include="M_GLOBAL.PAS"/>
@@ -164,12 +164,12 @@
         <DCCReference Include="_STRINGS.PAS"/>
         <DCCReference Include="_UNDOC.PAS"/>
         <DCCReference Include="R_UTIL.PAS"/>
-        <DCCReference Include="W_UTIL.PAS"/>
+        <DCCReference Include="w_util.pas"/>
         <DCCReference Include="M_IO.PAS"/>
         <DCCReference Include="M_PROGRS.PAS">
             <Form>ProgressWindow</Form>
         </DCCReference>
-        <DCCReference Include="M_util.pas"/>
+        <DCCReference Include="M_UTIL.PAS"/>
         <DCCReference Include="M_WLEDIT.PAS">
             <Form>WallEditor</Form>
         </DCCReference>

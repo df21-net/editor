@@ -1927,7 +1927,7 @@ begin
       $57 {VK_W} : DO_Switch_To_WL_Mode;
       $58 {VK_X} : DO_Center_On_CurrentObject;
       $59 {VK_Y} : if MAP_MODE = MM_WL then SuperStitch(SC_HILITE, WL_HILITE, 0, 1);
-      $5A {VK_Z} : DO_StoreUndo;
+      $5A {VK_Z} : DO_ApplyUndo;
       VK_ADD     : DO_Zoom_In;
       VK_SUBTRACT: DO_Zoom_Out;
       VK_MULTIPLY: DO_Zoom_None;
@@ -2428,6 +2428,7 @@ begin
       if (Shift = [ssCtrl] + [ssLeft]) or (Shift = [ssCtrl] + [ssShift] + [ssLeft]) then
        begin
          IsDRAG := TRUE;
+         DO_StoreUndo;
          case MAP_MODE of
           MM_SC : begin
                    TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);

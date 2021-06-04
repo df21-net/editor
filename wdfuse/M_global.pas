@@ -2,7 +2,7 @@ unit M_global;
 
 interface
 uses
-  SysUtils, WinTypes, WinProcs, Messages, Classes, IniFiles, Graphics;
+  SysUtils, WinTypes, WinProcs, Messages, Classes, IniFiles, Graphics, Generics.Collections;
 
 TYPE Integ16 =
 {$IFNDEF WDF32}
@@ -507,8 +507,12 @@ WL_MULTIS,
 VX_MULTIS,
 OB_MULTIS     : TStringList;
 
+MAP_GLOBAL_UNDO : TList<TStringList>;
+MAP_GLOBAL_UNDO_INDEX : Integer;
 MAP_SEC_UNDO     : TStringList;
 MAP_OBJ_UNDO     : TStringList;
+MAP_GUI_UNDO     : TList<Integer>;
+
 MAP_MODE_UNDO    : Integer;
 SC_HILITE_UNDO,
 WL_HILITE_UNDO,

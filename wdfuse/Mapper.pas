@@ -659,6 +659,7 @@ var j,m,s,w     : Integer;
     TheWall     : TWall;
     TheObject   : TOB;
     Dimension   : Integer;
+    VXI         : Integer;
 begin
   if LEVELloaded then
     with Map.Canvas do
@@ -689,12 +690,15 @@ begin
                    s := StrToInt(Copy(WL_MULTIS[m],1,4));
                    TheSector := TSector(MAP_SEC.Objects[s]);
                    w := StrToInt(Copy(WL_MULTIS[m],5,4));
-                   TheWall := TWall(TheSector.Wl.Objects[w]);
-                   LVertex := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
-                   RVertex := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
-                   MoveTo(M2SX(LVertex.X), M2SZ(LVertex.Z));
-                   LineTo(M2SX(RVertex.X), M2SZ(RVertex.Z));
-                   DO_Draw_WLperp(s, w, col_multis);
+                   if w < TheSector.Wl.Count then
+                    begin
+                     TheWall := TWall(TheSector.Wl.Objects[w]);
+                     LVertex := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
+                     RVertex := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
+                     MoveTo(M2SX(LVertex.X), M2SZ(LVertex.Z));
+                     LineTo(M2SX(RVertex.X), M2SZ(RVertex.Z));
+                     DO_Draw_WLperp(s, w, col_multis);
+                    end;
                   end;
                end;
         MM_VX: begin
@@ -703,18 +707,22 @@ begin
                  for m := 0 to VX_MULTIS.Count - 1 do
                   begin
                    TheSector := TSector(MAP_SEC.Objects[StrToInt(Copy(VX_MULTIS[m],1,4))]);
-                   TheVertex := TVertex(TheSector.Vx.Objects[StrToInt(Copy(VX_MULTIS[m],5,4))]);
-                   if IsPtVisible(TheVertex.X, TheVertex.Z) then
-                    if not UsePlusVX then
-                      Ellipse(M2SX(TheVertex.X)-Dimension, M2SZ(TheVertex.Z)-Dimension,
-                              M2SX(TheVertex.X)+Dimension, M2SZ(TheVertex.Z)+Dimension)
-                    else
-                     begin
-                      MoveTo(M2SX(TheVertex.X)-Dimension, M2SZ(TheVertex.Z));
-                      LineTo(M2SX(TheVertex.X)+Dimension, M2SZ(TheVertex.Z));
-                      MoveTo(M2SX(TheVertex.X),M2SZ(TheVertex.Z) -Dimension);
-                      LineTo(M2SX(TheVertex.X),M2SZ(TheVertex.Z) +Dimension);
-                     end;
+                   VXI := StrToInt(Copy(VX_MULTIS[m],5,4));
+                   if VXI < TheSector.Vx.Count then
+                    begin
+                     TheVertex := TVertex(TheSector.Vx.Objects[VXI]);
+                     if IsPtVisible(TheVertex.X, TheVertex.Z) then
+                      if not UsePlusVX then
+                        Ellipse(M2SX(TheVertex.X)-Dimension, M2SZ(TheVertex.Z)-Dimension,
+                                M2SX(TheVertex.X)+Dimension, M2SZ(TheVertex.Z)+Dimension)
+                      else
+                       begin
+                        MoveTo(M2SX(TheVertex.X)-Dimension, M2SZ(TheVertex.Z));
+                        LineTo(M2SX(TheVertex.X)+Dimension, M2SZ(TheVertex.Z));
+                        MoveTo(M2SX(TheVertex.X),M2SZ(TheVertex.Z) -Dimension);
+                        LineTo(M2SX(TheVertex.X),M2SZ(TheVertex.Z) +Dimension);
+                       end;
+                    end;
                   end;
                end;
         MM_OB: begin
@@ -1811,6 +1819,8 @@ var adjoins : Integer;
     px, pz   : real;
     TheObject: TOB;
     m        : Integer;
+    i        : Integer;
+    prompt   : Boolean;
 begin
  if LEVELLoaded then
   begin
@@ -1863,6 +1873,8 @@ begin
       $41 {VK_A} : CASE MAP_MODE of
                     MM_SC : ;
                     MM_WL : begin
+                             Do_StoreUndo;
+                             IGNORE_UNDO := True;
                              if MakeAdjoin(SC_HILITE, WL_HILITE) then
                               adjoins := 1
                              else
@@ -1870,10 +1882,12 @@ begin
                              adjoins := adjoins + MultiMakeAdjoin;
                              DO_Fill_WallEditor;
                              PanelText.Caption := IntToStr(adjoins) + ' ADJOIN(S) MADE';
+                             IGNORE_UNDO := False;
                             end;
                     MM_VX : ;
                     MM_OB : ;
                    END;
+      $42 {VK_B} : DO_ApplyUndo(True);
       $43 {VK_C} : DO_Center_On_Cursor;
       $44 {VK_D} : begin
                     ToolsWindow.ToolsNotebook.PageIndex := 4;
@@ -1888,6 +1902,7 @@ begin
                     MM_OB : DO_Find_PlayerStart;
                    END;
       $47 {VK_G} : DO_Grid_Out;
+      $48 {VG_H} : DEBUG_UNDO;
       $49 {VK_I} : SpeedButtonINFClick(NIL);
       $4B {VK_K} : DO_Polygon;
                    {DEU compatibility}
@@ -1935,13 +1950,58 @@ begin
       VK_DELETE  : CASE MAP_MODE of
                     MM_SC : ShellDeleteSC;
                     MM_WL : if WL_MULTIS.Count <> 0 then
-                              ShowMessage('Cannot Delete Multiple Walls !')
+                              begin
+                                { Don't prompt for every wall - only Once }
+                                prompt := CONFIRMWallDelete;
+                                Do_StoreUndo;
+                                WL_MULTIS.CustomSort(@SortVX);
+                                IGNORE_UNDO := True;
+                                if CONFIRMWallDelete = True then
+                                  begin
+                                    CONFIRMWallDelete := False;
+                                    if Application.MessageBox('Confirm Multi Wall DELETE ?',
+                                                              'WDFUSE Mapper - Delete Wall',
+                                                               mb_YesNo or mb_IconQuestion) = idNo
+                                      then exit;
+                                  end;
+                                for i := 0 to WL_MULTIS.count-1 do
+                                  begin
+                                    ShellDeleteWL(StrToInt(Copy(WL_MULTIS[i],1,4)),
+                                                  StrToInt(Copy(WL_MULTIS[i],5,4)));
+                                  end;
+                                WL_MULTIS.Clear;
+                                IGNORE_UNDO := False;
+                                CONFIRMWallDelete := prompt;
+                               end
                              else
-                              ShellDeleteWL(SC_HILITE, WL_HILITE);
-                    MM_VX : if WL_MULTIS.Count <> 0 then
-                              ShowMessage('Cannot Delete Multiple Vertices !')
+                                ShellDeleteWL(SC_HILITE, WL_HILITE);
+                    MM_VX : if VX_MULTIS.count <> 0 then
+                              begin
+                                { Don't prompt for every vertex - only Once }
+                                prompt := CONFIRMWallDelete;
+                                Do_StoreUndo;
+                                VX_MULTIS.CustomSort(@SortVX);
+                                IGNORE_UNDO := True;
+                                if CONFIRMWallDelete = True then
+                                  begin
+                                    CONFIRMWallDelete := False;
+                                    if Application.MessageBox('Confirm Multi Vertex DELETE ?',
+                                                              'WDFUSE Mapper - Delete Vertex',
+                                                               mb_YesNo or mb_IconQuestion) = idNo
+                                      then exit;
+                                  end;
+                                for i := 0 to VX_MULTIS.count-1 do
+                                  begin
+                                    ShellDeleteVX(StrToInt(Copy(VX_MULTIS[i],1,4)),
+                                                  StrToInt(Copy(VX_MULTIS[i],5,4)));
+                                  end;
+                                VX_MULTIS.Clear;
+                                IGNORE_UNDO := False;
+                                CONFIRMWallDelete := prompt;
+                              end
                              else
                               ShellDeleteVX(SC_HILITE, VX_HILITE);
+
                     MM_OB : ShellDeleteOB;
                    END;
       VK_INSERT  : begin
@@ -1973,8 +2033,11 @@ begin
       VK_F3      : SpeedButtonSaveClick(NIL);
       VK_F4      : if WL_MULTIS.Count > 1 then
                     begin
+                     Do_StoreUndo;
+                     IGNORE_UNDO := True;
                      DO_StitchHorizontal(TRUE, TRUE, TRUE);
                      DO_StitchVertical(TRUE, TRUE, TRUE);
+                     IGNORE_UNDO := False;
                     end
                    else
                     ShowMessage('You must have a Wall multiselection !');
@@ -2014,6 +2077,8 @@ begin
       $41 {VK_A} : CASE MAP_MODE of
                     MM_SC : ;
                     MM_WL : begin
+                             Do_StoreUndo;
+                             IGNORE_UNDO := True;
                              if MakeLayerAdjoin(SC_HILITE, WL_HILITE) then
                               adjoins := 1
                              else
@@ -2021,6 +2086,7 @@ begin
                              adjoins := adjoins + MultiMakeAdjoin;
                              DO_Fill_WallEditor;
                              PanelText.Caption := IntToStr(adjoins) + ' ADJOIN(S) MADE';
+                             IGNORE_UNDO := False;
                             end;
                     MM_VX : ;
                     MM_OB : ;
@@ -2166,7 +2232,8 @@ begin
                              end;
                     END;
                   end;
-      $5A {VK_Z} : DO_ApplyUndo;
+      $5A {VK_X} : DO_ApplyUndo(True);
+      $5B {VK_Z} : DO_ApplyUndo;
       VK_F5      : if WL_MULTIS.Count > 1 then
                     DO_StitchHorizontal(FALSE, FALSE, TRUE)
                    else
@@ -2192,6 +2259,8 @@ begin
       $41 {VK_A} : CASE MAP_MODE of
                     MM_SC : ;
                     MM_WL : begin
+                             Do_StoreUndo;
+                             IGNORE_UNDO := True;
                              if UnAdjoin(SC_HILITE, WL_HILITE) then
                               adjoins := 1
                              else
@@ -2199,6 +2268,7 @@ begin
                              adjoins := adjoins + MultiUnAdjoin;
                              DO_Fill_WallEditor;
                              PanelText.Caption := IntToStr(adjoins) + ' ADJOIN(S) REMOVED';
+                             IGNORE_UNDO := False;
                             end;
                     MM_VX : ;
                     MM_OB : ;
@@ -2214,7 +2284,8 @@ begin
       $4E {VK_N} : ;
       $4F {VK_O} : DO_OBShadow_OnOff;
       $53 {VK_S} : DO_Layer_OnOff;
-      $5A {VK_Z} : DO_ApplyUndo;
+      $5A {VK_x} : DO_ApplyUndo(True);
+      $5B {VK_Z} : DO_ApplyUndo;
       VK_F5      : if WL_MULTIS.Count > 1 then
                     DO_StitchHorizontal(FALSE, TRUE, FALSE)
                    else

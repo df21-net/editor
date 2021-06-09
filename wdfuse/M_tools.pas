@@ -170,6 +170,7 @@ end;
 procedure TToolsWindow.BNStitchClick(Sender: TObject);
 var title   : array[0..60] of char;
 begin
+ Do_StoreUndo;
  StrCopy(title, 'WDFUSE Tools - Stitching');
  if MAP_MODE <> MM_WL then
   begin
@@ -203,6 +204,7 @@ begin
    exit;
   end;
 
+ IGNORE_UNDO := True;
  if CBStitchHoriz.Checked then
   if RGStitchHoriz.ItemIndex = 0 then
    DO_StitchHorizontal(CBHMid.Checked, CBHTop.Checked, CBHBot.Checked)
@@ -212,6 +214,8 @@ begin
  if CBStitchVert.Checked  then DO_StitchVertical(CBVMid.Checked, CBVTop.Checked, CBVBot.Checked);
  MODIFIED := TRUE;
  DO_Fill_WallEditor;
+
+ IGNORE_UNDO := False;
  {MapWindow.Map.Invalidate;}
  if not CBPin.Checked then Close;
 end;
@@ -253,6 +257,7 @@ var code    : Integer;
     c_z     : Real;
     title   : array[0..60] of char;
 begin
+  DO_StoreUndo;
   StrCopy(title, 'WDFUSE Tools - Create Polygon');
 
   Val(EDPolyRadius.Text, AReal, Code);
@@ -289,7 +294,9 @@ begin
     end;
 
  {create a polygon function in m_mapfun}
+ IGNORE_UNDO := True;
  CreatePolygon(SEPolySides.Value, radius, c_x, c_z, RGPolyAs.ItemIndex, SC_HILITE);
+ IGNORE_UNDO := False;
 
  {MODIFIED, Sector Editor are handled by CreatePolygon}
  if not CBPin.Checked then Close;
@@ -302,6 +309,7 @@ var code    : Integer;
     z       : Real;
     title   : array[0..60] of char;
 begin
+  DO_StoreUndo;
   StrCopy(title, 'WDFUSE Tools - Translate');
 
   Val(EDTranslateX.Text, AReal, Code);
@@ -421,7 +429,7 @@ var code    : Integer;
     title   : array[0..60] of char;
 begin
   StrCopy(title, 'WDFUSE Tools - Offset');
-
+  DO_StoreUndo;
   IF RGOffset.ItemIndex <> 3 then
    begin
     if (MAP_MODE = MM_WL) or (MAP_MODE = MM_VX) then
@@ -479,6 +487,7 @@ end;
 procedure TToolsWindow.BNFlipClick(Sender: TObject);
 var title   : array[0..60] of char;
 begin
+ DO_StoreUndo;
  StrCopy(title, 'WDFUSE Tools - Flip');
 
  if not ((MAP_MODE = MM_SC) or (MAP_MODE = MM_OB)) then

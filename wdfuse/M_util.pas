@@ -64,7 +64,8 @@ procedure DO_RecomputeObjectsLists(usegauge : Boolean; maintitle : string);
 
 procedure DO_StoreUndo;
 procedure DO_FreeUndo;
-procedure DO_ApplyUndo;
+procedure DEBUG_UNDO;
+procedure DO_ApplyUndo(reverse : Boolean = False);
 
 procedure DO_FreeGeometryClip;
 procedure DO_FreeObjectsClip;
@@ -213,6 +214,7 @@ begin
       MAP_MODE := MM_VX;
       DO_Switch_To_SC_Mode;
       MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : SECTORS';
+      DO_FreeUndo;
      end
   end
  else
@@ -2044,6 +2046,8 @@ var i,j,k     : Integer;
     debug : Integer;
 begin
  { DO_FreeUndo;}
+ if IGNORE_UNDO = True then exit;
+
  MAP_SEC_UNDO := TStringList.Create;
  MAP_OBJ_UNDO := TStringList.Create;
  MAP_GUI_UNDO := TStringList.Create;
@@ -2164,7 +2168,7 @@ begin
 
   { If you UNDO a few times and then make a STORE operation
     Wipe the UNDO history to the RIGHT (newer) than now }
-  if (MAP_GLOBAL_UNDO.Count / 3) > MAP_GLOBAL_UNDO_INDEX  then
+ if (MAP_GLOBAL_UNDO.Count / 3) > MAP_GLOBAL_UNDO_INDEX  then
     begin
       for i := MAP_GLOBAL_UNDO_INDEX to round((MAP_GLOBAL_UNDO.Count / 3) - 1)  do
         begin
@@ -2200,11 +2204,27 @@ begin
  for i := 0 to MAP_OBJ_UNDO.Count - 1 do
   TOB(MAP_OBJ_UNDO.Objects[i]).Free;
 
+ MAP_GLOBAL_UNDO.Clear;
+ MAP_GLOBAL_UNDO_INDEX := 0;
  MAP_SEC_UNDO.Free;
  MAP_OBJ_UNDO.Free;
 end;
 
-procedure DO_ApplyUndo;
+{ FOR DEBUGGING - REMOVE THIS FOR RELEASE }
+procedure DEBUG_UNDO;
+var debugstr : string;
+    i : Integer;
+begin
+ debugstr := inttostr(MAP_GLOBAL_UNDO_INDEX) + ' array --> ';
+ for i := 0 to round(MAP_GLOBAL_UNDO.Count/3)-1 do
+  begin
+   debugstr := debugstr + ',' + inttostr(i) + ':' + inttostr(MAP_GLOBAL_UNDO[i*3].count);
+  end;
+ showmessage(debugstr);
+end;
+
+{ Reversing an Undo means a Redo }
+procedure DO_ApplyUndo(reverse : Boolean = False);
 var i,j,k     : Integer;
     TheSector : TSector;
     TheWall   : TWall;
@@ -2215,11 +2235,37 @@ var i,j,k     : Integer;
     NewVertex : TVertex;
     NewObject : TOB;
 begin
- if (MAP_GLOBAL_UNDO_INDEX = 0) or (MAP_SEC_UNDO.Count = 0) or (MAP_OBJ_UNDO.Count = 0) then
+ if ((MAP_GLOBAL_UNDO_INDEX = 0) and (Not reverse)) or (MAP_SEC_UNDO.Count = 0) or (MAP_OBJ_UNDO.Count = 0) then
   begin
    ShowMessage('Undo lists are empty !!!');
    exit;
   end;
+
+ { If you are at the end of the Undo list and are restoring
+   then store current state in case you want to Redo here again }
+ if not reverse then
+   begin
+
+    if (MAP_GLOBAL_UNDO.Count / 3) = MAP_GLOBAL_UNDO_INDEX then
+     begin
+      Do_StoreUndo;
+      MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
+     end;
+ end;
+
+ { If you are at the end of the Redo then throw an error,
+   otherwise jump ahead into the Undo array and retrieve state }
+ if reverse = True then
+  begin
+   if MAP_GLOBAL_UNDO.Count / 3 <= MAP_GLOBAL_UNDO_INDEX + 1  then
+    begin
+
+     showmessage('You cannot Redo this command. You are the end of the Undo List');
+     exit;
+    end
+  else
+    MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX  + 2;
+ end;
 
  {first, empty the MAP completely}
 
@@ -2254,7 +2300,6 @@ begin
  MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+1];
  MAP_GUI_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+2];
  MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
-
 
  for i := 0 to MAP_SEC_UNDO.Count - 1 do
   begin
@@ -2359,7 +2404,7 @@ begin
    MAP_OBJ.AddObject('OB', newObject);
  end;
 
-
+ { Reload the highlights of the map }
 
  MAP_MODE    := StrToInt(MAP_GUI_UNDO.Values['MAP_MODE']);
  SC_HILITE   := StrToInt(MAP_GUI_UNDO.Values['SC_HILITE']);

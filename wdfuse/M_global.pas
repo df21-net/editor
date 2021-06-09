@@ -513,6 +513,8 @@ MAP_SEC_UNDO     : TStringList;
 MAP_OBJ_UNDO     : TStringList;
 MAP_GUI_UNDO     : TStringList;
 
+{ Sometimes there are recursive calls - only store the root Undo }
+IGNORE_UNDO      : Boolean;
 MAP_MODE_UNDO    : Integer;
 SC_HILITE_UNDO,
 WL_HILITE_UNDO,
@@ -578,6 +580,8 @@ function S2MX(x : Real) : Real;
 function S2MZ(z : Real) : Real;
 function M2SX(x : Real) : Integer;
 function M2SZ(z : Real) : Integer;
+
+function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
 
 {*****************************************************************************}
 implementation
@@ -704,6 +708,36 @@ end;
 function M2SZ(z : Real) : Integer;
 begin
   M2SZ := Round( ScreenCenterZ + ((Zoffset - z) * scale) );
+end;
+
+function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
+var
+  s1 : Integer;
+  s2 : Integer;
+  w1 : Integer;
+  w2 : Integer;
+begin
+  s1 := StrToInt(Copy(List[idx1],1,4));
+  w1 := StrToInt(Copy(List[idx1],5,4));
+  s2 := StrToInt(Copy(List[idx2],1,4));
+  w2 := StrToInt(Copy(List[idx2],5,4));
+  if s1 < s2 then
+    Result := -1
+  else
+    begin
+      if s2 > s1 then
+        Result := 1
+      else
+        begin
+          if w1 < w2 then
+            Result := 1
+          else 
+            if w1 = w2 then
+              Result := 0
+            else 
+              Result := -1
+        end;
+    end;
 end;
 
 begin

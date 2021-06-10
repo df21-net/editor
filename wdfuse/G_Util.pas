@@ -306,7 +306,7 @@ begin
  for i := 1 to MASTERN do
    begin
      FileRead(gf, gx, SizeOf(gx));
-     S_NAME := StrPas(gx.NAME);
+     S_NAME := PAnsiChar(AnsiString(gx.NAME));
      index := XList.IndexOf(S_NAME);
      if index <> -1 then
          begin

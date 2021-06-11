@@ -184,7 +184,6 @@ begin
   2 : begin
        with OpenUserGOB do
         if Execute then
-         if not (ofExtensionDifferent in Options) then
           if IsGOB(FileName) then
            begin
             HiddenListBox.Clear;
@@ -194,7 +193,6 @@ begin
                               FileName, HiddenListBox, NIL);
             OpenUserLEV.InitialDir := WDFUSEdir+ '\' + EDProjectName.Text;
             if OpenUserLEV.Execute then
-             if not (ofExtensionDifferent in OpenUserLEV.Options) then
               begin
                lname := ExtractFileName(Copy(OpenUserLEV.FileName,1,Length(OpenUserLEV.FileName)-4));
                {now, search for O, INF, GOL, PAL, CMP, JEDI.LVL, TEXT.MSG
@@ -251,7 +249,6 @@ begin
   3 : begin
        with OpenWAD do
         if Execute then
-         if not (ofExtensionDifferent in Options) then
           if IsWAD(FileName) then
            begin
             CopyFile(WDFUSEdir + '\WDFDATA\SECBASE.LEV',  WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.LEV');

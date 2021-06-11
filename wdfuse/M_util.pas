@@ -6,7 +6,7 @@ uses
   _Math, _Strings, _Files,
   M_Global, M_io, M_Progrs, M_Find, M_Multi, M_Checks,
   M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit,
-  V_Util, I_Util, G_Util;
+  V_Util, I_Util, G_Util, Generics.Collections;
 
 procedure DO_Help;
 function  DO_InitGOBS : Boolean;
@@ -64,7 +64,8 @@ procedure DO_RecomputeObjectsLists(usegauge : Boolean; maintitle : string);
 
 procedure DO_StoreUndo;
 procedure DO_FreeUndo;
-procedure DO_ApplyUndo;
+procedure DEBUG_UNDO;
+procedure DO_ApplyUndo(reverse : Boolean = False);
 
 procedure DO_FreeGeometryClip;
 procedure DO_FreeObjectsClip;
@@ -213,6 +214,7 @@ begin
       MAP_MODE := MM_VX;
       DO_Switch_To_SC_Mode;
       MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : SECTORS';
+      DO_FreeUndo;
      end
   end
  else
@@ -337,10 +339,8 @@ begin
    begin
     MAP_SEC_UNDO  := TStringList.Create;
     MAP_OBJ_UNDO  := TStringList.Create;
-   end
-  else
-   begin
-    DO_FreeUndo;
+    MAP_GUI_UNDO  := TStringList.Create;
+    MAP_GLOBAL_UNDO := TList<TStringList>.Create;
    end;
 
   MapWindow.SpeedButtonSave.Enabled      := LEVELLoaded;
@@ -2045,22 +2045,19 @@ var i,j,k     : Integer;
     NewObject : TOB;
     debug : Integer;
 begin
- DO_FreeUndo;
+ { DO_FreeUndo;}
+ if IGNORE_UNDO = True then exit;
 
  MAP_SEC_UNDO := TStringList.Create;
  MAP_OBJ_UNDO := TStringList.Create;
+ MAP_GUI_UNDO := TStringList.Create;
 
- MAP_MODE_UNDO    := MAP_MODE;
- SC_HILITE_UNDO   := SC_HILITE;
- WL_HILITE_UNDO   := WL_HILITE;
- VX_HILITE_UNDO   := VX_HILITE;
- OB_HILITE_UNDO   := OB_HILITE;
- XOffset_UNDO     := XOffset;
- ZOffset_UNDO     := ZOffset;
- Scale_UNDO       := Scale;
- LAYER_UNDO       := LAYER;
- LAYER_MIN_UNDO   := LAYER_MIN;
- LAYER_MAX_UNDO   := LAYER_MAX;
+ { Store the UI assets }
+ MAP_GUI_UNDO.CommaText := Format('MAP_MODE=%d, SC_HILITE=%d, WL_HILITE=%d, ' +
+ 'VX_HILITE=%d, OB_HILITE=%d, XOffset=%d, ZOffset=%d, Scale=%d, LAYER=%d, LAYER_MIN=%d, LAYER_MAX=%d',
+ [MAP_MODE,SC_HILITE,WL_HILITE,VX_HILITE,OB_HILITE,XOffset,ZOffset,Round(Scale),LAYER,LAYER_MIN,LAYER_MAX]);
+                                                                                   {
+                         }
 
  for i := 0 to MAP_SEC.Count - 1 do
   begin
@@ -2168,6 +2165,23 @@ begin
    NewObject.Seq.AddStrings(TheObject.Seq);
    MAP_OBJ_UNDO.AddObject('OB', newObject);
   end;
+
+  { If you UNDO a few times and then make a STORE operation
+    Wipe the UNDO history to the RIGHT (newer) than now }
+ if (MAP_GLOBAL_UNDO.Count / 3) > MAP_GLOBAL_UNDO_INDEX  then
+    begin
+      for i := MAP_GLOBAL_UNDO_INDEX to round((MAP_GLOBAL_UNDO.Count / 3) - 1)  do
+        begin
+           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
+           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
+           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
+        end;
+    end;
+
+  MAP_GLOBAL_UNDO.Add(MAP_SEC_UNDO);
+  MAP_GLOBAL_UNDO.Add(MAP_OBJ_UNDO);
+  MAP_GLOBAL_UNDO.Add(MAP_GUI_UNDO);
+  MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX + 1;
   debug := MAP_OBJ_UNDO.Count;
 end;
 
@@ -2190,11 +2204,27 @@ begin
  for i := 0 to MAP_OBJ_UNDO.Count - 1 do
   TOB(MAP_OBJ_UNDO.Objects[i]).Free;
 
+ MAP_GLOBAL_UNDO.Clear;
+ MAP_GLOBAL_UNDO_INDEX := 0;
  MAP_SEC_UNDO.Free;
  MAP_OBJ_UNDO.Free;
 end;
 
-procedure DO_ApplyUndo;
+{ FOR DEBUGGING - REMOVE THIS FOR RELEASE }
+procedure DEBUG_UNDO;
+var debugstr : string;
+    i : Integer;
+begin
+ debugstr := inttostr(MAP_GLOBAL_UNDO_INDEX) + ' array --> ';
+ for i := 0 to round(MAP_GLOBAL_UNDO.Count/3)-1 do
+  begin
+   debugstr := debugstr + ',' + inttostr(i) + ':' + inttostr(MAP_GLOBAL_UNDO[i*3].count);
+  end;
+ showmessage(debugstr);
+end;
+
+{ Reversing an Undo means a Redo }
+procedure DO_ApplyUndo(reverse : Boolean = False);
 var i,j,k     : Integer;
     TheSector : TSector;
     TheWall   : TWall;
@@ -2205,13 +2235,40 @@ var i,j,k     : Integer;
     NewVertex : TVertex;
     NewObject : TOB;
 begin
- if (MAP_SEC_UNDO.Count = 0) or (MAP_OBJ_UNDO.Count = 0) then
+ if ((MAP_GLOBAL_UNDO_INDEX = 0) and (Not reverse)) or (MAP_SEC_UNDO.Count = 0) or (MAP_OBJ_UNDO.Count = 0) then
   begin
    ShowMessage('Undo lists are empty !!!');
    exit;
   end;
 
+ { If you are at the end of the Undo list and are restoring
+   then store current state in case you want to Redo here again }
+ if not reverse then
+   begin
+
+    if (MAP_GLOBAL_UNDO.Count / 3) = MAP_GLOBAL_UNDO_INDEX then
+     begin
+      Do_StoreUndo;
+      MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
+     end;
+ end;
+
+ { If you are at the end of the Redo then throw an error,
+   otherwise jump ahead into the Undo array and retrieve state }
+ if reverse = True then
+  begin
+   if MAP_GLOBAL_UNDO.Count / 3 <= MAP_GLOBAL_UNDO_INDEX + 1  then
+    begin
+
+     showmessage('You cannot Redo this command. You are the end of the Undo List');
+     exit;
+    end
+  else
+    MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX  + 2;
+ end;
+
  {first, empty the MAP completely}
+
  for i := 0 to MAP_SEC.Count - 1 do
     begin
       TheSector := TSector(MAP_SEC.Objects[i]);
@@ -2237,7 +2294,12 @@ begin
  MAP_SEC := TStringList.Create;
  MAP_OBJ := TStringList.Create;
 
- {then copy the UNDO in the map}
+ { LOAD the UNDO Lists from the Global Mapper }
+
+ MAP_SEC_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3];
+ MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+1];
+ MAP_GUI_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+2];
+ MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
 
  for i := 0 to MAP_SEC_UNDO.Count - 1 do
   begin
@@ -2340,14 +2402,27 @@ begin
 
    NewObject.Seq.AddStrings(TheObject.Seq);
    MAP_OBJ.AddObject('OB', newObject);
-  end;
+ end;
+
+ { Reload the highlights of the map }
+
+ MAP_MODE    := StrToInt(MAP_GUI_UNDO.Values['MAP_MODE']);
+ SC_HILITE   := StrToInt(MAP_GUI_UNDO.Values['SC_HILITE']);
+ WL_HILITE   := StrToInt(MAP_GUI_UNDO.Values['WL_HILITE']);
+ VX_HILITE   := StrToInt(MAP_GUI_UNDO.Values['VX_HILITE']);
+ OB_HILITE   := StrToInt(MAP_GUI_UNDO.Values['OB_HILITE']);
+ XOffset     := StrToInt(MAP_GUI_UNDO.Values['XOffset']);
+ ZOffset     := StrToInt(MAP_GUI_UNDO.Values['ZOffset']);
+ Scale       := Real(StrToInt(MAP_GUI_UNDO.Values['Scale']));
+ LAYER       := StrToInt(MAP_GUI_UNDO.Values['LAYER']);
+ LAYER_MIN   := StrToInt(MAP_GUI_UNDO.Values['LAYER_MIN']);
+ LAYER_MAX   := StrToInt(MAP_GUI_UNDO.Values['LAYER_MAX']);
 
  {then recompute the INFClasses
   the following two lines are mandatory because ComputeINFClasses
   does update the sector/wall editor, so we must be sure there is
   a valid value in there}
- SC_HILITE   := SC_HILITE_UNDO;
- WL_HILITE   := WL_HILITE_UNDO;
+ 
 
   for i := 0 to MAP_SEC.Count - 1 do
    begin
@@ -2361,18 +2436,6 @@ begin
        ComputeInfClasses(i, j);
      end;
    end;
-
- MAP_MODE    := MAP_MODE_UNDO;
- SC_HILITE   := SC_HILITE_UNDO;
- WL_HILITE   := WL_HILITE_UNDO;
- VX_HILITE   := VX_HILITE_UNDO;
- OB_HILITE   := OB_HILITE_UNDO;
- XOffset     := XOffset_UNDO;
- ZOffset     := ZOffset_UNDO;
- Scale       := Scale_UNDO;
- LAYER       := LAYER_UNDO;
- LAYER_MIN   := LAYER_MIN_UNDO;
- LAYER_MAX   := LAYER_MAX_UNDO;
 
  {recompute the textures and objects, etc.}
  ProgressWindow.Show;

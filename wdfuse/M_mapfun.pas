@@ -1774,6 +1774,7 @@ var    m           : Integer;
        first_amb,
        last_amb    : Integer;
 begin
+ Do_StoreUndo;
  TheSector  := TSector(MAP_SEC.Objects[StrToInt(Copy(SC_MULTIS[0],1,4))]);
  first_falt := TheSector.Floor_Alt;
  first_calt := TheSector.Ceili_Alt;
@@ -1819,6 +1820,7 @@ var TheSector  : TSector;
     m          : Integer;
     Len        : Real;
 begin
+ Do_StoreUndo;
  TheSector  := TSector(MAP_SEC.Objects[StrToInt(Copy(WL_MULTIS[0],1,4))]);
  TheWall    := TWall(TheSector.Wl.Objects[StrToInt(Copy(WL_MULTIS[0],5,4))]);
 
@@ -1883,6 +1885,7 @@ var TheSector  : TSector;
     m          : Integer;
     Len        : Real;
 begin
+ Do_StoreUndo;
  TheSector  := TSector(MAP_SEC.Objects[StrToInt(Copy(WL_MULTIS[WL_MULTIS.Count-1],1,4))]);
  TheWall    := TWall(TheSector.Wl.Objects[StrToInt(Copy(WL_MULTIS[WL_MULTIS.Count-1],5,4))]);
 
@@ -1944,6 +1947,7 @@ var TheSector : TSector;
     m         : Integer;
     Floor     : Real;
 begin
+ Do_StoreUndo;
  TheSector  := TSector(MAP_SEC.Objects[StrToInt(Copy(WL_MULTIS[0],1,4))]);
  Floor      := TheSector.Floor_Alt;
  TheWall    := TWall(TheSector.Wl.Objects[StrToInt(Copy(WL_MULTIS[0],5,4))]);

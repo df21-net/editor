@@ -259,17 +259,18 @@ TRESOURCE = record
 end;
 
 TYPE
+ { ARHHHHH - Since 2009 CHARS are 2 bytes!!!!! - Karjala }
  TBM_HEADER = record
-   BM_MAGIC    : array[1..4] of Char;
-   SizeX       : Integ16;
-   SizeY       : Integ16;
-   idemX       : Integ16;
-   idemY       : Integ16;
+   BM_MAGIC    : array[1..4] of AnsiChar;
+   SizeX       : SmallInt;
+   SizeY       : SmallInt;
+   idemX       : SmallInt;
+   idemY       : SmallInt;
    transparent : Byte;
    logSizeY    : Byte;
-   Compressed  : Integ16;
+   Compressed  : SmallInt;
    DataSize    : LongInt;
-   filler      : array[1..12] of Char;
+   filler      : array[1..12] of AnsiChar;
  end;
 
  TBM_SUBHEADER = record
@@ -279,9 +280,9 @@ TYPE
    idemY       : Integ16;
    DataSize    : LongInt;
    logSizeY    : Byte;
-   filler1     : array[1..11] of Char;
+   filler1     : array[1..11] of AnsiChar;
    transparent : Byte;
-   filler2     : array[1..3] of Char;
+   filler2     : array[1..3] of AnsiChar;
  end;
 
  TFME_HEADER1 = record

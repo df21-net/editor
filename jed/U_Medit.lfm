@@ -1,0 +1,394 @@
+object EpisodeEdit: TEpisodeEdit
+  Left = 151
+  Top = 61
+  Width = 536
+  Height = 563
+  Caption = 'Episode Editor'
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Position = poScreenCenter
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnShow = FormShow
+  PixelsPerInch = 120
+  object Label1: TLabel
+    Left = 9
+    Top = 233
+    Width = 56
+    Height = 16
+    AutoSize = False
+    Caption = 'Line #'
+  end
+  object Label2: TLabel
+    Left = 64
+    Top = 233
+    Width = 57
+    Height = 16
+    AutoSize = False
+    Caption = 'CD #'
+  end
+  object Label3: TLabel
+    Left = 121
+    Top = 233
+    Width = 56
+    Height = 16
+    AutoSize = False
+    Caption = 'Level #'
+  end
+  object Label4: TLabel
+    Left = 9
+    Top = 282
+    Width = 56
+    Height = 16
+    AutoSize = False
+    Caption = 'Type'
+  end
+  object Label5: TLabel
+    Left = 233
+    Top = 304
+    Width = 64
+    Height = 16
+    AutoSize = False
+    Caption = 'File name'
+  end
+  object Label6: TLabel
+    Left = 9
+    Top = 330
+    Width = 128
+    Height = 16
+    AutoSize = False
+    Caption = 'Give Force powers'
+  end
+  object Label7: TLabel
+    Left = 9
+    Top = 346
+    Width = 56
+    Height = 16
+    AutoSize = False
+    Caption = 'Light'
+  end
+  object Label8: TLabel
+    Left = 126
+    Top = 346
+    Width = 56
+    Height = 16
+    AutoSize = False
+    Caption = 'Dark'
+  end
+  object Label9: TLabel
+    Left = 9
+    Top = 386
+    Width = 128
+    Height = 16
+    AutoSize = False
+    Caption = 'Goto '
+  end
+  object Label10: TLabel
+    Left = 9
+    Top = 402
+    Width = 56
+    Height = 16
+    AutoSize = False
+    Caption = 'A'
+  end
+  object Label11: TLabel
+    Left = 64
+    Top = 402
+    Width = 57
+    Height = 16
+    AutoSize = False
+    Caption = 'B'
+  end
+  object Label12: TLabel
+    Left = 224
+    Top = 378
+    Width = 273
+    Height = 16
+    AutoSize = False
+    Caption = 'Text when level loads'
+  end
+  object Label13: TLabel
+    Left = 224
+    Top = 329
+    Width = 273
+    Height = 16
+    AutoSize = False
+    Caption = 'Level Name'
+  end
+  object Label14: TLabel
+    Left = 176
+    Top = 9
+    Width = 273
+    Height = 16
+    AutoSize = False
+    Caption = 'Episode name'
+  end
+  object Label15: TLabel
+    Left = 9
+    Top = 9
+    Width = 104
+    Height = 16
+    AutoSize = False
+    Caption = 'Episode Type'
+  end
+  object Label16: TLabel
+    Left = 9
+    Top = 57
+    Width = 128
+    Height = 16
+    AutoSize = False
+    Caption = 'Sequence'
+  end
+  object EBLnum: TEdit
+    Left = 9
+    Top = 249
+    Width = 48
+    Height = 24
+    TabOrder = 0
+  end
+  object EBCDNum: TEdit
+    Left = 64
+    Top = 249
+    Width = 49
+    Height = 24
+    TabOrder = 1
+  end
+  object EBLevNum: TEdit
+    Left = 121
+    Top = 249
+    Width = 48
+    Height = 24
+    TabOrder = 2
+  end
+  object CBType: TComboBox
+    Left = 9
+    Top = 298
+    Width = 96
+    Height = 24
+    ItemHeight = 16
+    Items.Strings = (
+      'LEVEL'
+      'CUT'
+      'DECIDE'
+    )
+    TabOrder = 3
+  end
+  object EBFname: TEdit
+    Left = 304
+    Top = 297
+    Width = 137
+    Height = 24
+    TabOrder = 4
+  end
+  object BNFname: TButton
+    Left = 448
+    Top = 304
+    Width = 25
+    Height = 17
+    Caption = '...'
+    TabOrder = 5
+    OnClick = BNFnameClick
+  end
+  object EBGotoA: TEdit
+    Left = 9
+    Top = 421
+    Width = 48
+    Height = 24
+    TabOrder = 6
+  end
+  object EBGotoB: TEdit
+    Left = 64
+    Top = 421
+    Width = 49
+    Height = 24
+    TabOrder = 7
+  end
+  object MMLevText: TMemo
+    Left = 224
+    Top = 394
+    Width = 289
+    Height = 80
+    TabOrder = 8
+  end
+  object EBLevName: TEdit
+    Left = 224
+    Top = 345
+    Width = 289
+    Height = 24
+    TabOrder = 9
+  end
+  object CBGameType: TComboBox
+    Left = 9
+    Top = 25
+    Width = 144
+    Height = 24
+    ItemHeight = 16
+    Items.Strings = (
+      '1 (Single Player)'
+      '2 (DeathMatch)'
+      '8 (Special/CTF)'
+      '16 (SaberDM)'
+    )
+    TabOrder = 10
+  end
+  object EBEpName: TEdit
+    Left = 176
+    Top = 25
+    Width = 337
+    Height = 24
+    TabOrder = 11
+  end
+  object BNStrings: TButton
+    Left = 9
+    Top = 455
+    Width = 88
+    Height = 25
+    Caption = '&Edit Strings'
+    TabOrder = 12
+    OnClick = BNStringsClick
+  end
+  object Button1: TButton
+    Left = 9
+    Top = 487
+    Width = 152
+    Height = 25
+    Caption = '&Create StartUp COG'
+    TabOrder = 13
+    OnClick = Button1Click
+  end
+  object CBLPow: TComboBox
+    Left = 9
+    Top = 362
+    Width = 104
+    Height = 24
+    ItemHeight = 16
+    Items.Strings = (
+      '22 (Speed)'
+      '21 (Jump)'
+      '24 (Pull)'
+      '23 (Seeing)'
+      '25 (Healing)'
+      '26 (Persuasion)'
+      '32 (Blind)'
+      '28 (Absorb)'
+    )
+    TabOrder = 14
+  end
+  object CBDPow: TComboBox
+    Left = 121
+    Top = 362
+    Width = 96
+    Height = 24
+    ItemHeight = 16
+    Items.Strings = (
+      '30 (Throw)'
+      '31 (Grip)'
+      '27 (Lighting)'
+      '33 (Destruction)'
+    )
+    TabOrder = 15
+  end
+  object BNUpdate: TButton
+    Left = 224
+    Top = 249
+    Width = 73
+    Height = 24
+    Caption = '&Update'
+    TabOrder = 16
+    OnClick = BNUpdateClick
+  end
+  object BNDelete: TButton
+    Left = 425
+    Top = 249
+    Width = 73
+    Height = 24
+    Caption = '&Delete'
+    TabOrder = 17
+    OnClick = BNDeleteClick
+  end
+  object BNAdd: TButton
+    Left = 320
+    Top = 249
+    Width = 75
+    Height = 24
+    Caption = '&Add'
+    TabOrder = 18
+    OnClick = BNAddClick
+  end
+  object BNSave: TButton
+    Left = 272
+    Top = 486
+    Width = 75
+    Height = 26
+    Caption = '&Save'
+    TabOrder = 19
+    OnClick = BNSaveClick
+  end
+  object BNCancel: TButton
+    Left = 393
+    Top = 486
+    Width = 73
+    Height = 26
+    Caption = '&Cancel'
+    TabOrder = 20
+    OnClick = BNCancelClick
+  end
+  object Panel1: TPanel
+    Left = 10
+    Top = 79
+    Width = 503
+    Height = 149
+    BevelOuter = bvNone
+    TabOrder = 21
+    object LVSeqs: TListView
+      Left = 0
+      Top = 0
+      Width = 503
+      Height = 149
+      Align = alClient
+      OnClick = LVSeqsClick
+      Columns = <      
+        item
+          Caption = 'Line'
+          Width = 37
+          WidthType = (
+            -2
+          )
+        end      
+        item
+          Caption = 'Level/Cutscene'
+          Width = 105
+          WidthType = (
+            -2
+          )
+        end      
+        item
+          Caption = 'Level #'
+          Width = 55
+          WidthType = (
+            -2
+          )
+        end      
+        item
+          Caption = 'GotoA'
+          WidthType = (
+            -2
+          )
+        end      
+        item
+          Caption = 'GotoB'
+          Width = 252
+          WidthType = (
+            -2
+          )
+        end>
+      ReadOnly = True
+      HideSelection = False
+      OnChange = LVSeqsChange
+      TabOrder = 0
+      ViewStyle = vsReport
+    end
+  end
+end

@@ -1,0 +1,141 @@
+object GetFileOpen: TGetFileOpen
+  Left = 242
+  Top = 158
+  BorderStyle = bsDialog
+  Caption = 'Open File inside '
+  ClientHeight = 428
+  ClientWidth = 650
+  Font.Color = clWindowText
+  Font.Height = -14
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  KeyPreview = True
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  PixelsPerInch = 120
+  object Label1: TLabel
+    Left = 20
+    Top = 345
+    Width = 80
+    Height = 19
+    AutoSize = False
+    Caption = '&File Name:'
+  end
+  object Label2: TLabel
+    Left = 20
+    Top = 394
+    Width = 74
+    Height = 20
+    AutoSize = False
+    Caption = '&File Type:'
+  end
+  object Label4: TLabel
+    Left = 10
+    Top = 10
+    Width = 98
+    Height = 20
+    AutoSize = False
+    Caption = '&Container file:'
+  end
+  object Label3: TLabel
+    Left = 10
+    Top = 315
+    Width = 113
+    Height = 20
+    AutoSize = False
+    Caption = '&Current file size:'
+  end
+  object LBContainer: TLabel
+    Left = 98
+    Top = 10
+    Width = 391
+    Height = 20
+    AutoSize = False
+    Caption = 'Dark.gob'
+  end
+  object LBFileSize: TLabel
+    Left = 118
+    Top = 315
+    Width = 99
+    Height = 20
+    AutoSize = False
+    Caption = '0Kb'
+  end
+  object EBFname: TEdit
+    Left = 108
+    Top = 345
+    Width = 395
+    Height = 24
+    TabOrder = 0
+    OnChange = EBFnameChange
+  end
+  object BNOpen: TButton
+    Left = 522
+    Top = 345
+    Width = 92
+    Height = 30
+    Caption = '&Open'
+    Default = True
+    TabOrder = 1
+    OnClick = BNOpenClick
+  end
+  object BNCancel: TButton
+    Left = 522
+    Top = 384
+    Width = 92
+    Height = 31
+    Cancel = True
+    Caption = '&Cancel'
+    ModalResult = 2
+    TabOrder = 2
+  end
+  object CBFilter: TFilterComboBox
+    Left = 108
+    Top = 394
+    Width = 179
+    Height = 24
+    Filter = 'All files (*.*)|*'
+    TabOrder = 3
+    OnChange = CBFilterChange
+  end
+  object DirList: TListBox
+    Left = 10
+    Top = 39
+    Width = 602
+    Height = 267
+    ItemHeight = 16
+    TabOrder = 4
+    OnClick = DirListClick
+    OnDblClick = DirListDblClick
+  end
+  object BNDirUp: TBitBtn
+    Left = 544
+    Top = 8
+    Width = 33
+    Height = 25
+    Hint = 'Return to parent directory'
+    TabOrder = 5
+    OnClick = BNDirUpClick
+    Glyph.Data = {
+      78010000424D7801000000000000760000002800000020000000100000000100
+      04000000000000000000120B0000120B00000000000000000000000000000000
+      800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
+      FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00555555555555
+      5555555555555555555555555555555555555555555555555555555555555555
+      55555555FFFFFFFFFF5555500000000005555557777777777F55550BFBFBFBFB
+      0555557F555555557F55550FBFBFBFBF0555557F555555557F55550BFBFBFBFB
+      0555557F555555557F55550FBFBFBFBF0555557F555555557F55550BFBFBFBFB
+      0555557F555555557F55550FBFBFBFBF0555557FFFFFFFFF7555550000000000
+      555555777777777755555550FBFB0555555555575FFF75555555555700007555
+      5555555577775555555555555555555555555555555555555555555555555555
+      55555555555555555555555555555555555555555555555555550000
+    }
+    NumGlyphs = 2
+  end
+  object OpenDialog: TOpenDialog
+    Options = [ofReadOnly, ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofShareAware]
+    Title = 'Open File'
+    Left = 360
+    Top = 8
+  end
+end

@@ -1,0 +1,49 @@
+object TplEdit: TTplEdit
+  Left = 239
+  Top = 180
+  Width = 639
+  Height = 457
+  Caption = 'Template Editor'
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  PixelsPerInch = 120
+  object Panel1: TPanel
+    Left = 0
+    Top = 384
+    Width = 631
+    Height = 41
+    Align = alBottom
+    TabOrder = 0
+  end
+  object SGVals: TStringGrid
+    Left = 376
+    Top = 0
+    Width = 255
+    Height = 384
+    Align = alRight
+    ColCount = 2
+    DefaultColWidth = 120
+    DefaultRowHeight = 20
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goEditing, goAlwaysShowEditor]
+    TabOrder = 1
+    RowHeights = (
+      20
+      20
+      20
+      20
+      20
+    )
+  end
+  object TVTpls: TTreeView
+    Left = 0
+    Top = 0
+    Width = 376
+    Height = 384
+    Indent = 19
+    Align = alClient
+    ParentColor = False
+    TabOrder = 2
+  end
+end

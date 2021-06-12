@@ -1,0 +1,94 @@
+object Consistency: TConsistency
+  Left = 253
+  Top = 185
+  Width = 532
+  Height = 379
+  Caption = 'Consistency Checker'
+  Font.Color = clWindowText
+  Font.Height = -14
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Position = poScreenCenter
+  PixelsPerInch = 120
+  object Errors: TListBox
+    Left = 0
+    Top = 0
+    Width = 524
+    Height = 304
+    Align = alClient
+    ItemHeight = 16
+    TabOrder = 0
+    OnClick = ErrorsClick
+    OnDblClick = ErrorsDblClick
+  end
+  object Panel: TPanel
+    Left = 0
+    Top = 304
+    Width = 524
+    Height = 48
+    Align = alBottom
+    TabOrder = 1
+    object SBHelp: TSpeedButton
+      Left = 481
+      Top = 11
+      Width = 30
+      Height = 27
+      Hint = 'Help'
+      Glyph.Data = {
+        78010000424D7801000000000000760000002800000020000000100000000100
+        04000000000000000000120B0000120B00000000000000000000000000000000
+        800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        3333333333FFFFF3333333333F797F3333333333F737373FF333333BFB999BFB
+        33333337737773773F3333BFBF797FBFB33333733337333373F33BFBFBFBFBFB
+        FB3337F33333F33337F33FBFBFB9BFBFBF3337333337F333373FFBFBFBF97BFB
+        FBF37F333337FF33337FBFBFBFB99FBFBFB37F3333377FF3337FFBFBFBFB99FB
+        FBF37F33333377FF337FBFBF77BF799FBFB37F333FF3377F337FFBFB99FB799B
+        FBF373F377F3377F33733FBF997F799FBF3337F377FFF77337F33BFBF99999FB
+        FB33373F37777733373333BFBF999FBFB3333373FF77733F7333333BFBFBFBFB
+        3333333773FFFF77333333333FBFBF33333333333777773333330000
+      }
+      NumGlyphs = 2
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = SBHelpClick
+    end
+    object BNClose: TButton
+      Left = 118
+      Top = 10
+      Width = 92
+      Height = 31
+      Caption = '&Close'
+      TabOrder = 0
+      OnClick = BNCloseClick
+    end
+    object BNGoto: TButton
+      Left = 20
+      Top = 10
+      Width = 92
+      Height = 31
+      Caption = '&Go to'
+      Default = True
+      TabOrder = 1
+      OnClick = BNGotoClick
+    end
+    object BNCheck: TButton
+      Left = 234
+      Top = 10
+      Width = 92
+      Height = 31
+      Caption = '&Recheck'
+      TabOrder = 2
+      OnClick = BNCheckClick
+    end
+    object BNCheckRes: TButton
+      Left = 338
+      Top = 9
+      Width = 119
+      Height = 31
+      Caption = 'Check &Resources'
+      TabOrder = 3
+      OnClick = BNCheckResClick
+    end
+  end
+end

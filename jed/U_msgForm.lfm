@@ -1,0 +1,42 @@
+object MsgForm: TMsgForm
+  Left = 200
+  Top = 121
+  Width = 435
+  Height = 300
+  Caption = 'Messages'
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Menu = MainMenu1
+  Visible = True
+  PixelsPerInch = 120
+  object msgs: TMemo
+    Left = 0
+    Top = 0
+    Width = 427
+    Height = 244
+    Align = alClient
+    ReadOnly = True
+    ScrollBars = ssVertical
+    TabOrder = 0
+  end
+  object MainMenu1: TMainMenu
+    Left = 344
+    Top = 24
+    object File1: TMenuItem
+      Caption = '&Messages'
+      ShortCut = 0
+      object Clear1: TMenuItem
+        Caption = '&Clear'
+        ShortCut = 0
+        OnClick = Clear1Click
+      end
+      object Close1: TMenuItem
+        Caption = '&Close'
+        ShortCut = 0
+        OnClick = Close1Click
+      end
+    end
+  end
+end

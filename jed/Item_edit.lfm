@@ -1,0 +1,126 @@
+object ItemEdit: TItemEdit
+  Left = 81
+  Top = 138
+  Width = 224
+  Height = 522
+  Caption = 'ItemEdit'
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  KeyPreview = True
+  OnActivate = FormActivate
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnDeactivate = FormDeactivate
+  PixelsPerInch = 120
+  object SGFields: TStringGrid
+    Left = 0
+    Top = 41
+    Width = 216
+    Height = 316
+    Align = alClient
+    ColCount = 2
+    DefaultColWidth = 105
+    DefaultRowHeight = 20
+    RowCount = 1
+    FixedRows = 0
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goEditing, goAlwaysShowEditor]
+    TabOrder = 0
+  end
+  object PNButtons: TPanel
+    Left = 0
+    Top = 421
+    Width = 216
+    Height = 74
+    Align = alBottom
+    TabOrder = 1
+    object BNAdd: TButton
+      Left = 9
+      Top = 9
+      Width = 96
+      Height = 24
+      Caption = '&Add Value'
+      TabOrder = 0
+      OnClick = BNAddClick
+    end
+    object BNRemove: TButton
+      Left = 9
+      Top = 41
+      Width = 96
+      Height = 24
+      Caption = '&Remove Value'
+      TabOrder = 1
+      OnClick = BNRemoveClick
+    end
+    object BNAsFrame: TButton
+      Left = 112
+      Top = 9
+      Width = 97
+      Height = 24
+      Caption = '&Copy as Frame'
+      TabOrder = 2
+      OnClick = BNAsFrameClick
+    end
+    object BNPaste: TButton
+      Left = 111
+      Top = 41
+      Width = 97
+      Height = 24
+      Hint = 'Pastes what "Copy As Frame" copies'
+      Caption = '&Paste'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 3
+      OnClick = BNPasteClick
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Top = 0
+    Width = 216
+    Height = 41
+    Align = alTop
+    TabOrder = 2
+    object LBText: TLabel
+      Left = 2
+      Top = 25
+      Width = 215
+      Height = 16
+      AutoSize = False
+    end
+    object CBOnTop: TCheckBox
+      Left = 112
+      Top = 1
+      Width = 97
+      Height = 16
+      Caption = 'Stay OnTop'
+      TabOrder = 0
+      OnClick = CBOnTopClick
+    end
+  end
+  object LBCogs: TListBox
+    Left = 0
+    Top = 373
+    Width = 216
+    Height = 48
+    Align = alBottom
+    ItemHeight = 16
+    TabOrder = 3
+    OnDblClick = LBCogsDblClick
+  end
+  object Panel3: TPanel
+    Left = 0
+    Top = 357
+    Width = 216
+    Height = 16
+    Align = alBottom
+    Alignment = taLeftJustify
+    Caption = 'Used in Cogs'
+    TabOrder = 4
+  end
+  object ColorDlg: TColorDialog
+    Left = 16
+    Top = 392
+  end
+end

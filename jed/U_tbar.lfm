@@ -1,0 +1,520 @@
+object Toolbar: TToolbar
+  Left = 93
+  Top = 131
+  Width = 260
+  Height = 484
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsSizeToolWin
+  Caption = 'Map Settings'
+  Font.Color = clWindowText
+  Font.Height = -10
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Visible = True
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  PixelsPerInch = 96
+  object Panel1: TPanel
+    Left = 0
+    Top = 422
+    Width = 252
+    Height = 35
+    Align = alBottom
+    TabOrder = 0
+    object BNShow: TButton
+      Left = 7
+      Top = 13
+      Width = 46
+      Height = 20
+      Caption = '&Show'
+      TabOrder = 0
+      OnClick = BNShowClick
+    end
+    object BNHide: TButton
+      Left = 59
+      Top = 13
+      Width = 46
+      Height = 20
+      Caption = '&Hide'
+      TabOrder = 1
+      OnClick = BNHideClick
+    end
+    object BNDel: TButton
+      Left = 111
+      Top = 13
+      Width = 85
+      Height = 20
+      Caption = '&Delete Unused'
+      TabOrder = 2
+      OnClick = BNDelClick
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Top = 0
+    Width = 252
+    Height = 118
+    Align = alTop
+    TabOrder = 1
+    object PGStuff: TPageControl
+      Left = 1
+      Top = 20
+      Width = 250
+      Height = 97
+      ActivePage = PGrid
+      Align = alBottom
+      TabOrder = 0
+      object PGrid: TTabSheet
+        Caption = '&Grid'
+        object Label1: TLabel
+          Left = 7
+          Top = 18
+          Width = 59
+          Height = 13
+          AutoSize = False
+          Caption = 'Snap every:'
+        end
+        object Label2: TLabel
+          Left = 72
+          Top = 18
+          Width = 59
+          Height = 13
+          AutoSize = False
+          Caption = 'Line every:'
+        end
+        object Label3: TLabel
+          Left = 131
+          Top = 18
+          Width = 58
+          Height = 13
+          AutoSize = False
+          Caption = 'Dot every:'
+        end
+        object CBGridStep: TComboBox
+          Left = 7
+          Top = 33
+          Width = 59
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.005'
+            '0.01'
+            '0.02'
+            '0.03'
+            '0.04'
+            '0.05'
+            '0.06'
+            '0.07'
+            '0.08'
+            '0.1'
+            '0.125'
+            '0.2'
+            '0.250'
+            '0.3'
+            '0.4'
+            '0.5'
+            '0.6'
+            '0.7'
+            '0.8'
+            '0.9'
+            '1'
+          )
+          TabOrder = 0
+          Text = '0.2'
+          OnChange = CBGridStepChange
+          OnExit = CBGridStepExit
+        end
+        object CBGridLine: TComboBox
+          Left = 72
+          Top = 33
+          Width = 52
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.2'
+            '0.5'
+            '1'
+            '2'
+            '5'
+          )
+          TabOrder = 1
+          Text = '1'
+          OnChange = CBGridLineChange
+          OnExit = CBGridLineExit
+        end
+        object CBGridDot: TComboBox
+          Left = 130
+          Top = 33
+          Width = 53
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.1'
+            '0.2'
+            '0.3'
+            '0.4'
+            '0.5'
+            '0.6'
+            '0.7'
+            '0.8'
+            '0.9'
+            '1'
+          )
+          TabOrder = 2
+          Text = '0.2'
+          OnChange = CBGridDotChange
+          OnExit = CBGridDotExit
+        end
+        object CBGrid: TCheckBox
+          Left = 59
+          Top = 3
+          Width = 78
+          Height = 14
+          TabStop = False
+          Caption = 'Snap to Grid'
+          TabOrder = 3
+          OnClick = CBGridClick
+        end
+      end
+      object PTXing: TTabSheet
+        Caption = '&Texturing'
+        object Label4: TLabel
+          Left = 7
+          Top = 11
+          Width = 59
+          Height = 13
+          AutoSize = False
+          Caption = 'Shift Step:'
+        end
+        object Label5: TLabel
+          Left = 72
+          Top = 11
+          Width = 59
+          Height = 13
+          AutoSize = False
+          Caption = 'Rot. Step:'
+        end
+        object Label8: TLabel
+          Left = 137
+          Top = 11
+          Width = 59
+          Height = 13
+          AutoSize = False
+          Caption = 'Scale. Step:'
+        end
+        object CBTxStep: TComboBox
+          Left = 7
+          Top = 27
+          Width = 59
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.01'
+            '0.05'
+            '0.1'
+            '0.5'
+            '1'
+            '2'
+            '4'
+            '5'
+            '8'
+            '10'
+            '16'
+            '32'
+            '64'
+          )
+          TabOrder = 0
+          Text = '0.5'
+          OnChange = CBTxStepChange
+          OnExit = CBTxStepExit
+        end
+        object CBRotStep: TComboBox
+          Left = 72
+          Top = 27
+          Width = 55
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.01'
+            '0.05'
+            '0.1'
+            '0.5'
+            '1'
+            '5'
+            '10'
+            '15'
+            '45'
+          )
+          TabOrder = 1
+          Text = '1'
+          OnChange = CBRotStepChange
+          OnExit = CBRotStepExit
+        end
+        object CBScaleStep: TComboBox
+          Left = 137
+          Top = 27
+          Width = 55
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '1.024'
+            '1.125'
+            '1.25'
+            '1.6'
+            '2'
+            '4'
+            '8'
+          )
+          TabOrder = 2
+          Text = '2'
+          OnChange = CBScaleStepChange
+          OnExit = CBScaleStepExit
+        end
+      end
+      object PShapes: TTabSheet
+        Caption = '&Shapes'
+        object Label6: TLabel
+          Left = 33
+          Top = 7
+          Width = 117
+          Height = 13
+          AutoSize = False
+          Caption = 'New sector shape is'
+        end
+        object CBShapes: TComboBox
+          Left = 33
+          Top = 20
+          Width = 117
+          Height = 21
+          Style = csDropDownList
+          ItemHeight = 13
+          TabOrder = 0
+        end
+        object BNDelShape: TButton
+          Left = 168
+          Top = 8
+          Width = 65
+          Height = 25
+          Caption = '&Delete'
+          TabOrder = 1
+          OnClick = BNDelShapeClick
+        end
+      end
+      object PerShift: TTabSheet
+        Caption = 'Other'
+        object Label7: TLabel
+          Left = 4
+          Top = -2
+          Width = 59
+          Height = 13
+          AutoSize = False
+          Caption = '[] Step:'
+        end
+        object Label9: TLabel
+          Left = 56
+          Top = -2
+          Width = 94
+          Height = 13
+          AutoSize = False
+          Caption = '3D Preview step:'
+        end
+        object Label10: TLabel
+          Left = 147
+          Top = -2
+          Width = 49
+          Height = 13
+          AutoSize = False
+          Caption = 'Grid Size:'
+        end
+        object Label11: TLabel
+          Left = 7
+          Top = 33
+          Width = 78
+          Height = 13
+          AutoSize = False
+          Caption = 'Grid move step:'
+        end
+        object CBPerpStep: TComboBox
+          Left = 7
+          Top = 15
+          Width = 60
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.001'
+            '0.005'
+            '0.01'
+            '0.02'
+            '0.03'
+            '0.04'
+            '0.05'
+            '0.06'
+            '0.07'
+            '0.08'
+            '0.1'
+            '0.125'
+            '0.2'
+            '0.250'
+            '0.3'
+            '0.4'
+            '0.5'
+            '0.6'
+            '0.7'
+            '0.8'
+            '0.9'
+            '1'
+          )
+          TabOrder = 0
+          Text = '0.02'
+          OnChange = CBPerpStepChange
+          OnExit = CBPerpStepExit
+        end
+        object CB3DPStep: TComboBox
+          Left = 72
+          Top = 15
+          Width = 60
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.001'
+            '0.005'
+            '0.01'
+            '0.02'
+            '0.03'
+            '0.04'
+            '0.05'
+            '0.06'
+            '0.07'
+            '0.08'
+            '0.1'
+            '0.125'
+            '0.2'
+            '0.250'
+            '0.3'
+            '0.4'
+            '0.5'
+            '0.6'
+            '0.7'
+            '0.8'
+            '0.9'
+            '1'
+          )
+          TabOrder = 1
+          Text = '0.1'
+          OnChange = CB3DPStepChange
+          OnExit = CB3DPStepExit
+        end
+        object CBGridSize: TComboBox
+          Left = 143
+          Top = 15
+          Width = 46
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '1'
+            '2'
+            '5'
+            '10'
+            '20'
+            '25'
+            '50'
+          )
+          TabOrder = 2
+          Text = '10'
+          OnChange = CBGridSizeChange
+          OnExit = CBGridSizeExit
+        end
+        object CBGridMove: TComboBox
+          Left = 7
+          Top = 47
+          Width = 60
+          Height = 21
+          ItemHeight = 13
+          Items.Strings = (
+            '0.001'
+            '0.005'
+            '0.01'
+            '0.02'
+            '0.03'
+            '0.04'
+            '0.05'
+            '0.06'
+            '0.07'
+            '0.08'
+            '0.1'
+            '0.125'
+            '0.2'
+            '0.250'
+            '0.3'
+            '0.4'
+            '0.5'
+            '0.6'
+            '0.7'
+            '0.8'
+            '0.9'
+            '1'
+            '2'
+            '3'
+            '4'
+            '5'
+          )
+          TabOrder = 3
+          Text = '0.001'
+          OnChange = CBGridMoveChange
+          OnExit = CBGridMoveExit
+        end
+      end
+    end
+    object CBOnTop: TCheckBox
+      Left = 7
+      Top = 2
+      Width = 78
+      Height = 13
+      Caption = 'Stay On Top'
+      TabOrder = 1
+      OnClick = CBOnTopClick
+    end
+    object BNSave: TButton
+      Left = 91
+      Top = 3
+      Width = 105
+      Height = 14
+      Hint = 'Sets current map settings as defualt ones'
+      Caption = '&Set as default'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+      OnClick = BNSaveClick
+    end
+  end
+  object LVLayers: TListView
+    Left = 0
+    Top = 118
+    Width = 252
+    Height = 304
+    Align = alClient
+    OnDblClick = LVLayersDblClick
+    Columns = <    
+      item
+        Caption = 'Layer'
+        Width = 140
+      end    
+      item
+        Caption = 'Visible?'
+        Width = 108
+        WidthType = (
+          -2
+        )
+      end>
+    DragMode = dmAutomatic
+    ReadOnly = False
+    HideSelection = False
+    MultiSelect = True
+    OnChange = LVLayersChange
+    OnEdited = LVLayersEdited
+    OnDragDrop = LVLayersDragDrop
+    OnDragOver = LVLayersDragOver
+    TabOrder = 2
+    ViewStyle = vsReport
+  end
+end

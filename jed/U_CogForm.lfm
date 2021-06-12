@@ -1,0 +1,130 @@
+object CogForm: TCogForm
+  Left = 279
+  Top = 205
+  Width = 689
+  Height = 489
+  Caption = 'Placed Cogs'
+  Font.Color = clWindowText
+  Font.Height = -10
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Position = poScreenCenter
+  OnCreate = FormCreate
+  PixelsPerInch = 96
+  object Panel1: TPanel
+    Left = 0
+    Top = 423
+    Width = 681
+    Height = 39
+    Align = alBottom
+    TabOrder = 0
+    object BNAdd: TButton
+      Left = 13
+      Top = 13
+      Width = 59
+      Height = 20
+      Caption = '&Add Cog...'
+      TabOrder = 0
+      OnClick = BNAddClick
+    end
+    object BNDelete: TButton
+      Left = 78
+      Top = 13
+      Width = 59
+      Height = 20
+      Caption = '&Delete Cog'
+      TabOrder = 1
+      OnClick = BNDeleteClick
+    end
+    object BNRefresh: TButton
+      Left = 215
+      Top = 13
+      Width = 60
+      Height = 20
+      Caption = '&Refresh'
+      TabOrder = 2
+      OnClick = BNRefreshClick
+    end
+    object BNEdit: TButton
+      Left = 280
+      Top = 13
+      Width = 60
+      Height = 20
+      Caption = '&Edit Cog'
+      TabOrder = 3
+      OnClick = BNEditClick
+    end
+    object BNGetSel: TButton
+      Left = 429
+      Top = 13
+      Width = 111
+      Height = 20
+      Hint = 'Assigns the currently selected sectors/surface or thing to the COG slot'
+      Caption = '&Get selected item'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 4
+      OnClick = BNGetSelClick
+    end
+    object CBOnTop: TCheckBox
+      Left = 345
+      Top = 14
+      Width = 78
+      Height = 13
+      Caption = 'Stay OnTop'
+      TabOrder = 5
+      OnClick = CBOnTopClick
+    end
+    object BNDuplicate: TButton
+      Left = 143
+      Top = 13
+      Width = 53
+      Height = 20
+      Caption = '&Duplicate'
+      TabOrder = 6
+      OnClick = BNDuplicateClick
+    end
+  end
+  object LVCOGs: TListView
+    Left = 0
+    Top = 0
+    Width = 479
+    Height = 423
+    Align = alClient
+    Columns = <    
+      item
+        Caption = 'Cog'
+        Width = 128
+      end    
+      item
+        Caption = 'Parameters'
+        Width = 12
+        WidthType = (
+          -1
+        )
+      end>
+    ReadOnly = True
+    HideSelection = False
+    OnChange = LVCOGsChange
+    TabOrder = 1
+    ViewStyle = vsReport
+  end
+  object SGVals: TStringGrid
+    Left = 479
+    Top = 0
+    Width = 202
+    Height = 423
+    Align = alRight
+    ColCount = 2
+    DefaultColWidth = 120
+    DefaultRowHeight = 20
+    RowCount = 1
+    FixedRows = 0
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goEditing, goAlwaysShowEditor]
+    TabOrder = 2
+    OnExit = SGValsExit
+    RowHeights = (
+      20
+    )
+  end
+end

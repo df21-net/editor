@@ -1,0 +1,73 @@
+object Preview3D: TPreview3D
+  Left = 448
+  Top = 162
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsSingle
+  Caption = '3D Preview'
+  ClientHeight = 195
+  ClientWidth = 260
+  Font.Color = clWindowText
+  Font.Height = -10
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  FormStyle = fsStayOnTop
+  KeyPreview = True
+  Menu = MainMenu1
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDblClick = FormDblClick
+  OnHide = FormHide
+  OnKeyDown = FormKeyDown
+  OnMouseUp = FormMouseUp
+  OnPaint = FormPaint
+  OnShow = FormShow
+  PixelsPerInch = 96
+  object MainMenu1: TMainMenu
+    Left = 80
+    Top = 40
+    object Preview: TMenuItem
+      Caption = '&Preview'
+      ShortCut = 0
+      object Close1: TMenuItem
+        Caption = '&Close'
+        ShortCut = 0
+        OnClick = Close1Click
+      end
+    end
+    object Commands1: TMenuItem
+      Caption = '&Commands'
+      ShortCut = 116
+      object SetViewcamera1: TMenuItem
+        Caption = 'Set &View To Camera'
+        ShortCut = 0
+        OnClick = SetViewcamera1Click
+      end
+      object ToggleFullyLit1: TMenuItem
+        Caption = 'Toggle Fully Lit'
+        ShortCut = 0
+        OnClick = ToggleFullyLit1Click
+      end
+      object Keyboard1: TMenuItem
+        Caption = '&Keyboard'
+        ShortCut = 0
+        object miControl: TMenuItem
+          Caption = '&Control'
+          ShortCut = 0
+        end
+        object miTex: TMenuItem
+          Caption = '&Texturing'
+          ShortCut = 0
+        end
+        object miEdit: TMenuItem
+          Caption = '&Editing'
+          ShortCut = 0
+        end
+      end
+    end
+    object Settings1: TMenuItem
+      Caption = '&Options'
+      ShortCut = 0
+      OnClick = Settings1Click
+    end
+  end
+end

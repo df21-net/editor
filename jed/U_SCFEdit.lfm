@@ -1,0 +1,49 @@
+object SCFieldPicker: TSCFieldPicker
+  Left = 200
+  Top = 121
+  Width = 307
+  Height = 300
+  ActiveControl = BNOK
+  Caption = 'Sector Field'
+  Font.Color = clWindowText
+  Font.Height = -10
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  PixelsPerInch = 96
+  object Panel1: TPanel
+    Left = 0
+    Top = 0
+    Width = 299
+    Height = 273
+    Align = alClient
+    TabOrder = 0
+    object RGItems: TRadioGroup
+      Left = 13
+      Top = 13
+      Width = 215
+      Height = 150
+      Caption = 'RGItems'
+      TabOrder = 0
+    end
+    object BNOK: TButton
+      Left = 52
+      Top = 182
+      Width = 61
+      Height = 20
+      Caption = '&OK'
+      Default = True
+      ModalResult = 1
+      TabOrder = 1
+    end
+    object BNCancel: TButton
+      Left = 130
+      Top = 182
+      Width = 61
+      Height = 20
+      Cancel = True
+      Caption = '&Cancel'
+      ModalResult = 2
+      TabOrder = 2
+    end
+  end
+end

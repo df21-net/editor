@@ -1,0 +1,772 @@
+object JedMain: TJedMain
+  Left = 531
+  Top = 73
+  Width = 732
+  Height = 641
+  Caption = 'Jed'
+  Color = clBlack
+  Font.Color = clWindowText
+  Font.Height = -14
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  KeyPreview = True
+  Menu = MainMenu
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
+  OnKeyUp = FormKeyUp
+  OnMouseDown = FormMouseDown
+  OnMouseMove = FormMouseMove
+  OnMouseUp = FormMouseUp
+  OnPaint = FormPaint
+  OnResize = FormResize
+  OnShow = FormShow
+  PixelsPerInch = 120
+  object Tbar: TPanel
+    Left = 0
+    Top = 0
+    Width = 724
+    Height = 41
+    Align = alTop
+    TabOrder = 0
+    object BNSC: TSpeedButton
+      Left = 9
+      Top = 9
+      Width = 24
+      Height = 24
+      Hint = 'Sector Mode'
+      GroupIndex = 1
+      Down = True
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00000000000000000000000000000000
+        80000080000000808000800000008000800080800000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        3333333333333333333330000000003333338888888883333333300333333003
+        3333883333338833333330303333303033338383333383833333303303333033
+        0333833833338338333330330000000000338338888888888333303303333033
+        3033833833338333833330330333303330338338333383338333303303333033
+        3033833833338333833330000000003330338888888883338333330303333303
+        3033383833333833833333300333333030333388333333838333333303333333
+        0033333833333338833333330000000000333338888888888333333333333333
+        3333333333333333333333333333333333333333333333333333
+      }
+      NumGlyphs = 2
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object BNSF: TSpeedButton
+      Left = 41
+      Top = 9
+      Width = 24
+      Height = 24
+      Hint = 'Surface Mode'
+      GroupIndex = 1
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00000000000000000000000000000000
+        80000080000000808000800000008000800080800000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        3333333333333333333333333333333333333333333333333333330000000000
+        0333388888888888333333044444444403333877777777783333330444444444
+        0333387777777778333333044444444403333877777777783333330444444444
+        0333387777777778333333044444444403333877777777783333330444444444
+        0333387777777778333333044444444403333877777777783333330444444444
+        0333387777777778333333044444444403333877777777783333330444444444
+        0333387777777778333333000000000003333888888888883333333333333333
+        3333333333333333333333333333333333333333333333333333
+      }
+      NumGlyphs = 2
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object BNVX: TSpeedButton
+      Left = 73
+      Top = 9
+      Width = 24
+      Height = 24
+      Hint = 'Vertex Mode'
+      GroupIndex = 1
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00000000000000000000000000000000
+        80000080000000808000800000008000800080800000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        33333333333333333333300FFFFFFFF003333887777777788333300333333330
+        033338833333333883333F3333333333F33337333333333373333F3333333333
+        F33337333333333373333F3333333333F33337333333333373333F3333333333
+        F33337333333333373333F3333333333F33337333333333373333F3333333333
+        F33337333333333373333F3333333333F33337333333333373333F3333333333
+        F33337333333333373333F3333333333F33337333333333373333F3333333333
+        F333373333333333733330033333333003333883333333388333300FFFFFFFF0
+        0333388777777778833333333333333333333333333333333333
+      }
+      NumGlyphs = 2
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object BNTH: TSpeedButton
+      Left = 137
+      Top = 9
+      Width = 24
+      Height = 24
+      Hint = 'Thing Mode'
+      GroupIndex = 1
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00000000000000000000000000000000
+        80000080000000808000800000008000800080800000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        3333333333333333333333888888888833333388888888883333338FFFFFFFF8
+        83333387777777788333338FFFFFFFF8F8333387777777787833339999999998
+        F833331111111118783333999999999998333311111111111833338FFFFFFFF9
+        99333387777777711133338FFFFFFFF899333387777777781133338888888888
+        F9333388888888887133338FFFFFFFFF883333877777777788333338FFFFFFFF
+        F833333877777777783333338FFFFFFFF8333333877777777833333338888888
+        8833333338888888883333333333333333333333333333333333333333333333
+        3333333333333333333333333333333333333333333333333333
+      }
+      NumGlyphs = 2
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object BNLT: TSpeedButton
+      Left = 169
+      Top = 9
+      Width = 24
+      Height = 24
+      Hint = 'Light Mode'
+      GroupIndex = 1
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00000000000000000000000000000000
+        80000080000000808000800000008000800080800000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333003333
+        3333333338833333333333333000033333333333888833333333333330000333
+        333333338888333333333333300003333333333388883333333333333F33F333
+        333333337337333333333333FF33FF3333333337733773333333333FF3333FF3
+        33333377333377333333333F333333F333333373333337333333333F333333F3
+        333333733333373333333333F3333F333333333733337333333333303FFFF303
+        3333338377773833333333033333333033333833333333833333303333333333
+        0333833333333338333303333333333330383333333333338333333333333333
+        3333333333333333333333333333333333333333333333333333
+      }
+      NumGlyphs = 2
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object BNED: TSpeedButton
+      Left = 105
+      Top = 9
+      Width = 24
+      Height = 24
+      Hint = 'Edge Mode'
+      GroupIndex = 1
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00000000000000000000000000000000
+        80000080000000808000800000008000800080800000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        3333333333333333333333333333333333333333333333333333333333333333
+        3333333333333333333333333333333333333333333333333333333333333333
+        3333333333333333333333333333333333333333333333333333333333333333
+        3333333333333333333330000000000000338888888888888833333333333333
+        3333333333333333333333333333333333333333333333333333333333333333
+        3333333333333333333333333333333333333333333333333333333333333333
+        3333333333333333333333333333333333333333333333333333333333333333
+        3333333333333333333333333333333333333333333333333333
+      }
+      NumGlyphs = 2
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object LBXYZ: TLabel
+      Left = 304
+      Top = 16
+      Width = 50
+      Height = 20
+      Caption = 'LBXYZ'
+      Visible = False
+    end
+    object BNFR: TSpeedButton
+      Left = 201
+      Top = 9
+      Width = 24
+      Height = 24
+      Hint = 'Frame Mode'
+      GroupIndex = 1
+      Glyph.Data = {
+        F6000000424DF600000000000000760000002800000010000000100000000100
+        0400000000008000000000000000000000001000000010000000000000000000
+        BF0000BF000000BFBF00BF000000BF00BF00BFBF0000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00777777777777
+        7777700000000000777778080808080007777000000000008077770888888888
+        08077000000000008080770FFFFFFFFF0808777077777777F080777707777777
+        7F077000000000000000770FFFFFFFFF07777770FFFFFFFFF07777770FFFFFFF
+        FF07777770000000000077777777777777777777777777777777
+      }
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object BNEX: TSpeedButton
+      Left = 234
+      Top = 10
+      Width = 24
+      Height = 23
+      Hint = 'Extra Mode'
+      GroupIndex = 1
+      Glyph.Data = {
+        F6000000424DF600000000000000760000002800000010000000100000000100
+        0400000000008000000000000000000000001000000010000000000000000000
+        BF0000BF000000BFBF00BF000000BF00BF00BFBF0000C0C0C000808080000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00777777777777
+        7777700000000000777778080808080007777000000000008077770888888888
+        08077000000000008080770FFFFFFFFF0808777077777777F080777707777777
+        7F077000000000000000770FFFFFFFFF07777770FFFFFFFFF07777770FFFFFFF
+        FF07777770000000000077777777777777777777777777777777
+      }
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = BNSCClick
+    end
+    object PNProjType: TPanel
+      Left = 671
+      Top = 1
+      Width = 52
+      Height = 39
+      Align = alRight
+      Caption = 'JK'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      OnDblClick = PNProjTypeDblClick
+    end
+  end
+  object Panel1: TPanel
+    Left = 0
+    Top = 574
+    Width = 724
+    Height = 21
+    Align = alBottom
+    BevelOuter = bvLowered
+    TabOrder = 1
+    object PXYZ: TPanel
+      Left = 1
+      Top = 1
+      Width = 224
+      Height = 19
+      Hint = 'Shows current X,Y,Z'
+      Align = alLeft
+      Alignment = taLeftJustify
+      BevelOuter = bvLowered
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+    end
+    object PMsg: TPanel
+      Left = 249
+      Top = 1
+      Width = 474
+      Height = 19
+      Hint = 'Shows messages and warnings'
+      Align = alClient
+      BevelOuter = bvLowered
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
+      OnDblClick = PMsgDblClick
+    end
+    object PMsel: TPanel
+      Left = 225
+      Top = 1
+      Width = 24
+      Height = 19
+      Hint = 'Current <ultislection mode is Toggle. Click to change'
+      Align = alLeft
+      BevelOuter = bvLowered
+      Caption = '*'
+      Font.Color = clBlack
+      Font.Height = -18
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+      OnClick = PMselClick
+      OnDblClick = PMsgDblClick
+    end
+  end
+  object MainMenu: TMainMenu
+    Left = 72
+    Top = 152
+    object FileMenu: TMenuItem
+      Caption = '&File'
+      ShortCut = 0
+      object New1: TMenuItem
+        Caption = 'New &JK Project'
+        ShortCut = 0
+        OnClick = New1Click
+      end
+      object NewMOTSProject1: TMenuItem
+        Caption = 'New &MOTS Project'
+        ShortCut = 0
+        OnClick = NewMOTSProject1Click
+      end
+      object N1: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object OpenMenu: TMenuItem
+        Caption = '&Open...'
+        ShortCut = 16463
+        OnClick = OpenMenuClick
+      end
+      object Import1: TMenuItem
+        Caption = '&Import...'
+        ShortCut = 0
+        OnClick = Import1Click
+      end
+      object Save1: TMenuItem
+        Caption = '&Save'
+        ShortCut = 16467
+        OnClick = Save1Click
+      end
+      object SaveAs1: TMenuItem
+        Caption = 'Save &As...'
+        ShortCut = 0
+        OnClick = SaveAs1Click
+      end
+      object Reverttosaved1: TMenuItem
+        Caption = '&Revert to saved'
+        ShortCut = 16466
+        OnClick = Reverttosaved1Click
+      end
+      object MakeaBackupCopy1: TMenuItem
+        Caption = 'Make a &Backup Copy'
+        ShortCut = 16450
+        OnClick = MakeaBackupCopy1Click
+      end
+      object N4: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object ExportSectoras3DO1: TMenuItem
+        Caption = 'Export Sector(s) as &3DO...'
+        ShortCut = 0
+        OnClick = ExportSectoras3DO1Click
+      end
+      object ExportSectorasShape1: TMenuItem
+        Caption = 'Export Sector as Shape'
+        ShortCut = 0
+        OnClick = ExportSectorasShape1Click
+      end
+      object N3: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object SaveJKL1: TMenuItem
+        Caption = 'Save &JKL'
+        ShortCut = 8305
+        OnClick = SaveJKL1Click
+      end
+      object Export1: TMenuItem
+        Caption = 'Save JKL &to...'
+        ShortCut = 0
+        OnClick = Export1Click
+      end
+      object GobProject1: TMenuItem
+        Caption = '&Gob Project'
+        ShortCut = 0
+        OnClick = GobProject1Click
+      end
+      object SaveJKLGob1: TMenuItem
+        Caption = 'Save JKL And GOB'
+        ShortCut = 113
+        OnClick = SaveJKLGob1Click
+      end
+      object SaveJKLGOBandTest1: TMenuItem
+        Caption = 'Save JKL and &Test'
+        ShortCut = 16497
+        OnClick = SaveJKLGOBandTest1Click
+      end
+      object Exit1: TMenuItem
+        Caption = '&Exit'
+        ShortCut = 0
+        OnClick = Exit1Click
+      end
+      object RecentBar: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+    end
+    object Edit1: TMenuItem
+      Caption = '&Edit'
+      ShortCut = 0
+      OnClick = Edit1Click
+      object miUndo: TMenuItem
+        Caption = '&Undo'
+        ShortCut = 16474
+        OnClick = miUndoClick
+      end
+      object miCopy: TMenuItem
+        Caption = '&Copy'
+        ShortCut = 0
+        OnClick = miCopyClick
+      end
+      object miPaste: TMenuItem
+        Caption = '&Paste'
+        ShortCut = 0
+        OnClick = miPasteClick
+      end
+      object N5: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object Find1: TMenuItem
+        Caption = '&Find...'
+        ShortCut = 16454
+        OnClick = Find1Click
+      end
+      object FindNext1: TMenuItem
+        Caption = 'Find &Next'
+        ShortCut = 16455
+        OnClick = FindNext1Click
+      end
+    end
+    object View1: TMenuItem
+      Caption = '&View'
+      ShortCut = 0
+      object ViewthingsAs1: TMenuItem
+        Caption = '&View Things As'
+        ShortCut = 0
+        object Dots: TMenuItem
+          Caption = '&Dots'
+          Checked = True
+          GroupIndex = 2
+          RadioItem = True
+          ShortCut = 0
+          OnClick = WireframesClick
+        end
+        object Boxes: TMenuItem
+          Caption = '&Boxes'
+          GroupIndex = 2
+          RadioItem = True
+          ShortCut = 0
+          OnClick = WireframesClick
+        end
+        object Wireframes: TMenuItem
+          Caption = '&Wireframes'
+          GroupIndex = 2
+          RadioItem = True
+          ShortCut = 0
+          OnClick = WireframesClick
+        end
+      end
+      object Multiselectionmode1: TMenuItem
+        Caption = '&Multiselection mode'
+        ShortCut = 0
+        object miToggle: TMenuItem
+          Caption = '&Toggle'
+          Checked = True
+          GroupIndex = 3
+          RadioItem = True
+          ShortCut = 0
+          OnClick = miToggleClick
+        end
+        object miAdd: TMenuItem
+          Caption = '&Add'
+          GroupIndex = 3
+          RadioItem = True
+          ShortCut = 0
+          OnClick = miToggleClick
+        end
+        object miSubtract: TMenuItem
+          Caption = '&Subtract'
+          GroupIndex = 3
+          RadioItem = True
+          ShortCut = 0
+          OnClick = miToggleClick
+        end
+      end
+      object HideThings: TMenuItem
+        Caption = 'Hide &Things'
+        ShortCut = 0
+        OnClick = HideThingsClick
+      end
+      object HideLights: TMenuItem
+        Caption = 'Hide &Lights'
+        ShortCut = 0
+        OnClick = HideLightsClick
+      end
+    end
+    object Commands1: TMenuItem
+      Caption = 'Co&mmands'
+      ShortCut = 0
+      object ReloadTemplates1: TMenuItem
+        Caption = '&Reload Templates'
+        ShortCut = 0
+        OnClick = ReloadTemplates1Click
+      end
+      object MUNextObject: TMenuItem
+        Caption = '&Next Object'
+        ShortCut = 0
+        OnClick = MUNextObjectClick
+      end
+      object MUPrevObject: TMenuItem
+        Caption = '&Previous Object'
+        ShortCut = 0
+        OnClick = MUPrevObjectClick
+      end
+      object JumptoObject1: TMenuItem
+        Caption = '&Jump to Object...'
+        ShortCut = 16458
+        OnClick = JumptoObject1Click
+      end
+      object MUSnapGridTo: TMenuItem
+        Caption = '&Snap  Grid to Object'
+        ShortCut = 0
+        OnClick = MUSnapGridToClick
+      end
+      object SnapViewToObject: TMenuItem
+        Caption = 'Snap View &To Object'
+        ShortCut = 0
+        OnClick = SnapViewToObjectClick
+      end
+      object Viewtogrid1: TMenuItem
+        Caption = '&View to grid'
+        ShortCut = 0
+        OnClick = Viewtogrid1Click
+      end
+      object GridtoView1: TMenuItem
+        Caption = '&Grid to View'
+        ShortCut = 0
+        OnClick = GridtoView1Click
+      end
+      object N3DPreviewtoItem1: TMenuItem
+        Caption = '&3D Preview to Item'
+        ShortCut = 116
+        OnClick = N3DPreviewtoItem1Click
+      end
+      object miKeyboard: TMenuItem
+        Caption = '&Keyboard'
+        ShortCut = 0
+        object miMap: TMenuItem
+          Caption = '&Map Control'
+          ShortCut = 0
+        end
+        object miGrid: TMenuItem
+          Caption = '&Grid Control'
+          ShortCut = 0
+        end
+        object miSel: TMenuItem
+          Caption = '&Selection'
+          ShortCut = 0
+        end
+        object miTex: TMenuItem
+          Caption = '&Texturing'
+          ShortCut = 0
+        end
+        object MIrecovery: TMenuItem
+          Caption = '&Recovery'
+          ShortCut = 0
+        end
+        object MiEdit: TMenuItem
+          Caption = '&Editing'
+          ShortCut = 0
+        end
+        object miOther: TMenuItem
+          Caption = 'Other'
+          ShortCut = 0
+        end
+      end
+    end
+    object Tools1: TMenuItem
+      Caption = '&Tools'
+      ShortCut = 0
+      object CalculateLights1: TMenuItem
+        Caption = 'Calculate &Lighting'
+        ShortCut = 16460
+        OnClick = CalculateLights1Click
+      end
+      object CalcLightOnLayers: TMenuItem
+        Caption = '... On visible layers'
+        ShortCut = 0
+        OnClick = CalculateLights1Click
+      end
+      object CalcLightInSel: TMenuItem
+        Caption = '... In selected sectors'
+        ShortCut = 0
+        OnClick = CalculateLights1Click
+      end
+      object N6: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object ConsistencyCheck1: TMenuItem
+        Caption = '&Consistency Check'
+        ShortCut = 121
+        OnClick = ConsistencyCheck1Click
+      end
+      object CheckResources1: TMenuItem
+        Caption = 'Check &Resources'
+        ShortCut = 8313
+        OnClick = CheckResources1Click
+      end
+      object N7: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object ToolWindow1: TMenuItem
+        Caption = '&Tool Window'
+        ShortCut = 120
+        OnClick = ToolWindow1Click
+      end
+      object PlcedCogs1: TMenuItem
+        Caption = '&Placed Cogs'
+        ShortCut = 118
+        OnClick = PlaceCogs1Click
+      end
+      object ItemEditor1: TMenuItem
+        Caption = 'Item &Editor'
+        ShortCut = 0
+        OnClick = ItemEditor1Click
+      end
+      object Messages1: TMenuItem
+        Caption = '&Messages'
+        ShortCut = 0
+        OnClick = Messages1Click
+      end
+      object N3DOHierarchy1: TMenuItem
+        Caption = '&3DO Hierarchy'
+        ShortCut = 0
+        OnClick = N3DOHierarchy1Click
+      end
+      object N8: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object Options1: TMenuItem
+        Caption = '&Options'
+        ShortCut = 0
+        OnClick = Options1Click
+      end
+      object Toolbar1: TMenuItem
+        Caption = 'Map &Settings'
+        ShortCut = 115
+        OnClick = Toolbar1Click
+      end
+      object N3DPreview1: TMenuItem
+        Caption = '&3D Preview'
+        ShortCut = 123
+        OnClick = N3DPreview1Click
+      end
+      object N9: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object Levelheadereditor1: TMenuItem
+        Caption = 'Level &header editor'
+        ShortCut = 117
+        OnClick = Levelheadereditor1Click
+      end
+      object EpisodeEditor1: TMenuItem
+        Caption = '&Episode Editor'
+        ShortCut = 119
+        OnClick = EpisodeEditor1Click
+      end
+      object TemplateCreator1: TMenuItem
+        Caption = '&Template Creator'
+        ShortCut = 0
+        OnClick = TemplateCreator1Click
+      end
+      object CutsceneHelper1: TMenuItem
+        Caption = 'Cutscene Helper'
+        ShortCut = 0
+        Visible = False
+        OnClick = CutsceneHelper1Click
+      end
+    end
+    object Plugins: TMenuItem
+      Caption = '&Plugins'
+      ShortCut = 0
+    end
+    object Help1: TMenuItem
+      Caption = '&Help'
+      ShortCut = 0
+      object Topics1: TMenuItem
+        Caption = '&Topics'
+        ShortCut = 0
+        OnClick = Topics1Click
+      end
+      object JedTutor1: TMenuItem
+        Caption = 'Jed &Tutor'
+        ShortCut = 0
+        OnClick = JedTutor1Click
+      end
+      object TutorialsonMassassiNet1: TMenuItem
+        Caption = 'Tutorials on Massassi.Net'
+        ShortCut = 0
+        OnClick = TutorialsonMassassiNet1Click
+      end
+      object N2: TMenuItem
+        Caption = '-'
+        ShortCut = 0
+      end
+      object About1: TMenuItem
+        Caption = '&About'
+        ShortCut = 0
+        OnClick = About1Click
+      end
+    end
+  end
+  object SaveJKL: TSaveDialog
+    DefaultExt = 'jkl'
+    FileName = '1.jkl'
+    Filter = 'JKL|*.JKL'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofNoChangeDir]
+    Left = 8
+    Top = 152
+  end
+  object SaveJed: TSaveDialog
+    DefaultExt = 'jed'
+    Filter = 'JED Files (*.JED)|*.JED'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist]
+    Title = 'Select a file to save to'
+    Left = 40
+    Top = 144
+  end
+  object SaveGOB: TSaveDialog
+    Filter = 'GOB Files|*.gob|GOO Files|*.goo'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofNoChangeDir, ofPathMustExist]
+    Title = 'Select a GOB to create'
+    Left = 16
+    Top = 104
+  end
+  object Save3DO: TSaveDialog
+    DefaultExt = '3do'
+    Filter = '3DO Files (*.3DO)|*.3DO'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofNoChangeDir, ofPathMustExist]
+    Title = 'Save 3DO'
+    Left = 56
+    Top = 104
+  end
+  object SaveTimer: TTimer
+    Interval = 60000
+    OnTimer = SaveTimerTimer
+    Left = 184
+    Top = 64
+  end
+  object ImageList1: TImageList
+    Left = 328
+    Top = 96
+  end
+end

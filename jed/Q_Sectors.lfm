@@ -1,0 +1,494 @@
+object FindSectors: TFindSectors
+  Left = 199
+  Top = 207
+  ActiveControl = EBNum
+  BorderStyle = bsDialog
+  Caption = 'Find Sector'
+  ClientHeight = 283
+  ClientWidth = 663
+  Font.Color = clWindowText
+  Font.Height = -14
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Position = poScreenCenter
+  OnCreate = FormCreate
+  PixelsPerInch = 120
+  object Label1: TLabel
+    Left = 2
+    Top = 14
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Number:'
+  end
+  object Label3: TLabel
+    Left = 18
+    Top = 44
+    Width = 72
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Flags'
+  end
+  object Label7: TLabel
+    Left = 2
+    Top = 72
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Extra light:'
+  end
+  object Label2: TLabel
+    Left = 2
+    Top = 100
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'ColorMap'
+  end
+  object Label8: TLabel
+    Left = 2
+    Top = 130
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Tint red'
+  end
+  object Label9: TLabel
+    Left = 2
+    Top = 158
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Tint green'
+  end
+  object Label10: TLabel
+    Left = 2
+    Top = 188
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Tint blue'
+  end
+  object Label15: TLabel
+    Left = 2
+    Top = 218
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Sound:'
+  end
+  object Label16: TLabel
+    Left = 322
+    Top = 16
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Volume'
+  end
+  object Label17: TLabel
+    Left = 322
+    Top = 42
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Layer:'
+  end
+  object SBHelp: TSpeedButton
+    Left = 624
+    Top = 251
+    Width = 31
+    Height = 27
+    Hint = 'Help'
+    Glyph.Data = {
+      78010000424D7801000000000000760000002800000020000000100000000100
+      04000000000000000000120B0000120B00000000000000000000000000000000
+      800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
+      FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+      3333333333FFFFF3333333333F797F3333333333F737373FF333333BFB999BFB
+      33333337737773773F3333BFBF797FBFB33333733337333373F33BFBFBFBFBFB
+      FB3337F33333F33337F33FBFBFB9BFBFBF3337333337F333373FFBFBFBF97BFB
+      FBF37F333337FF33337FBFBFBFB99FBFBFB37F3333377FF3337FFBFBFBFB99FB
+      FBF37F33333377FF337FBFBF77BF799FBFB37F333FF3377F337FFBFB99FB799B
+      FBF373F377F3377F33733FBF997F799FBF3337F377FFF77337F33BFBF99999FB
+      FB33373F37777733373333BFBF999FBFB3333373FF77733F7333333BFBFBFBFB
+      3333333773FFFF77333333333FBFBF33333333333777773333330000
+    }
+    NumGlyphs = 2
+    ParentShowHint = False
+    ShowHint = True
+    OnClick = SBHelpClick
+  end
+  object Label4: TLabel
+    Left = 322
+    Top = 68
+    Width = 92
+    Height = 16
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Surfaces'
+  end
+  object CBNum: TComboBox
+    Left = 97
+    Top = 10
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+    )
+    TabOrder = 10
+  end
+  object EBNum: TEdit
+    Left = 185
+    Top = 10
+    Width = 80
+    Height = 24
+    TabOrder = 0
+  end
+  object CBFlags: TComboBox
+    Left = 97
+    Top = 40
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+      'Set'
+      'No set'
+    )
+    TabOrder = 19
+  end
+  object EBFlags: TEdit
+    Left = 185
+    Top = 40
+    Width = 90
+    Height = 24
+    TabOrder = 9
+  end
+  object CBExtraL: TComboBox
+    Left = 97
+    Top = 69
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+    )
+    TabOrder = 11
+  end
+  object EBExtraL: TEdit
+    Left = 185
+    Top = 69
+    Width = 90
+    Height = 24
+    TabOrder = 1
+  end
+  object GroupBox1: TGroupBox
+    Left = 372
+    Top = 110
+    Width = 238
+    Height = 129
+    Caption = '&Query Result(s) will be'
+    TabOrder = 24
+    object RBAdd: TRadioButton
+      Left = 20
+      Top = 30
+      Width = 208
+      Height = 20
+      Caption = '&Added to multiselection'
+      TabOrder = 0
+    end
+    object RBSubtract: TRadioButton
+      Left = 20
+      Top = 59
+      Width = 208
+      Height = 21
+      Caption = '&Subtracted from multiselection'
+      TabOrder = 1
+    end
+    object RBFocus: TRadioButton
+      Left = 20
+      Top = 89
+      Width = 188
+      Height = 21
+      Caption = 'F&ocused in the editor'
+      Checked = True
+      TabOrder = 2
+      TabStop = True
+    end
+  end
+  object BNFind: TButton
+    Left = 84
+    Top = 249
+    Width = 93
+    Height = 31
+    Caption = '&Find'
+    Default = True
+    ModalResult = 1
+    TabOrder = 25
+  end
+  object BNCancel: TButton
+    Left = 193
+    Top = 249
+    Width = 92
+    Height = 31
+    Cancel = True
+    Caption = '&Cancel'
+    ModalResult = 2
+    TabOrder = 26
+  end
+  object CBSelOnly: TCheckBox
+    Left = 376
+    Top = 246
+    Width = 198
+    Height = 21
+    Caption = '&Search multiselection only'
+    TabOrder = 27
+    Visible = False
+  end
+  object BNFlags: TButton
+    Left = 279
+    Top = 46
+    Width = 31
+    Height = 21
+    Caption = '...'
+    TabOrder = 23
+    OnClick = BNFlagsClick
+  end
+  object CBCMap: TComboBox
+    Left = 97
+    Top = 96
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      '='
+      '<>'
+      'Contains'
+      'Doesnt contain'
+    )
+    TabOrder = 12
+  end
+  object EBCMap: TEdit
+    Left = 185
+    Top = 96
+    Width = 110
+    Height = 24
+    TabOrder = 2
+  end
+  object BNCMap: TButton
+    Left = 302
+    Top = 102
+    Width = 31
+    Height = 21
+    Caption = '...'
+    TabOrder = 20
+    OnClick = BNCMapClick
+  end
+  object CBTint_R: TComboBox
+    Left = 97
+    Top = 126
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+    )
+    TabOrder = 13
+  end
+  object EBTint_R: TEdit
+    Left = 185
+    Top = 126
+    Width = 90
+    Height = 24
+    TabOrder = 3
+  end
+  object CBTint_G: TComboBox
+    Left = 97
+    Top = 155
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+    )
+    TabOrder = 14
+  end
+  object EBTint_G: TEdit
+    Left = 185
+    Top = 155
+    Width = 90
+    Height = 24
+    TabOrder = 4
+  end
+  object CBTint_b: TComboBox
+    Left = 97
+    Top = 185
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+    )
+    TabOrder = 15
+  end
+  object EBTint_B: TEdit
+    Left = 185
+    Top = 185
+    Width = 90
+    Height = 24
+    TabOrder = 5
+  end
+  object CBSound: TComboBox
+    Left = 97
+    Top = 214
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      '='
+      '<>'
+      'Contains'
+      'Doesnt contain'
+    )
+    TabOrder = 16
+  end
+  object BNSound: TButton
+    Left = 302
+    Top = 224
+    Width = 31
+    Height = 21
+    Caption = '...'
+    TabOrder = 21
+    OnClick = BNSoundClick
+  end
+  object EBSound: TEdit
+    Left = 185
+    Top = 214
+    Width = 110
+    Height = 24
+    TabOrder = 6
+  end
+  object CBVol: TComboBox
+    Left = 417
+    Top = 12
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+    )
+    TabOrder = 17
+  end
+  object EBVol: TEdit
+    Left = 505
+    Top = 12
+    Width = 90
+    Height = 24
+    TabOrder = 7
+  end
+  object CBLayer: TComboBox
+    Left = 417
+    Top = 39
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      '='
+      '<>'
+      'Contains'
+      'Doesnt contain'
+    )
+    TabOrder = 18
+  end
+  object EBLayer: TEdit
+    Left = 505
+    Top = 39
+    Width = 110
+    Height = 24
+    TabOrder = 8
+  end
+  object BNLayer: TButton
+    Left = 622
+    Top = 49
+    Width = 31
+    Height = 21
+    Caption = '...'
+    TabOrder = 22
+    OnClick = BNLayerClick
+  end
+  object CBNsurf: TComboBox
+    Left = 417
+    Top = 67
+    Width = 80
+    Height = 24
+    Style = csDropDownList
+    ItemHeight = 16
+    Items.Strings = (
+      ''
+      'Is'
+      'Is not'
+      '>'
+      '<'
+    )
+    TabOrder = 28
+  end
+  object EBNSurf: TEdit
+    Left = 505
+    Top = 67
+    Width = 90
+    Height = 24
+    TabOrder = 29
+  end
+end

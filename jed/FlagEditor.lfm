@@ -1,0 +1,354 @@
+object FlagEdit: TFlagEdit
+  Left = 271
+  Top = 144
+  BorderStyle = bsDialog
+  Caption = 'Flag Editor'
+  ClientHeight = 327
+  ClientWidth = 265
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  OnCreate = FormCreate
+  PixelsPerInch = 96
+  object Bit0: TCheckBox
+    Left = 8
+    Top = 8
+    Width = 150
+    Height = 17
+    Caption = 'Bit 0'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 0
+  end
+  object Bit1: TCheckBox
+    Left = 8
+    Top = 24
+    Width = 150
+    Height = 17
+    Caption = 'Bit1'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 1
+  end
+  object Bit2: TCheckBox
+    Left = 8
+    Top = 40
+    Width = 150
+    Height = 17
+    Caption = 'Bit2'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 2
+  end
+  object Bit3: TCheckBox
+    Left = 8
+    Top = 56
+    Width = 150
+    Height = 17
+    Caption = 'Bit3'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 3
+  end
+  object Bit4: TCheckBox
+    Left = 8
+    Top = 72
+    Width = 150
+    Height = 17
+    Caption = 'Bit4'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 4
+  end
+  object Bit5: TCheckBox
+    Left = 8
+    Top = 88
+    Width = 150
+    Height = 17
+    Caption = 'Bit5'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 5
+  end
+  object Bit6: TCheckBox
+    Left = 8
+    Top = 104
+    Width = 150
+    Height = 17
+    Caption = 'Bit6'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 6
+  end
+  object Bit7: TCheckBox
+    Left = 8
+    Top = 120
+    Width = 150
+    Height = 17
+    Caption = 'Bit7'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 7
+  end
+  object Bit8: TCheckBox
+    Left = 8
+    Top = 136
+    Width = 150
+    Height = 17
+    Caption = 'Bit8'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 8
+  end
+  object Bit9: TCheckBox
+    Left = 8
+    Top = 152
+    Width = 150
+    Height = 17
+    Caption = 'Bit9'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 9
+  end
+  object Bit10: TCheckBox
+    Left = 8
+    Top = 168
+    Width = 150
+    Height = 17
+    Caption = 'Bit10'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 10
+  end
+  object Bit11: TCheckBox
+    Left = 8
+    Top = 184
+    Width = 150
+    Height = 17
+    Caption = 'Bit11'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 11
+  end
+  object Bit12: TCheckBox
+    Left = 8
+    Top = 200
+    Width = 150
+    Height = 17
+    Caption = 'Bit12'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 12
+  end
+  object Bit13: TCheckBox
+    Left = 8
+    Top = 216
+    Width = 150
+    Height = 17
+    Caption = 'Bit13'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 13
+  end
+  object Bit14: TCheckBox
+    Left = 8
+    Top = 232
+    Width = 150
+    Height = 17
+    Caption = 'Bit14'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 14
+  end
+  object Bit15: TCheckBox
+    Left = 8
+    Top = 248
+    Width = 150
+    Height = 17
+    Caption = 'Bit15'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 15
+  end
+  object Bit16: TCheckBox
+    Left = 168
+    Top = 8
+    Width = 150
+    Height = 17
+    Caption = 'Bit16'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 16
+  end
+  object Bit17: TCheckBox
+    Left = 168
+    Top = 24
+    Width = 150
+    Height = 17
+    Caption = 'Bit17'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 17
+  end
+  object Bit18: TCheckBox
+    Left = 168
+    Top = 40
+    Width = 150
+    Height = 17
+    Caption = 'Bit18'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 18
+  end
+  object Bit19: TCheckBox
+    Left = 168
+    Top = 56
+    Width = 150
+    Height = 17
+    Caption = 'Bit19'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 19
+  end
+  object Bit20: TCheckBox
+    Left = 168
+    Top = 72
+    Width = 150
+    Height = 17
+    Caption = 'Bit20'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 20
+  end
+  object Bit21: TCheckBox
+    Left = 168
+    Top = 88
+    Width = 150
+    Height = 17
+    Caption = 'Bit21'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 21
+  end
+  object Bit22: TCheckBox
+    Left = 168
+    Top = 104
+    Width = 150
+    Height = 17
+    Caption = 'Bit22'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 22
+  end
+  object Bit23: TCheckBox
+    Left = 168
+    Top = 120
+    Width = 150
+    Height = 17
+    Caption = 'Bit23'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 23
+  end
+  object Bit24: TCheckBox
+    Left = 168
+    Top = 136
+    Width = 150
+    Height = 17
+    Caption = 'Bit24'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 24
+  end
+  object Bit25: TCheckBox
+    Left = 168
+    Top = 152
+    Width = 150
+    Height = 17
+    Caption = 'Bit25'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 25
+  end
+  object Bit26: TCheckBox
+    Left = 168
+    Top = 168
+    Width = 150
+    Height = 17
+    Caption = 'Bit26'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 26
+  end
+  object Bit27: TCheckBox
+    Left = 168
+    Top = 184
+    Width = 150
+    Height = 17
+    Caption = 'Bit27'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 27
+  end
+  object Bit28: TCheckBox
+    Left = 168
+    Top = 200
+    Width = 150
+    Height = 17
+    Caption = 'Bit28'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 28
+  end
+  object Bit29: TCheckBox
+    Left = 168
+    Top = 216
+    Width = 150
+    Height = 17
+    Caption = 'Bit29'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 29
+  end
+  object Bit30: TCheckBox
+    Left = 168
+    Top = 232
+    Width = 150
+    Height = 17
+    Caption = 'Bit30'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 30
+  end
+  object Bit31: TCheckBox
+    Left = 168
+    Top = 248
+    Width = 150
+    Height = 17
+    Caption = 'Bit31'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 31
+  end
+  object BNOK: TButton
+    Left = 56
+    Top = 280
+    Width = 75
+    Height = 25
+    Caption = '&OK'
+    Default = True
+    ModalResult = 1
+    TabOrder = 32
+  end
+  object BNCancel: TButton
+    Left = 184
+    Top = 279
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = '&Cancel'
+    ModalResult = 2
+    TabOrder = 33
+  end
+end

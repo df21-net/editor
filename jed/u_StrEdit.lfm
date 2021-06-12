@@ -1,0 +1,80 @@
+object StrEdit: TStrEdit
+  Left = 279
+  Top = 198
+  Width = 474
+  Height = 402
+  Caption = 'Strings'
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Position = poScreenCenter
+  PixelsPerInch = 120
+  object LBStrs: TListBox
+    Left = 0
+    Top = 0
+    Width = 466
+    Height = 279
+    Align = alClient
+    ItemHeight = 16
+    MultiSelect = True
+    TabOrder = 0
+    OnClick = LBStrsClick
+  end
+  object Panel1: TPanel
+    Left = 0
+    Top = 279
+    Width = 466
+    Height = 96
+    Align = alBottom
+    TabOrder = 1
+    object Label1: TLabel
+      Left = 8
+      Top = 48
+      Width = 177
+      Height = 16
+      AutoSize = False
+      Caption = '&String'
+    end
+    object Label2: TLabel
+      Left = 8
+      Top = 8
+      Width = 177
+      Height = 16
+      AutoSize = False
+      Caption = '&Key'
+    end
+    object EBKey: TEdit
+      Left = 8
+      Top = 24
+      Width = 209
+      Height = 24
+      TabOrder = 0
+    end
+    object EBStr: TEdit
+      Left = 8
+      Top = 64
+      Width = 449
+      Height = 24
+      TabOrder = 1
+    end
+    object BNAdd: TButton
+      Left = 240
+      Top = 24
+      Width = 89
+      Height = 25
+      Caption = '&Add/Update'
+      TabOrder = 2
+      OnClick = BNAddClick
+    end
+    object BNDelete: TButton
+      Left = 368
+      Top = 24
+      Width = 65
+      Height = 25
+      Caption = '&Delete'
+      TabOrder = 3
+      OnClick = BNDeleteClick
+    end
+  end
+end

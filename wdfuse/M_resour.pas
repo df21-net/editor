@@ -444,7 +444,7 @@ end;
 procedure TResourcePicker.SEcontrastChange(Sender: TObject);
 begin
  _VGA_MULTIPLIER := SEcontrast.Value;
- {LBResourcesClick(Sender); hangs up, because list is not yet created}
+ if LBResources.Count <> 0 then
+   LBResourcesClick(Sender); { hangs up, because list is not yet created}
 end;
-
 end.

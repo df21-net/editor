@@ -16,6 +16,6 @@ The **Lawmaker** code was provided on 5/31/2021 by Alexei Novikov https://www.li
 The **JED** code was provided in on 7/20/2005  by Alexei Novikov https://www.linkedin.com/in/alexei-n-02313714a/  
 **Note:** While JED is an Jedi Knight editor, it is added here since it is also written in Delphi/Pascal and may assist in creation of a 3D preview for **WDFUSE**
 
-Original **WDFUSE** Author is Yves Borckmans https://www.linkedin.com/in/deathangel/ It is kept on github for preservation purposes (and hopefully additional features). 
+Original **DFUSE** Author is Yves Borckmans https://www.linkedin.com/in/deathangel/ It is kept on github for preservation purposes (and hopefully additional features). 
 
 You can find the compiled Windows version of DFUSE over here https://df-21.net/downloads/util.php

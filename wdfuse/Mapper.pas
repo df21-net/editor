@@ -322,6 +322,10 @@ type
     procedure SpeedButtonMapKeyClick(Sender: TObject);
      procedure SpeedButtonVueClick(Sender: TObject);
     procedure SpeedButton1Click(Sender: TObject);
+    procedure FormMouseWheelDown(Sender: TObject; Shift: TShiftState;
+      MousePos: TPoint; var Handled: Boolean);
+    procedure FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
+      MousePos: TPoint; var Handled: Boolean);
 
      
   private
@@ -2304,6 +2308,18 @@ begin
                     ShowMessage('You must have a Sector multiselection !');
     end;
   end;
+end;
+
+procedure TMapWindow.FormMouseWheelDown(Sender: TObject; Shift: TShiftState;
+  MousePos: TPoint; var Handled: Boolean);
+begin
+  DO_Zoom_Out;
+end;
+
+procedure TMapWindow.FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
+  MousePos: TPoint; var Handled: Boolean);
+begin
+   DO_Zoom_In;
 end;
 
 procedure TMapWindow.SpeedButtonCenterMapClick(Sender: TObject);

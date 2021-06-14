@@ -12,8 +12,8 @@ CONST
 
 TYPE
  LFD_INDEX = record
-   MAGIC  : array[1..4] of char;
-   NAME   : array[1..8] of char;
+   MAGIC  : array[1..4] of AnsiChar;
+   NAME   : array[1..8] of AnsiChar;
    LEN    : LongInt;
  end;
 
@@ -218,7 +218,7 @@ var i       : LongInt;
     S_NAME  : String;
     position  : LongInt;
     OldCursor : HCursor;
-    Buffer  : array[0..4095] of Char;
+    Buffer  : array[0..4095] of AnsiChar;
 begin
  OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
  gf := FileOpen(LFDName, fmOpenRead);
@@ -296,7 +296,7 @@ var i       : LongInt;
     tmp,tmp2  : array[0..127] of Char;
     go        : Boolean;
     OldCursor : HCursor;
-    Buffer  : array[0..4095] of Char;
+    Buffer  : array[0..4095] of AnsiChar;
     XList   : TStrings;
 begin
 
@@ -420,7 +420,7 @@ var i       : LongInt;
     tmp,tmp2  : array[0..127] of Char;
     go        : Boolean;
     OldCursor : HCursor;
-    Buffer    : array[0..4095] of Char;
+    Buffer    : array[0..4095] of AnsiChar;
     Counter   : LongInt;
 begin
 {
@@ -617,7 +617,7 @@ var i       : LongInt;
     position  : LongInt;
     go        : Boolean;
     OldCursor : HCursor;
-    Buffer    : array[0..4095] of Char;
+    Buffer    : array[0..4095] of AnsiChar;
     Counter   : LongInt;
     XList     : TStrings;
 begin

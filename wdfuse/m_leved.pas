@@ -4,7 +4,7 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, ExtCtrls, Buttons, M_global, TabNotBk{, ComCtrls};
+  Forms, Dialogs, StdCtrls, ExtCtrls, Buttons, M_global, TabNotBk, Vcl.ComCtrls{, ComCtrls};
 
 type
   TLevelEditorWindow = class(TForm)

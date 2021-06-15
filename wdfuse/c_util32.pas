@@ -238,7 +238,7 @@ begin
   end;
 
  {This is enough room to create a 800x600x256 BMP}
- GHBMP := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 480000);
+ GHBMP := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GHBMP = 0 then
   begin
    Application.MessageBox('Cannot Allocate Buffer', 'WDFUSE Toolkit - BM2BMP', mb_Ok or mb_IconExclamation);
@@ -468,7 +468,7 @@ begin
   end;
 
  {This is enough room to create a 800x600x256 BMP}
- GHBMP := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 480000);
+ GHBMP := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GHBMP = 0 then
   begin
    Application.MessageBox('Cannot Allocate Buffer', 'WDFUSE Toolkit - FME2BMP', mb_Ok or mb_IconExclamation);
@@ -670,7 +670,7 @@ begin
   end;
 
  {This is enough room to create a 800x600x256 BMP}
- GHBMP := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 480000);
+ GHBMP := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GHBMP = 0 then
   begin
    Application.MessageBox('Cannot Allocate Buffer', 'WDFUSE Toolkit - ANIM/DELT2BMP', mb_Ok or mb_IconExclamation);
@@ -910,7 +910,7 @@ begin
   end;
 
  {This is enough room to create a 800x600x256 BM}
- GHBM := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 480000);
+ GHBM := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GHBM = 0 then
   begin
    Application.MessageBox('Cannot Allocate Buffer', Title, mb_Ok or mb_IconExclamation);
@@ -1137,7 +1137,7 @@ begin
   end;
 
  {This is enough room to create a 800x600x256 FME}
- GHBM := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 480000);
+ GHBM := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GHBM = 0 then
   begin
    Application.MessageBox('Cannot Allocate Buffer', Title, mb_Ok or mb_IconExclamation);
@@ -1349,7 +1349,7 @@ begin
   end;
 
  {This is enough room to create a 800x600x256 FME}
- GHBM := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 480000);
+ GHBM := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GHBM = 0 then
   begin
    Application.MessageBox('Cannot Allocate Buffer', Title, mb_Ok or mb_IconExclamation);

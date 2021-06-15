@@ -262,7 +262,8 @@ var gf        : Integer;
     bmp_align : LongInt;
     bmp_counter : LongInt;
 begin
- GlobalH := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 150000);
+ { up the asset buffer cache to 10 MB }
+ GlobalH := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GlobalH <> 0 then
    begin
      GlobalP := GlobalLock(GlobalH);
@@ -577,7 +578,7 @@ var gf        : Integer;
     col_end   : LongInt;
     rle       : Integer;
 begin
- GlobalH := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 150000);
+ GlobalH := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 104857600);
  if GlobalH <> 0 then
    begin
      GlobalP := GlobalLock(GlobalH);
@@ -739,7 +740,7 @@ var gf        : Integer;
     firstframe : LongInt;
 begin
 
- GlobalH := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 150000);
+ GlobalH := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
  if GlobalH <> 0 then
    begin
      GlobalP := GlobalLock(GlobalH);

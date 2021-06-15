@@ -434,7 +434,7 @@ end;
 Constructor TDFImage.Create;
 begin
  Inherited Create;
- HWaxStruct:=GlobalAlloc(GMEM_MOVEABLE,32000);
+ HWaxStruct:=GlobalAlloc(GMEM_MOVEABLE, 10485760);
  if HWaxStruct=0 then raise Exception.Create('Could not allocate memory for Wax')
 end;
 

@@ -536,15 +536,15 @@ begin
 
        gx.LEN  := FileSizing(fsf);
        T_NAME  := ExtractFileName(fs_NAME) + '        ';
-       for j := 1 to 8 do gx.NAME[j] := T_NAME[j];
+       for j := 1 to 8 do gx.NAME[j] := AnsiChar(T_NAME[j]);
        for j := 1 to 8 do if gx.NAME[j] = '.' then for k := j to 8 do gx.NAME[k] := ' ';
        for j := 1 to 8 do if gx.NAME[j] = ' ' then for k := j to 8 do gx.NAME[k] := #0;
        T_NAME   := UpperCase(ExtractFileExt(fs_NAME));
        tmpstr   := Copy(Copy(T_NAME,2,3) + '????', 1,4);
-       gx.MAGIC[1] := tmpstr[1];
-       gx.MAGIC[2] := tmpstr[2];
-       gx.MAGIC[3] := tmpstr[3];
-       gx.MAGIC[4] := tmpstr[4];
+       gx.MAGIC[1] := AnsiChar(tmpstr[1]);
+       gx.MAGIC[2] := AnsiChar(tmpstr[2]);
+       gx.MAGIC[3] := AnsiChar(tmpstr[3]);
+       gx.MAGIC[4] := AnsiChar(tmpstr[4]);
        if T_NAME = '.PLT' then gx.MAGIC := 'PLTT';
        if T_NAME = '.FON' then gx.MAGIC := 'FONT';
        if T_NAME = '.ANM' then gx.MAGIC := 'ANIM';

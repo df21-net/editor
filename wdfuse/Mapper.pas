@@ -328,6 +328,7 @@ type
       MousePos: TPoint; var Handled: Boolean);
     procedure ToolsGOBFileManagerClick(Sender: TObject);
     procedure ToolsLFDFileManagerClick(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 
      
   private
@@ -1815,6 +1816,20 @@ end;
 procedure TMapWindow.SpeedButtonGridEightClick(Sender: TObject);
 begin
   DO_Grid_8;
+end;
+
+procedure TMapWindow.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+ if LEVELLoaded then
+   begin
+     case Key of
+      VK_LEFT    : DO_Scroll_Left;
+      VK_UP      : DO_Scroll_Up;
+      VK_RIGHT   : DO_Scroll_Right;
+      VK_DOWN    : DO_Scroll_Down;
+     end;
+   end;
 end;
 
 procedure TMapWindow.FormKeyUp(Sender: TObject; var Key: Word;

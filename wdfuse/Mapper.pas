@@ -326,6 +326,8 @@ type
       MousePos: TPoint; var Handled: Boolean);
     procedure FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
       MousePos: TPoint; var Handled: Boolean);
+    procedure ToolsGOBFileManagerClick(Sender: TObject);
+    procedure ToolsLFDFileManagerClick(Sender: TObject);
 
      
   private
@@ -3268,6 +3270,21 @@ begin
    ToolbarTools.Visible := TRUE;
    TBTools.Checked      := TRUE;
   end;
+end;
+
+procedure TMapWindow.ToolsGOBFileManagerClick(Sender: TObject);
+begin
+ Application.CreateForm(TGOBWindow, GOBWindow);
+ GOBWindow.ShowModal; GOBWindow.Destroy;
+ Application.OnHint := DisplayHint;
+end;
+
+procedure TMapWindow.ToolsLFDFileManagerClick(Sender: TObject);
+begin
+ Application.CreateForm(TLFDWindow, LFDWindow);
+ LFDWindow.ShowModal;
+ LFDWindow.Destroy;
+ Application.OnHint := DisplayHint;
 end;
 
 procedure TMapWindow.HScrollBarScroll(Sender: TObject;

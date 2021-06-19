@@ -291,6 +291,7 @@ procedure DO_Zoom_In;
 begin
   if Scale < 128 then
     begin
+      dec(GRID_OFFSET);
       Scale := Scale * Sqrt(2);
       MapWindow.PanelZoom.Caption := Format('%-6.3f', [Scale]);
       MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
@@ -298,13 +299,16 @@ begin
       MapWindow.VScrollBar.SmallChange := Trunc(1+25/scale);
       MapWindow.VScrollBar.LargeChange := Trunc(1+100/scale);
       MapWindow.Map.Invalidate;
-    end;
+    end
+  else
+    showmessage('Maximum Zoom Reached!');
 end;
 
 procedure DO_Zoom_Out;
 begin
   if Scale > 0.05 then
     begin
+      inc(GRID_OFFSET);
       Scale := Scale / Sqrt(2);
       MapWindow.PanelZoom.Caption := Format('%-6.3f', [Scale]);
       MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
@@ -320,6 +324,7 @@ begin
   if Scale <> 1 then
     begin
       Scale := 1;
+      GRID_OFFSET := 4
       MapWindow.PanelZoom.Caption := '1,000';
       MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
       MapWindow.HScrollBar.LargeChange := Trunc(1+100/scale);
@@ -334,19 +339,21 @@ begin
   if Grid < 256 then
     begin
       Grid := 2 * Grid;
-      MapWindow.PanelGrid.Caption := IntToStr(Grid);
+      MapWindow.PanelGrid.Caption := FloatToStr(Grid);
       if GridON then MapWindow.Map.Invalidate;
     end;
 end;
 
 procedure DO_Grid_Out;
 begin
-  if Grid > 1 then
+  if Grid > 0.125 then
     begin
-      Grid := Grid div 2;
-      MapWindow.PanelGrid.Caption := IntToStr(Grid);
+      Grid := Grid / 2.0;
+      MapWindow.PanelGrid.Caption := FloatToStr(Grid);
       if GridON then MapWindow.Map.Invalidate;
-    end;
+    end
+  else
+    showmessage('Cannot make the grid any smaller!')
 end;
 
 procedure DO_Grid_OnOff;

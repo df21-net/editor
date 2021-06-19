@@ -481,7 +481,7 @@ INF_LEVELNAME : String[20];
 GOL_VERSION   : String[20];
 Scale         : Real;
 GridON        : Boolean;
-GRID          : Integer;
+GRID          : Float;
 ScreenX       : Integer;
 ScreenZ       : Integer;
 ScreenCenterX : Integer;

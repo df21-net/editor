@@ -12,7 +12,7 @@ uses
   M_Extern, M_LevEd, M_regist,
   Gobs, G_Util, Lfds, L_Util, InfEdit2, ToolKit, M_Query,
   _undoc, M_Test, I_Util, GolEdit, M_Duke, M_key,
-  Render,vuecreat,_conv3do,
+  Render,vuecreat,_conv3do, math,
 {$IFDEF WDF32}
 ZRender,ComCtrls,
 {$ENDIF}
@@ -870,27 +870,32 @@ begin
 end;
 
 procedure TMapWindow.DO_DrawGrid;
-var i, j   : Integer;
+var i, j   : Real;
     TheMsg : TMsg;
 begin
   with Map.Canvas do
     begin
-      i := Round(S2MX(0)/Grid)*Grid-Grid;
-      while  i <= Round(S2MX(ScreenX)/Grid)*Grid+Grid do
+      if scale * Power(2,GRID_OFFSET) > grid then
+        grid := grid *2;
+      if scale * Power(2,GRID_OFFSET+3) < grid then
+        grid := grid / 2;
+      i := Round(Round(Real(S2MX(0))/grid)*grid-grid);
+      while  i <= Round(S2MX(ScreenX)/grid)*Grid+Grid do
         begin
           if FastSCROLL and
            (PeekMessage(TheMsg, 0, WM_KEYUP,   WM_KEYUP,   PM_NOYIELD or PM_NOREMOVE) or
             PeekMessage(TheMsg, 0, WM_LBUTTONDOWN, WM_LBUTTONDOWN, PM_NOYIELD or PM_NOREMOVE))
               then Break;
-          j := Round(S2MZ(ScreenZ)/Grid)*Grid-Grid;
-          while j <= Round(S2MZ(0)/Grid)*Grid+Grid do
+          j := Round(Round(S2MZ(ScreenZ)/grid)*grid-grid);
+          while j <= Round(S2MZ(0)/grid)*grid+grid do
             begin
               SetPixel(Handle, M2SX(i), M2SZ(j), col_grid);
-              Inc(j ,Grid);
+              j := grid + j;
             end;
-          Inc(i, Grid);
+          i := grid + i;
         end;
     end;
+    {showmessage('Grid=' + floattostr(grid) + ' scale=' + floattostr(scale) + ' gridoffset=' + inttostr(grid_offset));}
 end;
 
 procedure TMapWindow.DO_DrawSuperHilite;
@@ -2315,13 +2320,17 @@ end;
 procedure TMapWindow.FormMouseWheelDown(Sender: TObject; Shift: TShiftState;
   MousePos: TPoint; var Handled: Boolean);
 begin
+  if handled or not LEVELloaded  then exit;
+  handled := True;
   DO_Zoom_Out;
 end;
 
 procedure TMapWindow.FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
   MousePos: TPoint; var Handled: Boolean);
 begin
-   DO_Zoom_In;
+  if handled or not LEVELloaded  then exit;
+  handled := True;
+  DO_Zoom_In;
 end;
 
 procedure TMapWindow.SpeedButtonCenterMapClick(Sender: TObject);

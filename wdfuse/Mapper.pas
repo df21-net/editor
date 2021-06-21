@@ -895,6 +895,7 @@ begin
           i := grid + i;
         end;
     end;
+    MapWindow.PanelGrid.Caption := FloatToStr(Grid);
     {showmessage('Grid=' + floattostr(grid) + ' scale=' + floattostr(scale) + ' gridoffset=' + inttostr(grid_offset));}
 end;
 

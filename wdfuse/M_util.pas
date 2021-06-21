@@ -199,6 +199,8 @@ begin
       Xoffset       := 0;
       Zoffset       := 0;
       Scale         := 1;
+      grid          := 16;
+      grid_offset   := 4;
       ScreenX       := MapWindow.Map.Width;
       ScreenZ       := MapWindow.Map.Height;
       ScreenCenterX := MapWindow.Map.Width div 2;
@@ -1321,8 +1323,8 @@ begin
    GZ := Grid * Trunc(tz / Grid);
 
    {but the method for finding it is slightly different in negative areas!}
-   if X < -Grid div 2 then GX := GX - Grid;
-   if Z < -Grid div 2 then GZ := GZ - Grid;
+   if X < -Grid / 2.0 then GX := GX - Grid;
+   if Z < -Grid / 2.0 then GZ := GZ - Grid;
 
    GetNearestGridPoint := TRUE;
   end

@@ -4,7 +4,7 @@ interface
 
 uses
   WinTypes, WinProcs, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Grids, ExtCtrls, Buttons ;
+  Grids, ExtCtrls, Buttons, IniFiles, M_Global ;
 
 type
   TVUECreator = class(TForm)
@@ -56,6 +56,12 @@ var
  a: integer;
  FrameNum: string;
 begin
+
+  VUECreator.Left     := Ini.ReadInteger('WINDOWS', 'VUE Editor    X', 0);
+  VUECreator.Top      := Ini.ReadInteger('WINDOWS', 'VUE Editor    Y', 72);
+  VUECreator.Width    := Ini.ReadInteger('WINDOWS', 'VUE Editor    W', 805);
+  VUECreator.Height   := Ini.ReadInteger('WINDOWS', 'VUE Editor    H', 905);
+
  with DataGrid do
   begin
    ColWidths[0] := 40;
@@ -87,6 +93,10 @@ end;
 procedure TVUECreator.FormCloseQuery(Sender: TObject;
   var CanClose: Boolean);
 begin
+ Ini.WriteInteger('WINDOWS', 'VUE Editor    X', VUECreator.Left);
+ Ini.WriteInteger('WINDOWS', 'VUE Editor    Y', VUECreator.Top);
+ Ini.WriteInteger('WINDOWS', 'VUE Editor    W', VUECreator.Width);
+ Ini.WriteInteger('WINDOWS', 'VUE Editor    H', VUECreator.Height);
  CanClose := True;
 end;
 

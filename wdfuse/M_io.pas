@@ -2,12 +2,15 @@ unit M_io;
 
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes, Forms, IniFiles, Dialogs,
-     StdCtrls,
+     StdCtrls, IOUtils,  ShellApi,
      _Strings, _Files, M_Global, M_Progrs, G_Util, FileCtrl, V_Util,
-     M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util;
+     M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util, StrUtils,
+     M_Option, Generics.Collections, System.Types;
 
 procedure FreeLevel;
 procedure GOB_Test_Level;
+procedure Preview_3D_Level;
+procedure UpdateDOSBOX_CONF( levname : String);
 function  IO_ReadLEV(levname : TFileName) : Boolean;
 function  IO_ReadO(oname : TFileName) : Boolean;
 function  IO_WriteLEV(levname : TFileName) : Boolean;
@@ -17,6 +20,7 @@ procedure IO_ReadINF2(infname : TFileName);
 procedure IO_WriteINF2(infname : TFileName);
 procedure IO_ReadGOL(golname : TFileName);
 procedure IO_WriteGOL(golname : TFileName);
+
 
 implementation
 uses Mapper, M_Util, InfEdit2;
@@ -101,7 +105,7 @@ begin
   ObjectEditor.Hide;
 
   MapWindow.PanelLevelName.Caption := '';
-  MapWindow.Caption := 'WDFUSE';
+  MapWindow.Caption := WDFUSE_VERSION ;
   MapWindow.Map.Invalidate;
   DO_SetMapButtonsState;
 end;
@@ -117,9 +121,103 @@ end;
 procedure GOB_Test_Level;
 var TheGob : TFileName;
     i      : Integer;
-    tmp    : array[0..127] of char;
+    tmp    : array[0..511] of char;
+    ExecuteResult : Integer;
+    TextConf : String;
 begin
  if not LEVELLoaded then exit;
+ Log.Info('GOB Start', LogName);
+ if LEVELLoaded and MODIFIED then
+  CASE Application.MessageBox('Level has been modified. Do you want to SAVE ?',
+                               'WDFUSE Mapper - Create GOB file',
+                               mb_YesNoCancel or mb_IconQuestion) OF
+   idYes    : begin
+               {this is to pass by the registration check}
+               MapWindow.SpeedButtonSaveClick(NIL);
+              end;
+   idNo     : ;
+   idCancel : exit;
+  END;
+ Log.Info('GOB Making Empty GOG = ' +
+          DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB'), LogName);
+ TheGob := DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB');
+ GOB_CreateEmpty(TheGob);
+
+ ProgressWindow.Progress1.Caption := 'Creating the project GOB file';
+ ProgressWindow.Gauge.Progress    := 0;
+ ProgressWindow.Gauge.MinValue    := 0;
+ ProgressWindow.Gauge.MaxValue    := 0;
+ ProgressWindow.Progress2.Caption := 'GOBing...';
+ ProgressWindow.Progress2.Update;
+ ProgressWindow.Show;
+ ProgressWindow.Update;
+
+ Log.Info('GOB copying files', LogName);
+ {This uses a dummy, invisible TFileListBox on The MapWindow form}
+ MapWindow.DummyFileListBox.Visible := FALSE;
+ MapWindow.DummyFileListBox.MultiSelect := TRUE;
+ MapWindow.DummyFileListBox.Directory := LEVELPath;
+ MapWindow.DummyFileListBox.Update;
+ for i:= 0 to MapWindow.DummyFileListBox.Items.Count - 1 do MapWindow.DummyFileListBox.Selected[i] := TRUE;
+ GOB_AddFiles(LEVELPath, TheGOB, MapWindow.DummyFileListBox, ProgressWindow.Gauge);
+
+ ProgressWindow.Hide;
+
+ Log.Info('GOB copying Text File from ' + ChangeFileExt(PROJECTFile, '.TXT') + ' to '
+           + DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')), LogName);
+
+ {copy the txt file also...}
+ CopyFile(ChangeFileExt(PROJECTFile, '.TXT'),
+          DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')));
+
+ if TestLaunch then
+  begin
+   if not FileExists(DOSBOX_PATH) then
+    begin
+       CASE Application.MessageBox('You do not have DOSBOX setup, do you just want to GOB it?',
+                                   'Just GOB the map?',
+                                   mb_YesNo) OF
+       idYes    : TestLaunch := False;
+       idNo     : begin
+                   OptionsDialog.ShowModal;
+                   OptionsDialog.OptionsNoteBook.PageIndex := 0;
+                   exit;
+                  end;
+       end;
+
+    end;
+   log.info('GOB Updating DOSBOX CONFIG ' + PROJECTFile, LogName);
+   UpdateDOSBOX_CONF(PROJECTFile);
+   try
+     TextConf := String(WDFUSEdir);
+     ExecuteResult := ShellExecute(0, 'open', PChar(DOSBOX_PATH), Pchar(' -conf "' +  String(WDFUSEdir) + '\WDFDATA\dosbox.conf"' + ' -noconsole -c "exit"'), nil, SW_SHOWNORMAL) ;
+     log.info('GOB DosBox Path = ' + DOSBOX_PATH + ' Result = ' + IntToStr(ExecuteResult), LogName);
+   Except
+      on E : Exception do
+          begin
+            Log.error('GOB Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
+            showmessage('GOB Error ' + E.ClassName+' error raised, with message : '+E.Message);
+          end
+    end;
+  end
+ else
+  begin
+   MapWindow.PanelText.Caption := ' GOBBed and placed in [ ' + DarkInst +  '\' +
+                                  ExtractFileName(ChangeFileExt(PROJECTFile, '.GOB')) + ' ] . Press F9 to Change these Settings';
+   MapWindow.NotifyMessage(MapWindow.PanelText.Caption);
+   log.info('GOB places into [ ' + DarkInst +  '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.GOB')) + ' ]', LogName);
+  end;
+end;
+
+procedure Preview_3D_Level;
+var TheGob : TFileName;
+    i      : Integer;
+    tmp    : array[0..511] of char;
+    returnVal : Integer;
+begin
+ if not LEVELLoaded then exit;
+ log.info('3D Loading Start', LogName);
+
  if LEVELLoaded and MODIFIED then
   CASE Application.MessageBox('Level has been modified. Do you want to SAVE ?',
                                'WDFUSE Mapper - Create GOB file',
@@ -132,7 +230,16 @@ begin
    idCancel : exit;
   END;
 
+ if not StrUtils.ContainsStr(LowerCase(renderInst), 'showcase.exe') then
+   begin
+     showmessage('Missing Dark Forces Showcase renderer in ' + renderInst);
+     OptionsDialog.OptionsNoteBook.PageIndex := 1;
+     OptionsDialog.ShowModal;
+     exit;
+   end;
+
  TheGob := DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB');
+ log.info('3D Start GOB=' + TheGob, LogName);
  GOB_CreateEmpty(TheGob);
 
  ProgressWindow.Progress1.Caption := 'Creating the project GOB file';
@@ -154,15 +261,68 @@ begin
 
  ProgressWindow.Hide;
 
+ log.info('3D Copy Project File from ' + ChangeFileExt(PROJECTFile, '.TXT') +
+          ' to ' + DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')), LogName);
+
  {copy the txt file also...}
  CopyFile(ChangeFileExt(PROJECTFile, '.TXT'),
-          DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')));
+        DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')));
 
- if TestLaunch then
-  begin
-   strPcopy(tmp, WDFUSEdir + '\DARK.PIF -u' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB'));
-   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMIZED);
+ try
+   strPcopy(tmp, '"' + renderInst + '" -d "' + darkinst + '" "' + TheGOB + '" -t LevelExplorer');
+   log.info('3D Run Command ' + AnsiString(tmp), LogName);
+   returnVal := WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMIZED);
+   log.info('Return Value = ' + IntToStr(returnVal), LogName);
+  Except
+    on E : Exception do
+        begin
+          Log.error('Renderer Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
+          showmessage('Renderer Error ' + E.ClassName+' error raised, with message : '+E.Message);
+        end
   end;
+end;
+
+procedure UpdateDOSBOX_CONF( levname : String);
+var textTmp : String;
+    fileTmp : TextFile;
+    confTxt : String;
+begin
+  log.info('UPDATE DOSBOXCONF Starting', LogName);
+
+  if not FileExists(DOSBOX_CONF) then
+    DOSBOX_CONF := WDFUSEdir + '\WDFDATA\dosbox_default.conf';
+  log.info('UPDATE DOSBOXCONF Current Config is ' + DOSBOX_CONF, LogName);
+  log.info('UPDATE DOSBOXCONF Copying DOSBOX conf from ' + DOSBOX_CONF + ' to '
+           + WDFUSEdir + '\WDFDATA\dosbox.conf', LogName);
+  TFile.Copy(DOSBOX_CONF, WDFUSEdir + '\WDFDATA\dosbox.conf',  True);
+
+  log.info('UPDATE DOSBOXCONF Opening File ' + WDFUSEdir + '\WDFDATA\dosbox.conf', LogName);
+  try
+    AssignFile(fileTmp, WDFUSEdir + '\WDFDATA\dosbox.conf');
+    FileMode := fmOpenRead;
+    Reset(fileTmp);
+    while not Eof(fileTmp) do
+     begin
+       ReadLn(fileTmp, textTmp);
+       if StrUtils.ContainsText(LowerCase(textTmp), 'dark') then
+         textTmp := 'dark -u' + TPath.GetFileNameWithoutExtension(levname) + '.GOB';
+       if StrUtils.ContainsText(LowerCase(textTmp), 'mount') then
+         textTmp := 'mount c "' + DarkInst + '"';
+       confTxt := confTxt + textTmp + EOL;
+     end;
+    log.info('UPDATE DOSBOXCONF Writing new configuration to same file. Payload is '
+             + EOL + confTxt, LogName);
+    ReWrite(fileTmp);
+    Write(fileTmp, confTxt);
+    CloseFile(fileTmp);
+  Except
+    on E : Exception do
+        begin
+          Log.error('Options Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
+          showmessage('Options Error ' + E.ClassName+' error raised, with message : '+E.Message);
+        end
+  end;
+  Log.Info('UPDATE DOSBOXCONF done', LogName);
 end;
 
 function IO_ReadLEV(levname : TFileName) : Boolean;
@@ -175,11 +335,13 @@ var lev       : System.TextFile;
     textures  : Integer;
     TheVertex : TVertex;
     TheWall   : TWall;
-    tmp       : array[0..127] of char;
+    tmp       : array[0..255] of char;
     tmpreal   : Real;
     code      : Integer;
     First     : Boolean;
-    sccounter : Integer;
+    sccounter,
+    wlcounter : Integer;
+    loaderror : Boolean;
 begin
   if not FileExists(levname) then
     begin
@@ -189,6 +351,8 @@ begin
     end
   else
     begin
+      Log.Info('Loading Level data from ' + levname, LogName);
+
       OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
       numsectors := 0;
       textures   := 0;
@@ -196,6 +360,8 @@ begin
       LAYER_MIN  :=  999;
       LAYER_MAX  := -999;
       sccounter  := -1;
+      wlcounter  := -1;
+      loaderror  := False;
 
       MAP_SEC := TStringList.Create;
       TX_LIST := TStringList.Create;
@@ -212,374 +378,422 @@ begin
       while not SeekEof(lev) do
         begin
           Readln(lev, strin);
-          if Pos('#', strin) = 1 then
-            begin
-            end
-          else
-          {vertices and walls are by far the most frequent, so place them
-           first in the imbricated ifs. It saves THOUSANDS of tests !}
-          if Pos('X:', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 4 then
-                  begin
-                    TheVertex := TVertex.Create;
-                    Val(pars[2], tmpreal, code);
-                    TheVertex.X := tmpreal;
-                    Val(pars[4], tmpreal, code);
-                    TheVertex.Z := tmpreal;
-                    TheSector.Vx.AddObject('VX', TheVertex);
-                  end;
-               finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('WALL', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 36 then
-                  begin
-                  {  1 WALL
-                     2 LEFT:  0
-                     4 RIGHT: 1
-                     6 MID:  47   0.00   0.00   0
-                    11 TOP:  47   0.00   0.00   0
-                    16 BOT:  47   0.00   0.00   0
-                    21 SIGN:  -1   0.00   0.00
-                    25 ADJOIN:  -1
-                    27 MIRROR:  -1
-                    29 WALK:  -1
-                    31 FLAGS: 1024 0 0
-                    35 LIGHT: 22
-                  }
+          try
 
-                    TheWall          := TWall.Create;
-                    TheWall.Mark     := 0;
-                    TheWall.Left_vx  := StrToInt(pars[3]);
-                    TheWall.Right_vx := StrToInt(pars[5]);
-                    with TheWall.Mid do
-                      begin
-                        Name := TX_LIST[StrToInt(pars[7])];
-                        Val(pars[8], tmpreal, code);
-                        f1   := tmpreal;
-                        Val(pars[9], tmpreal, code);
-                        f2   := tmpreal;
-                        i    := StrToInt(pars[10]);
-                      end;
-                    with TheWall.Top do
-                      begin
-                        Name := TX_LIST[StrToInt(pars[12])];
-                        Val(pars[13], tmpreal, code);
-                        f1   := tmpreal;
-                        Val(pars[14], tmpreal, code);
-                        f2   := tmpreal;
-                        i    := StrToInt(pars[15]);
-                      end;
-                    with TheWall.Bot do
-                      begin
-                        Name := TX_LIST[StrToInt(pars[17])];
-                        Val(pars[18], tmpreal, code);
-                        f1   := tmpreal;
-                        Val(pars[19], tmpreal, code);
-                        f2   := tmpreal;
-                        i    := StrToInt(pars[20]);
-                      end;
-                    with TheWall.Sign do
-                      begin
-                        if StrToInt(pars[22]) <> -1 then
-                          begin
-                            Name := TX_LIST[StrToInt(pars[22])];
-                            Val(pars[23], tmpreal, code);
-                            f1   := tmpreal;
-                            Val(pars[24], tmpreal, code);
-                            f2   := tmpreal;
-                          end
-                        else
-                          begin
-                            Name := '';
-                            f1   := 0;
-                            f2   := 0;
-                          end;
-                      end;
-                    TheWall.Adjoin  := StrToInt(pars[26]);
-                    TheWall.Mirror  := StrToInt(pars[28]);
-                    TheWall.Walk    := StrToInt(pars[30]);
-                    TheWall.Flag1   := StrToInt(pars[32]);
-                    TheWall.Flag2   := StrToInt(pars[33]);
-                    TheWall.Flag3   := StrToInt(pars[34]);
-                    TheWall.Light   := StrToInt(pars[36]);
+            //log.Info(strin,logname);
+            if True then
 
-                    TheSector.Wl.AddObject('WL', TheWall);
-                  end;
-               finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('SECTOR', UpperCase(strin)) = 1 then
-            begin
-              if not First then MAP_SEC.AddObject('SC', TheSector);
-              TheSector := TSector.Create;
-              TheSector.Mark := 0;
-              First := FALSE;
-              Inc(sccounter);
-              if sccounter mod 20 = 19 then
-               ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 20;
-            end
-          else
-          if Pos('NAME', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 2 then
-                  TheSector.Name := pars[2]
-                else
-                  TheSector.Name := '';
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('AMBIENT', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 2 then
-                  TheSector.Ambient := StrToInt(pars[2]);
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('FLOOR', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 2 then
-                  if pars[2] = 'TEXTURE' then
-                    if pars.Count > 6 then
-                     with TheSector.Floor do
-                      begin
-                        Name := TX_LIST[StrToInt(pars[3])];
-                        Val(pars[4], tmpreal, code);
-                        f1   := tmpreal;
-                        Val(pars[5], tmpreal, code);
-                        f2   := tmpreal;
-                        i    := StrToInt(pars[6]);
-                      end
-                    else
-                  else
-                    if pars.Count > 3 then
-                      begin
-                        Val(pars[3], tmpreal, code);
-                        TheSector.Floor_alt := -tmpreal;
-                      end;
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('CEILING', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 2 then
-                  if pars[2] = 'TEXTURE' then
-                    if pars.Count > 6 then
-                     with TheSector.Ceili do
-                      begin
-                        Name := TX_LIST[StrToInt(pars[3])];
-                        Val(pars[4], tmpreal, code);
-                        f1   := tmpreal;
-                        Val(pars[5], tmpreal, code);
-                        f2   := tmpreal;
-                        i    := StrToInt(pars[6]);
-                      end
-                    else
-                  else
-                    if pars.Count > 3 then
-                      begin
-                        Val(pars[3], tmpreal, code);
-                        TheSector.Ceili_alt := -tmpreal;
-                      end;
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('SECOND', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 3 then
-                  begin
-                    Val(pars[3], tmpreal, code);
-                    TheSector.Second_alt := -tmpreal;
-                  end;
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('FLAGS', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 4 then
-                  begin
-                    TheSector.Flag1 := StrToInt(pars[2]);
-                    TheSector.Flag2 := StrToInt(pars[3]);
-                    TheSector.Flag3 := StrToInt(pars[4]);
-                  end;
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('LAYER', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 2 then
-                 begin
-                  TheSector.Layer := StrToInt(pars[2]);
-                  if TheSector.Layer > LAYER_MAX then LAYER_MAX := TheSector.Layer;
-                  if TheSector.Layer < LAYER_MIN then LAYER_MIN := TheSector.Layer;
-                 end;
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('VERTICES', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 2 then ;
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          if Pos('WALLS', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              try
-                if pars.Count > 2 then ;
-              finally
-                pars.Free;
-              end;
-            end
-          else
-          {LEVNAME must be before LEV}
-          if Pos('LEVELNAME', UpperCase(strin)) = 1 then
-           begin
-            pars := TStringParser.Create(strin);
-            try
-             if pars.Count > 2 then LEV_LEVELNAME := pars[2];
-            finally
-             pars.Free;
-            end;
-           end
-          else
-          if Pos('LEV', UpperCase(strin)) = 1 then
-           begin
-            pars := TStringParser.Create(strin);
-            try
-             if pars.Count > 2 then LEV_VERSION := pars[2];
-            finally
-             pars.Free;
-            end;
-           end
-          else
-          if Pos('PALETTE', UpperCase(strin)) = 1 then
-           begin
-            pars := TStringParser.Create(strin);
-            try
-             if pars.Count > 2 then LEV_PALETTE := pars[2];
-            finally
-             pars.Free;
-            end;
-           end
-          else
-          if Pos('MUSIC', UpperCase(strin)) = 1 then
-           begin
-            pars := TStringParser.Create(strin);
-            try
-             if pars.Count > 2 then LEV_MUSIC := pars[2];
-            finally
-             pars.Free;
-            end;
-           end
-          else
-          if Pos('PARALLAX', UpperCase(strin)) = 1 then
-           begin
-            pars := TStringParser.Create(strin);
-            try
-             if pars.Count > 3 then
+            if Pos('#', strin) = 1 then
               begin
-               Val(pars[2], tmpreal, code);
-               LEV_PARALLAX1 := tmpreal;
-               Val(pars[3], tmpreal, code);
-               LEV_PARALLAX2 := tmpreal;
-              end;
-            finally
-             pars.Free;
-            end;
-           end
-          else
-          if Pos('TEXTURES', UpperCase(strin)) = 1 then
-            begin
+              end
+            else
+            {vertices and walls are by far the most frequent, so place them
+             first in the imbricated ifs. It saves THOUSANDS of tests !}
+            if Pos('X:', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 4 then
+                    begin
+                      TheVertex := TVertex.Create;
+                      Val(pars[2], tmpreal, code);
+                      TheVertex.X := tmpreal;
+                      Val(pars[4], tmpreal, code);
+                      TheVertex.Z := tmpreal;
+                      TheSector.Vx.AddObject('VX', TheVertex);
+                    end;
+                 finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('WALL', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 36 then
+                    begin
+                    {  1 WALL
+                       2 LEFT:  0
+                       4 RIGHT: 1
+                       6 MID:  47   0.00   0.00   0
+                      11 TOP:  47   0.00   0.00   0
+                      16 BOT:  47   0.00   0.00   0
+                      21 SIGN:  -1   0.00   0.00
+                      25 ADJOIN:  -1
+                      27 MIRROR:  -1
+                      29 WALK:  -1
+                      31 FLAGS: 1024 0 0
+                      35 LIGHT: 22
+                    }
+                      wlcounter := wlcounter + 1;
+                      TheWall          := TWall.Create;
+                      TheWall.Mark     := 0;
+                      TheWall.Left_vx  := StrToInt(pars[3]);
+                      TheWall.Right_vx := StrToInt(pars[5]);
+                      with TheWall.Mid do
+                        begin
+                          if (pars[7] = '-1') then
+                            begin
+                              log.error('Sector ' + inttostr(sccounter+1) +  ' has a wall ' +
+                              inttostr(wlcounter) + ' with a MID texture of -1. Resetting to 0 ', logname);
+                              loaderror := True;
+                              pars[7] := '0';
+                            end;
+
+                          Name := TX_LIST[StrToInt(pars[7])];
+                          Val(pars[8], tmpreal, code);
+                          f1   := tmpreal;
+                          Val(pars[9], tmpreal, code);
+                          f2   := tmpreal;
+                          i    := StrToInt(pars[10]);
+                        end;
+                      with TheWall.Top do
+                        begin
+                          if (pars[12] = '-1') then
+                            begin
+                              log.error('Sector ' + inttostr(sccounter+1) +  ' has a wall ' +
+                              inttostr(wlcounter) + ' with a  TOP texture of -1. Resetting to 0 ', logname);
+                              loaderror := True;
+                              pars[12] := '0';
+                            end;
+                          Name := TX_LIST[StrToInt(pars[12])];
+                          Val(pars[13], tmpreal, code);
+                          f1   := tmpreal;
+                          Val(pars[14], tmpreal, code);
+                          f2   := tmpreal;
+                          i    := StrToInt(pars[15]);
+                        end;
+                      with TheWall.Bot do
+                        begin
+                          if (pars[18] = '-1') then
+                            begin
+                              log.error('Sector ' + inttostr(sccounter+1) +  ' has a wall ' +
+                              inttostr(wlcounter) + ' with a BOTTOM texture of -1. Resetting to 0 ', logname);
+                              loaderror := True;
+                              pars[18] := '0';
+                            end;
+                          Name := TX_LIST[StrToInt(pars[17])];
+                          Val(pars[18], tmpreal, code);
+                          f1   := tmpreal;
+                          Val(pars[19], tmpreal, code);
+                          f2   := tmpreal;
+                          i    := StrToInt(pars[20]);
+                        end;
+                      with TheWall.Sign do
+                        begin
+                          if (pars[22] = '22') then
+                            begin
+                              log.error('Sector ' + inttostr(sccounter+1) +  ' has a wall ' +
+                              inttostr(wlcounter) + ' with a SIGN texture of -1. Resetting to 0 ', logname);
+                              loaderror := True;
+                              pars[22] := '0';
+                            end;
+                          if StrToInt(pars[22]) <> -1 then
+                            begin
+                              Name := TX_LIST[StrToInt(pars[22])];
+                              Val(pars[23], tmpreal, code);
+                              f1   := tmpreal;
+                              Val(pars[24], tmpreal, code);
+                              f2   := tmpreal;
+                            end
+                          else
+                            begin
+                              Name := '';
+                              f1   := 0;
+                              f2   := 0;
+                            end;
+                        end;
+                      TheWall.Adjoin  := StrToInt(pars[26]);
+                      TheWall.Mirror  := StrToInt(pars[28]);
+                      TheWall.Walk    := StrToInt(pars[30]);
+                      TheWall.Flag1   := StrToInt(pars[32]);
+                      TheWall.Flag2   := StrToInt(pars[33]);
+                      TheWall.Flag3   := StrToInt(pars[34]);
+                      TheWall.Light   := StrToInt(pars[36]);
+
+                      TheSector.Wl.AddObject('WL', TheWall);
+                    end;
+                 finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('SECTOR', UpperCase(strin)) = 1 then
+              begin
+                if not First then MAP_SEC.AddObject('SC', TheSector);
+                TheSector := TSector.Create;
+                TheSector.Mark := 0;
+                First := FALSE;
+                Inc(sccounter);
+                wlcounter := 0;
+                if sccounter mod 20 = 19 then
+                 ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 20;
+              end
+            else
+            if Pos('NAME', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then
+                    TheSector.Name := pars[2]
+                  else
+                    TheSector.Name := '';
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('AMBIENT', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then
+                    TheSector.Ambient := StrToInt(pars[2]);
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('FLOOR', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then
+                    if pars[2] = 'TEXTURE' then
+                      if pars.Count > 6 then
+                       with TheSector.Floor do
+                        begin
+                          Name := TX_LIST[StrToInt(pars[3])];
+                          Val(pars[4], tmpreal, code);
+                          f1   := tmpreal;
+                          Val(pars[5], tmpreal, code);
+                          f2   := tmpreal;
+                          i    := StrToInt(pars[6]);
+                        end
+                      else
+                    else
+                      if pars.Count > 3 then
+                        begin
+                          Val(pars[3], tmpreal, code);
+                          TheSector.Floor_alt := -tmpreal;
+                        end;
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('CEILING', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then
+                    if pars[2] = 'TEXTURE' then
+                      if pars.Count > 6 then
+                       with TheSector.Ceili do
+                        begin
+                          Name := TX_LIST[StrToInt(pars[3])];
+                          Val(pars[4], tmpreal, code);
+                          f1   := tmpreal;
+                          Val(pars[5], tmpreal, code);
+                          f2   := tmpreal;
+                          i    := StrToInt(pars[6]);
+                        end
+                      else
+                    else
+                      if pars.Count > 3 then
+                        begin
+                          Val(pars[3], tmpreal, code);
+                          TheSector.Ceili_alt := -tmpreal;
+                        end;
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('SECOND', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 3 then
+                    begin
+                      Val(pars[3], tmpreal, code);
+                      TheSector.Second_alt := -tmpreal;
+                    end;
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('FLAGS', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 4 then
+                    begin
+                      TheSector.Flag1 := StrToInt(pars[2]);
+                      TheSector.Flag2 := StrToInt(pars[3]);
+                      TheSector.Flag3 := StrToInt(pars[4]);
+                    end;
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('LAYER', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then
+                   begin
+                    TheSector.Layer := StrToInt(pars[2]);
+                    if TheSector.Layer > LAYER_MAX then LAYER_MAX := TheSector.Layer;
+                    if TheSector.Layer < LAYER_MIN then LAYER_MIN := TheSector.Layer;
+                   end;
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('VERTICES', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then ;
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('WALLS', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then ;
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            {LEVNAME must be before LEV}
+            if Pos('LEVELNAME', UpperCase(strin)) = 1 then
+             begin
               pars := TStringParser.Create(strin);
               try
-                if pars.Count > 2 then textures := StrToInt(pars[2]);
-                { HIDE progress for TEXTURES, showing it takes more
-                       time than actually reading the textures!
-                ProgressWindow.Gauge.MaxValue    := textures;
-                ProgressWindow.Gauge.Progress    := 0;
-                ProgressWindow.Progress2.Caption := 'Parsing TEXTURES...';
-                ProgressWindow.Progress2.Update;
-                }
+               if pars.Count > 2 then LEV_LEVELNAME := pars[2];
               finally
-                pars.Free;
+               pars.Free;
               end;
-            end
-          else
-          if Pos('TEXTURE:', UpperCase(strin)) = 1 then
-            begin
+             end
+            else
+            if Pos('LEV', UpperCase(strin)) = 1 then
+             begin
               pars := TStringParser.Create(strin);
               try
-                if pars.Count > 2 then TX_LIST.Add(pars[2]);
-                {ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 1;}
+               if pars.Count > 2 then LEV_VERSION := pars[2];
               finally
-                pars.Free;
+               pars.Free;
               end;
-            end
-          else
-          if Pos('NUMSECTORS', UpperCase(strin)) = 1 then
-            begin
+             end
+            else
+            if Pos('PALETTE', UpperCase(strin)) = 1 then
+             begin
               pars := TStringParser.Create(strin);
               try
-                if pars.Count > 2 then numsectors := StrToInt(pars[2]);
-                ProgressWindow.Gauge.MaxValue     := numsectors;
-                ProgressWindow.Gauge.Progress     := 0;
-                ProgressWindow.Progress2.Caption  := 'Parsing GEOMETRY...';
-                ProgressWindow.Progress2.Update;
+               if pars.Count > 2 then LEV_PALETTE := pars[2];
               finally
-                pars.Free;
+               pars.Free;
               end;
-            end
-          else ;
+             end
+            else
+            if Pos('MUSIC', UpperCase(strin)) = 1 then
+             begin
+              pars := TStringParser.Create(strin);
+              try
+               if pars.Count > 2 then LEV_MUSIC := pars[2];
+              finally
+               pars.Free;
+              end;
+             end
+            else
+            if Pos('PARALLAX', UpperCase(strin)) = 1 then
+             begin
+              pars := TStringParser.Create(strin);
+              try
+               if pars.Count > 3 then
+                begin
+                 Val(pars[2], tmpreal, code);
+                 LEV_PARALLAX1 := tmpreal;
+                 Val(pars[3], tmpreal, code);
+                 LEV_PARALLAX2 := tmpreal;
+                end;
+              finally
+               pars.Free;
+              end;
+             end
+            else
+            if Pos('TEXTURES', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then textures := StrToInt(pars[2]);
+                  { HIDE progress for TEXTURES, showing it takes more
+                         time than actually reading the textures!
+                  ProgressWindow.Gauge.MaxValue    := textures;
+                  ProgressWindow.Gauge.Progress    := 0;
+                  ProgressWindow.Progress2.Caption := 'Parsing TEXTURES...';
+                  ProgressWindow.Progress2.Update;
+                  }
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('TEXTURE:', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then TX_LIST.Add(pars[2]);
+                  {ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 1;}
+                finally
+                  pars.Free;
+                end;
+              end
+            else
+            if Pos('NUMSECTORS', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                try
+                  if pars.Count > 2 then numsectors := StrToInt(pars[2]);
+                  ProgressWindow.Gauge.MaxValue     := numsectors;
+                  ProgressWindow.Gauge.Progress     := 0;
+                  ProgressWindow.Progress2.Caption  := 'Parsing GEOMETRY...';
+                  ProgressWindow.Progress2.Update;
+                finally
+                  pars.Free;
+                end;
+              end
+            else ;
+          Except
+            on E : Exception do
+                begin
+                  Log.error('Level Read Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
+                  Log.Error('Failure occured on sector ' + inttostr(sccounter) +
+                  ' and wall = ' + inttostr(wlcounter) + ' and line ' + EOL + strin, logName );
+                end
+          end;
+
+
         end;
 
       { add last sector}
       MAP_SEC.AddObject('SC', TheSector);
       System.CloseFile(lev);
 
-      LAYER := LAYER_MIN;
+      if (LAYER_MAX >= 0) and (LAYER_MIN <= 0) then
+        LAYER := 0
+      else
+        LAYER := LAYER_MIN;
 
       ProgressWindow.Hide;
       { compare the textures and sectors found with those announced
@@ -587,6 +801,11 @@ begin
       LEVELLoaded := TRUE;
       SetCursor(OldCursor);
       IO_ReadLEV := TRUE;
+
+      if loaderror then
+        showmessage('There are LEV Loading errors for this level.' + EOL +
+         'Please look at the log for details [F5]');
+
     end;
 end;
 
@@ -737,7 +956,7 @@ var o         : System.TextFile;
     sprs      : Integer;
     fmes      : Integer;
     snds      : Integer;
-    tmp       : array[0..127] of char;
+    tmp       : array[0..255] of char;
     tmpreal   : Real;
     code      : Integer;
     First     : Boolean;
@@ -1210,8 +1429,22 @@ var i,j,k    : Integer;
    TheWall   : TWall;
    TheInfClass : TInfClass;
    infcount  : Integer;
+   itemName,
+   error     : String;
+   errors    : TStringList;
+   sectorName : String;
+   INFKey     : String;
+   INFKeyPair : TPair<String,String>;
+   INFKeyAr   : TArray<String>;
 begin
+   log.Info('Loading INFs from ' + infname + ' ...', LogName);
+   INF_READ := True;
    OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
+   errors := TStringList.Create;
+
+   //Stores the sectors/wall that have INF
+   //to prevent recalculating them
+   INFCache := TDictionary<String, String>.Create;
 
    {first create all the flag and exploding door, and secret things
     for all sectors}
@@ -1265,6 +1498,7 @@ begin
 
    Comment := FALSE;
    lastnum := 0;
+   itemName := 'Not Started Item Parsing';
 
    AssignFile(inf, infname);
    Reset(inf);
@@ -1292,194 +1526,244 @@ begin
      if SeekEoln(inf) then StrList.Add(' ');
 
      Readln(inf, strin);
+     try
+       if Pos('/*', strin) = 1 then
+         begin
+           StrList.Add(strin);
+           if Pos('*/', strin) = 0 then Comment := TRUE;
+         end
+       else
+       if Pos('*/', strin) <> 0 then
+         begin
+           StrList.Add(strin);
+           Comment := FALSE;
+         end
+       else
+       if Pos('inf', LowerCase(strin)) = 1 then
+         begin
+            {StrList.Add(strin); will use header editor instead}
+            pars := TStringParserWithColon.Create(strin);
+            try
+             if pars.Count > 2 then
+              INF_VERSION := pars[2]
+             else
+              INF_VERSION := '1.0';
+            finally
+             pars.Free;
+            end;
+         end
+       else
+       if Pos('levelname', LowerCase(strin)) = 1 then
+         begin
+            {StrList.Add(strin); will use header editor instead}
+            pars := TStringParserWithColon.Create(strin);
+            try
+             if pars.Count > 2 then INF_LEVELNAME := pars[2];
+            finally
+             pars.Free;
+            end;
+         end
+       else
+       if Pos('items', LowerCase(strin)) = 1 then
+         begin
+            {don't write items, it will be computed}
+            {StrList.Add(strin);}
 
-     if Pos('/*', strin) = 1 then
-       begin
-         StrList.Add(strin);
-         if Pos('*/', strin) = 0 then Comment := TRUE;
-       end
-     else
-     if Pos('*/', strin) <> 0 then
-       begin
-         StrList.Add(strin);
-         Comment := FALSE;
-       end
-     else
-     if Pos('inf', LowerCase(strin)) = 1 then
-       begin
-          {StrList.Add(strin); will use header editor instead}
-          pars := TStringParserWithColon.Create(strin);
-          try
-           if pars.Count > 2 then
-            INF_VERSION := pars[2]
-           else
-            INF_VERSION := '1.0';
-          finally
-           pars.Free;
-          end;
-       end
-     else
-     if Pos('levelname', LowerCase(strin)) = 1 then
-       begin
-          {StrList.Add(strin); will use header editor instead}
-          pars := TStringParserWithColon.Create(strin);
-          try
-           if pars.Count > 2 then INF_LEVELNAME := pars[2];
-          finally
-           pars.Free;
-          end;
-       end
-     else
-     if Pos('items', LowerCase(strin)) = 1 then
-       begin
-          {don't write items, it will be computed}
-          {StrList.Add(strin);}
+            {here we store the main comments (ie before items)}
+            INFComments.AddStrings(StrList);
+            StrList.Free;
 
-          {here we store the main comments (ie before items)}
-          INFComments.AddStrings(StrList);
-          StrList.Free;
+            {start new string list}
+            StrList := TStringList.Create;
 
-          {start new string list}
-          StrList := TStringList.Create;
-
-          {get the items count for progress bar}
-          pars := TStringParserWithColon.Create(strin);
-          try
-           if pars.Count > 2 then
-            infcount := StrToInt(pars[2])
-           else
-            infcount := 999;
-          except
-           on EConvertError do infcount := 999;
-          end;
-          pars.Free;
-          ProgressWindow.Gauge.MaxValue    := infcount;
-          infcount := 0;
-       end
-     else
-     if Comment then
-       begin
-         StrList.Add(strin);
-       end
-     else
-     if Pos('item:', LowerCase(strin)) = 1 then
-       begin
-         pars := TStringParserWithColon.Create(strin);
-         try
-           if LowerCase(pars[2]) = 'level' then
-            begin
-             oname := '?yb?'; {force it wrong!}
-             otype := 'L';
-            end
-           else
-           if LowerCase(pars[2]) = 'sector' then
-             if pars.Count > 4 then
+            {get the items count for progress bar}
+            pars := TStringParserWithColon.Create(strin);
+            try
+             if pars.Count > 2 then
+              infcount := StrToInt(pars[2])
+             else
+              infcount := 999;
+            except
+             on EConvertError do infcount := 999;
+            end;
+            pars.Free;
+            ProgressWindow.Gauge.MaxValue    := infcount;
+            infcount := 0;
+         end
+       else
+       if Comment then
+         begin
+           StrList.Add(strin);
+         end
+       else
+       if Pos('item:', LowerCase(strin)) = 1 then
+         begin
+           itemName := strin;
+           pars := TStringParserWithColon.Create(strin);
+           try
+             if LowerCase(pars[2]) = 'level' then
               begin
-               oname := pars[4];
-               otype := 'S';
+               oname := '?yb?'; {force it wrong!}
+               otype := 'L';
               end
              else
-              begin
-               oname := '?yb?';
-               otype := 'S';
-              end
-           else
-             if pars.Count > 6 then
-              begin
-               oname := pars[4];
-               onum  := StrToIntDef(pars[6], 0);
-               lastnum := onum;
-               otype := 'W';
-              end
-             else
-              begin
+             if LowerCase(pars[2]) = 'sector' then
                if pars.Count > 4 then
                 begin
                  oname := pars[4];
-                 onum  := lastnum;
-                 otype := 'W';
+                 otype := 'S';
                 end
                else
                 begin
                  oname := '?yb?';
-                 onum  := 0;
+                 otype := 'S';
+                end
+             else
+               if pars.Count > 6 then
+                begin
+                 oname := pars[4];
+                 onum  := StrToIntDef(pars[6], 0);
+                 lastnum := onum;
                  otype := 'W';
+                end
+               else
+                begin
+                 if pars.Count > 4 then
+                  begin
+                   oname := pars[4];
+                   onum  := lastnum;
+                   otype := 'W';
+                  end
+                 else
+                  begin
+                   oname := '?yb?';
+                   onum  := 0;
+                   otype := 'W';
+                  end;
                 end;
-              end;
-         finally
-           pars.Free;
-         end;
-         Inc(infcount);
-         if infcount mod 10 = 9 then
-          ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 10;
-       end
-     else
-     if Pos('seqend', LowerCase(strin)) = 1 then
-       begin
-         StrList.Add('seqend');
-         {add the stringlist to its correct sc or wl}
-         if GetSectorNumFromNameNoCase(oname, sc) then
-          begin
-           TheSector := TSector(MAP_SEC.Objects[sc]);
-           if otype = 'S' then
+           finally
+             pars.Free;
+           end;
+           Inc(infcount);
+           if infcount mod 10 = 9 then
+            ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 10;
+         end
+       else
+       if Pos('seqend', LowerCase(strin)) = 1 then
+         begin
+           StrList.Add('seqend');
+           {add the stringlist to its correct sc or wl}
+           if GetSectorNumFromNameNoCase(oname, sc) then
             begin
-             TheSector.InfItems.AddStrings(StrList);
-             ComputeINFClasses(sc, -1);
-            end
-           else
-            begin
-             if onum >= TheSector.WL.Count then
-              begin
-               onum := 0; {careful !}
-               StrList.Add('/* Invalid wall set to 0 ! */');
-              end;
-             TheWall := TWall(TheSector.Wl.Objects[onum]);
-             TheWall.InfItems.AddStrings(StrList);
-             ComputeINFClasses(sc, onum);
-            end;
-          end
-         else
-          begin
-           {sector not found, add to the INFErrors part unless it is an item: level}
-           if otype = 'L' then
-            begin
-             INFLevel.Add('item: level');
-             INFLevel.AddStrings(StrList);
-             INFLevel.Add(' ');
-            end
-           else
-            begin
-             CASE otype of
-              'S' : INFErrors.Add('item: sector name: ????????');
-              'W' : INFErrors.Add('item: line   name: ???????? num: 0');
-             END;
-             INFErrors.AddStrings(StrList);
-             INFErrors.Add(' ');
-            end;
-          end;
 
-         StrList.Free;
-         {start new string list, so that interitems comments will be ok}
-         StrList := TStringList.Create;
-       end
-     else
-     {must be AFTER !!! seqend, else seqend is never found !!!}
-     if Pos('seq', LowerCase(strin)) = 1 then
-       begin
-         StrList.Add('seq');
-       end
-     else
-       begin
-         StrList.Add(LTrim(Rtrim(strin)));
-       end;
+             TheSector := TSector(MAP_SEC.Objects[sc]);
+             if otype = 'S' then
+              begin
+               onum := -1 ;
+               TheSector.InfItems.AddStrings(StrList);
+               //ComputeINFClasses(sc, -1);
+              end
+             else
+              begin
+               if onum >= TheSector.WL.Count then
+                begin
+
+                 onum := 0; {careful !}
+                 StrList.Add('/* Invalid wall set to 0 ! */');
+                end;
+               TheWall := TWall(TheSector.Wl.Objects[onum]);
+               TheWall.InfItems.AddStrings(StrList);
+               //ComputeINFClasses(sc, onum);
+              end;
+              INFKey := oname + ':' + inttostr(sc) + ':' + inttostr(onum);
+              if INFCache.ContainsKey(INFKey) then
+                INFCache[INFKey] := TheWall.InfItems.DelimitedText
+              else
+                INFCache.Add(INFKey, TheWall.InfItems.DelimitedText);
+            end
+           else
+            begin
+             {sector not found, add to the INFErrors part unless it is an item: level}
+             if otype = 'L' then
+              begin
+               INFLevel.Add('item: level');
+               INFLevel.AddStrings(StrList);
+               INFLevel.Add(' ');
+              end
+             else
+              begin
+               CASE otype of
+                'S' : INFErrors.Add('item: sector name: ????????');
+                'W' : INFErrors.Add('item: line   name: ???????? num: 0');
+               END;
+               INFErrors.AddStrings(StrList);
+               INFErrors.Add(' ');
+              end;
+            end;
+
+           StrList.Free;
+           {start new string list, so that interitems comments will be ok}
+           StrList := TStringList.Create;
+         end
+       else
+       {must be AFTER !!! seqend, else seqend is never found !!!}
+       if Pos('seq', LowerCase(strin)) = 1 then
+         begin
+           StrList.Add('seq');
+         end
+       else
+         begin
+           StrList.Add(LTrim(Rtrim(strin)));
+         end;
+     except
+      on E : Exception do
+        begin
+          error := 'Failed to parse the INF  [' + itemName + ']' + EOL +  E.Message;
+          log.Error(error, logname);
+          errors.Add(error);
+        end
+     end;
    end;
 
+
+  // Instead of recalulating duplicate INFs per sector - do them all at once
+  for INFKeyPair in INFCache  do
+    try
+      begin
+        INFKeyAr := INFKeyPair.key.Split([':']);
+        j := StrToInt(INFKeyAr[1]);
+        k := StrToInt(INFKeyAr[2]);
+        log.Info('Compiling ' + inttostr(i) + ':' + inttostr(j), logname);
+        ComputeINFClasses(j,k);
+      end;
+     except
+       on E : Exception do
+        begin
+          error := 'Failed to parse the INF due to...'  + EOL + E.Message;
+          log.Error(error, logname);
+          errors.Add(error);
+        end
+    end;
+
+   if errors.Count > 0 then
+    begin
+      showmessage('There are ' + inttostr(errors.Count) + ' INF loading errors. ' + EOL +
+                  'Please look in the logs for details by pressing  F5 ' + EOL +
+                  'Or look at the consistency check by pressing F10');
+    end;
+   log.Info('1', logname);
    System.CloseFile(inf);
    {because a new StrList is created after the last seqend}
+   log.Info('2', logname);
    StrList.Free;
+   log.Info('3', logname);
    INFFILELoaded := TRUE;
    ProgressWindow.Hide;
+   log.Info('4', logname);
    SetCursor(OldCursor);
+   log.Info('5', logname);
+   INF_READ := False;
+   log.Info('Done Loading INFs from ' + infname + ' ...', LogName);
 end;
 
 
@@ -1694,7 +1978,7 @@ begin
  MapWindow.HiddenINFOutMemo.Clear;
 
  {last any possible errors}
- for i := 0 to INFErrors.Count - 1 do WriteLn(inf, INFErrors[i]);
+ for i := 0 to INFErrors.Count - 1 do log.Error(INFErrors[i], logName);
  WriteLn(inf, ' ');
 
  System.CloseFile(inf);

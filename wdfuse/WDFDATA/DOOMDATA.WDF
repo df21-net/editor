@@ -1,0 +1,491 @@
+[Thing_Classes]
+01=Start
+02=Weapon
+03=Enemy
+04=Ammo
+05=Powerup
+06=Key
+07=Scenery
+08=Teleport
+09=Barrels
+10=Armor
+11=Healing
+
+;     IDused     to uniquely identify things in a map
+;     MASTER     master object conversion switch
+;       Y        should work :-)
+;       N        object voluntarily excluded
+;     DF Class   Dark Forces object class
+;       -        don't convert (cannot)
+;       /        don't convert (decided)
+;       ?        undecided yet
+;                The -/? values are for reference only, they are not checked
+;                master switch = N does the job of excluding those things
+;     DF Data    name of the wax, fme, ...
+;     Logic      Logic to copy (refers to dm_seqs.wdf)
+;       *N       is a special logic meaning "[no logic]"
+;       *r       is a special logic meaning "RADIUS: 0"
+;       *A       is a special logic meaning "LOGIC: ANIM"
+;       *a       is a special logic meaning "LOGIC: ANIM
+;                                            RADIUS: 0"
+;       *S       is a special logic meaning "LOGIC: SCENERY
+;                                            LOGIC: ANIM"
+;                (use *S to create destroyable scenery, the 'destroyed'
+;                 frames won't exists, so the objects will just disappear)
+;                (these to avoid a lot of unneeded trips to dm_seqs.wdf
+;                 during the conversion phase)
+;
+;                What logic to chose for items that have no equivalent
+;                like the Invisibility (blur sphere)?
+;                They must have a logic corresponding to a gettable object
+;                else they will just stay there (and possibly block the way)!
+;                On the other hand, it should not unbalance the game too much...
+;                Maybe LOGIC: PILE will do ? Unless it gets the info from
+;                the inventory at level start ?
+;     Duplic
+;       (n)      this means this object must be duplicated
+;                to allow for things like boxes of ammo and other tricks
+;       -        one object, no duplication
+;     Special
+;       !        special sufficient to make level unplayable
+;                 =>  message is output to user and object ISN'T converted
+;       B        these Doom bosses may trigger things when dying...
+;       L        force this object to generate a message in LOG file
+;     Doom Class classification (defined above section)
+;     Doom Image
+;                root 4 letters of Doom Sprite name for a SPRITE
+;             or complete Doom frame name for an FRAME
+;             or * to use Dark Forces Data
+;     Doom Name  textual description of thing
+
+[Thing_Types]
+0x001=Y SPIRIT   SPIRIT        SPIRIT      - - 01  -        Player 1
+0x002=N -        -             -           - - 01  -        Player 2
+0x003=N -        -             -           - - 01  -        Player 3
+0x004=N -        -             -           - - 01  -        Player 4
+0x00b=Y SAFE     SAFE          SAFE        - - 01  -        Deathmatch
+
+0x052=Y FRAME    SGN2A0.FME    SGN2A0.FME  - - 02  SGN2A0   Super shotgun
+0x7d1=Y FRAME    SHOTA0.FME    SHOTA0.FME  - - 02  SHOTA0   Shotgun
+0x7d2=Y FRAME    MGUNA0.FME    MGUNA0.FME  - - 02  MGUNA0   Chaingun
+0x7d3=Y FRAME    LAUNA0.FME    LAUNA0.FME  - - 02  LAUNA0   Rocket launcher
+0x7d4=Y FRAME    PLASA0.FME    PLASA0.FME  - - 02  PLASA0   Plasma rifle
+0x7d5=Y FRAME    CSAWA0.FME    CSAWA0.FME  - - 02  CSAWA0   Chainsaw
+0x7d6=Y FRAME    BFUGA0.FME    BFGUA0.FME  - - 02  BFUGA0   BFG 9000
+
+0x007=Y SPRITE   SPID.WAX      SPID.WAX    - B 03  SPID     Spider demon
+0x009=Y SPRITE   SPOS.WAX      SPOS.WAX    - - 03  SPOS     Former sergeant
+0x010=Y SPRITE   CYBR.WAX      CYBR.WAX    - B 03  CYBR     Cyberdemon
+0x03a=Y SPRITE   SARG.WAX      SARG.WAX    - - 03  SARG     Spectre
+0x040=Y SPRITE   VILE.WAX      VILE.WAX    - - 03  VILE     Arch-Vile
+0x041=Y SPRITE   CPOS.WAX      CPOS.WAX    - - 03  CPOS     Chaingun soldier
+0x042=Y SPRITE   SKEL.WAX      SKEL.WAX    - - 03  SKEL     Revenant
+0x043=Y SPRITE   FATT.WAX      FATT.WAX    - B 03  FATT     Mancubus
+0x044=Y SPRITE   BSPI.WAX      BSPI.WAX    - - 03  BSPI     Arachnotron
+0x045=Y SPRITE   BOS2.WAX      BOS2.WAX    - - 03  BOS2     Hell knight
+0x047=Y SPRITE   PAIN.WAX      PAIN.WAX    - - 03  PAIN     Pain elemental
+0x048=Y SPRITE   KEEN.WAX      KEEN.WAX    - B 03  KEEN     Commander Keen
+0x054=Y SPRITE   SSWV.WAX      SSWV.WAX    - - 03  SSWV     SS soldier
+0x057=Y -        BFE2          -           - ! 03  BFE2     Icon of sin landing
+0x059=Y -        BOSF          -           - ! 03  BOSF     Icon of sin
+0xbb9=Y SPRITE   TROO.WAX      TROO.WAX    - - 03  TROO     Imp
+0xbba=Y SPRITE   SARG.WAX      SARG.WAX    - - 03  SARG     Demon
+0xbbb=Y SPRITE   BOSS.WAX      BOSS.WAX    - B 03  BOSS     Baron of hell
+0xbbc=Y SPRITE   POSS.WAX      POSS.WAX    - - 03  POSS     Former human
+0xbbd=Y SPRITE   HEAD.WAX      HEAD.WAX    - - 03  HEAD     Cacodemon
+0xbbe=Y SPRITE   SKUL.WAX      SKUL.WAX    - - 03  SKUL     Lost soul
+
+0x011=Y FRAME    CELPA0.FME    CELLA0.FME  5 - 04  CELPA0   Bulk cell (100)
+0x7d7=Y FRAME    CLIPA0.FME    CLIPA0.FME  - - 04  CLIPA0   Ammo clip (4)
+0x7d8=Y FRAME    SHELA0.FME    SHELA0.FME  - - 04  SHELA0   Shotgun shells (4)
+0x7da=Y FRAME    ROCKA0.FME    ROCKA0.FME  - - 04  ROCKA0   Rocket
+0x7fe=Y FRAME    BROKA0.FME    BROKA0.FME  - - 04  BROKA0   Box of rockets (8)
+0x7ff=Y FRAME    CELLA0.FME    CELLA0.FME  - - 04  CELLA0   Energy cell (20)
+0x800=Y FRAME    AMMOA0.FME    CLIPA0.FME  5 - 04  AMMOA0   Box of bullets (50)
+0x801=Y FRAME    SBOXA0.FME    SHELA0.FME  4 - 04  SBOXA0   Box of shells (24)
+
+0x008=Y FRAME    BPAKA0.FME    BPAKA0.FME  - - 05  BPAKA0   Backpack
+0x053=Y SPRITE   MEGA.WAX      MEGA.WAX    - - 05  MEGA     Megasphere
+0x7dd=Y SPRITE   SOUL.WAX      BON1.WAX    5 - 05  SOUL     Soul sphere
+0x7e6=Y SPRITE   PINV.WAX      PINV.WAX    - - 05  PINV     Invulnerability
+0x7e7=Y FRAME    PSTRA0.FME    PSTRA0.FME  - - 05  PSTRA0   Berserk
+0x7e8=Y SPRITE   PINS.WAX      PINS.WAX    - - 05  PINS     Invisibility
+0x7e9=Y FRAME    SUITA0.FME    SUITA0.FME  - - 05  SUITA0   Radiation suit
+0x7ea=Y SPRITE   PMAP.WAX      PMAP.WAX    - - 05  PMAP     Computer map
+0x7fd=Y SPRITE   PVIS.WAX      PVIS.WAX    - - 05  PVIS     Light amplification goggles
+
+0x005=Y SPRITE   BKEY.WAX      BKEY.WAX    - - 06  BKEY     Blue card
+0x006=Y SPRITE   YKEY.WAX      YKEY.WAX    - - 06  YKEY     Yellow card
+0x00d=Y SPRITE   RKEY.WAX      RKEY.WAX    - - 06  RKEY     Red card
+0x026=Y SPRITE   RSKU.WAX      RKEY.WAX    - - 06  RSKU     Red skull
+0x027=Y SPRITE   YSKU.WAX      YKEY.WAX    - - 06  YSKU     Yellow skull
+0x028=Y SPRITE   BSKU.WAX      BKEY.WAX    - - 06  BSKU     Blue skull
+
+0x00e=Y SAFE     SAFE          SAFE        - L 08  -        Teleport Destination
+
+0x046=Y SPRITE   FCAN.WAX      *A          - - 09  FCAN     Flaming barrel
+0x7f3=Y SPRITE   BAR1.WAX      BAR1.WAX    - - 09  BAR1     Barrel
+
+0x7df=Y SPRITE   BON2.WAX      BON2.WAX    - - 10  BON2     Helmet (1)
+0x7e2=Y SPRITE   ARM1.WAX      BON2.WAX    3 - 10  ARM1     Green (100)
+0x7e3=Y SPRITE   ARM2.WAX      BON2.WAX    5 - 10  ARM2     Blue (200)
+
+0x7db=Y FRAME    STIMA0.FME    BON1.WAX    2 - 11  STIMA0   Stimpak (10)
+0x7dc=Y FRAME    MEDIA0.FME    BON1.WAX    3 - 11  STIMA0   Medipak (25)
+0x7de=Y SPRITE   BON1.WAX      BON1.WAX    - - 11  BON1     Potion (1)
+
+0x00a=Y FRAME    SPOSU0.FME    *r          - - 07  SPOSU0   Body of sergeant (shredded)
+0x00c=Y FRAME    TROOU0.FME    *r          - - 07  TROOU0   Body of imp (shredded)
+0x00f=Y FRAME    PLAYM0.FME    *r          - - 07  PLAYM0   Body of player
+0x012=Y FRAME    SPOSU0.FME    *r          - - 07  SPOSU0   Body of former human
+0x013=Y FRAME    SPOSU0.FME    *r          - - 07  SPOSU0   Body of former sergeant
+0x014=Y FRAME    SPOSU0.FME    *r          - - 07  SPOSU0   Body of imp
+0x015=Y FRAME    SPOSU0.FME    *r          - - 07  SPOSU0   Body of demon
+0x016=Y FRAME    SPOSU0.FME    *r          - - 07  SPOSU0   Body of cacodemon
+0x018=Y FRAME    POL5A0.FME    *r          - - 07  POL5A0   Body of lost soul (blood)
+0x019=Y FRAME    POL6A0.FME    *N          - - 07  POL6A0   Pole w/dead player
+0x01a=Y SPRITE   POL6.WAX      *A          - - 07  POL6     Pole w/dying player
+0x01b=Y FRAME    TREDA0.FME    *N          - - 07  TREDA0   Pole w/head
+0x01c=Y FRAME    POL2A0.FME    *N          - - 07  POL2A0   Pole w/heads
+0x01d=Y FRAME    POL3A0.FME    *N          - - 07  POL3A0   Skulls and candles
+0x01e=Y FRAME    COL1A0.FME    *N          - - 07  COL1A0   Column (tall/green)
+0x01f=Y FRAME    COL2A0.FME    *N          - - 07  COL2A0   Column (short/green)
+0x020=Y FRAME    COL3A0.FME    *N          - - 07  COL3A0   Column (tall/red)
+0x021=Y FRAME    COL4A0.FME    *N          - - 07  COL4A0   Column (short/red)
+0x022=Y FRAME    CANDA0.FME    *N          - - 07  CANDA0   Candle
+0x023=Y FRAME    CBRAA0.FME    *N          - - 07  CBRAA0   Candelabra
+0x024=Y SPRITE   COL5.WAX      *A          - - 07  COL5     Column w/heart
+0x025=Y FRAME    COL6A0.FME    *N          - - 07  COL6A0   Column w/skull
+0x029=Y SPRITE   CEYE.WAX      *A          - - 07  CEYE     Eye
+0x02a=Y SPRITE   FSKU.WAX      *A          - - 07  FSKU     Floating skull
+0x02b=Y FRAME    TRE1A0.FME    *N          - - 07  TRE1A0   Tree (short)
+0x02c=Y SPRITE   TBLU.WAX      *A          - - 07  TBLU     Torch (tall/blue)
+0x02d=Y SPRITE   TGRN.WAX      *A          - - 07  TGRN     Torch (tall/green)
+0x02e=Y SPRITE   TRED.WAX      *A          - - 07  TRED     Torch (tall/red)
+0x02f=Y FRAME    SMITA0.FME    *N          - - 07  SMITA0   Stalagmite
+0x030=Y FRAME    ELECA0.FME    *N          - - 07  ELECA0   Column (electric)
+0x031=Y SPRITE   GOR1.WAX      *A          - - 07  GOR1     Chain w/dying player hung by neck
+0x032=Y FRAME    GOR2A0.FME    *N          - - 07  GOR2A0   Chain w/player hung by ankle
+0x033=Y FRAME    GOR3A0.FME    *N          - - 07  GOR3A0   Chain w/one legged player hung by ankle
+0x034=Y FRAME    GOR4A0.FME    *N          - - 07  GOR4A0   Chain w/half player torso
+0x035=Y FRAME    GOR5A0.FME    *N          - - 07  GOR5A0   Chain w/player leg
+0x036=Y FRAME    TRE2A0.FME    *N          - - 07  TRE2A0   Tree (large)
+0x037=Y SPRITE   SMBT.WAX      *A          - - 07  SMBT     Torch (short/blue)
+0x038=Y SPRITE   SMGT.WAX      *A          - - 07  SMGT     Torch (short/green)
+0x039=Y SPRITE   SMRT.WAX      *A          - - 07  SMRT     Torch (short/red)
+0x03b=Y FRAME    GOR2A0.FME    *r          - - 07  GOR2A0   Chain w/player hung by ankle
+0x03c=Y FRAME    GOR4A0.FME    *r          - - 07  GOR4A0   Chain w/half player torso
+0x03d=Y FRAME    GOR3A0.FME    *r          - - 07  GOR3A0   Chain w/one legged player hung by ankle
+0x03e=Y FRAME    GOR5A0.FME    *r          - - 07  GOR5A0   Chain w/player leg
+0x03f=Y SPRITE   GOR1.WAX      *a          - - 07  GOR1     Chain w/dying player hung by neck
+0x049=Y FRAME    HDB1A0.FME    *N          - - 07  HDB1A0   Body w/o guts
+0x04a=Y FRAME    HDB2A0.FME    *N          - - 07  HDB2A0   Body w/o guts and leg
+0x04b=Y FRAME    HDB3A0.FME    *N          - - 07  HDB3A0   Body w/o lower half
+0x04c=Y FRAME    HDB4A0.FME    *N          - - 07  HDB4A0   Body w/o lower half and cranium
+0x04d=Y FRAME    HDB5A0.FME    *N          - - 07  HDB5A0   Body w/o lower half and head
+0x04e=Y FRAME    HDB6A0.FME    *N          - - 07  HDB6A0   Body w/o most anything...
+0x04f=Y FRAME    POB1A0.FME    *r          - - 07  POB1A0   Blood w/empty skin
+0x050=Y FRAME    POB2A0.FME    *r          - - 07  POB2A0   Blood spatter
+0x051=Y FRAME    BRS1A0.FME    *r          - - 07  BRS1A0   Brain w/spinal column
+0x055=Y SPRITE   TLMP.WAX      *A          - - 07  TLMP     Gas lamp
+0x056=Y SPRITE   TLP2.WAX      *A          - - 07  TLP2     Gas lamp (small)
+0x058=Y SPRITE   BBRN.WAX      *A          - B 07  BBRN     John Romero's head
+0x7ec=Y FRAME    COLUA0.FME    *N          - - 07  COLUA0   Electric lamp
+
+[Sector_Types]
+01=Blink (random)
+02=Blink (1/2 second)
+03=Blink (1 second)
+04=-10/20% health, blink (1/2 second)
+05=-5/10% health
+06=Invalid Sector Type
+07=-2/5% health
+08=Light oscillates
+09=Secret
+10=Ceiling drops (after 30 seconds)
+11=-10/20% health, end level/game
+12=Blink (1/2 second sync.)
+13=Blink (1 second sync.)
+14=Ceiling rises (after 300 seconds)
+15=Invalid Sector Type
+16=-10/20% health
+17=Flicker on and off (1.666+)
+
+
+;   ID
+;   acts upon
+;       X     Special (WDFUSE special coding)
+;       A     Acts on Adjoin sector
+;       T     Acts on Tag
+;       C     Acts on Complete
+
+;             for A & T
+;             The elevator must be created if it doesn't already exists yet.
+;             The user will be responsible in case of multiple classes.
+;             To minimize this possibility, I only generate 3 types of elevators
+;             instead of generating doors, etc
+
+;   elevator to create
+;       --    none (trigger only)
+;       MC    elevator move_ceiling
+;       MF    elevator move_floor
+;       CL    elevator change_light
+
+;   master at start of play
+;       0     off
+;       1     on
+
+;   event_mask
+;       W     line   trigger : walk-over (both sides)
+;       S     line   trigger : switch
+;       G     line   trigger : shoot, use entity_mask:
+;       e     sector trigger : enter
+;       n     sector trigger : nudge from outside
+;       -     don't care
+
+;   repeat
+;       1     the line may be activated once only
+;       R     potentially repeatable activation
+
+;   trigger action
+;       Z     Zero       (goto_stop 0)
+;       O     One        (goto_stop 1)
+;       N     Next       (next_stop)
+;       0     Deactivate (master_off)
+;       1     Activate   (master_on)
+
+;   number of stops
+;       2     two stops (most use this)
+;       V     variable (enough to fill the sector height)
+;             first stop *MUST* be FLO and next stop must a POSITIVE NUMERIC value
+;             This is a sorry excuse for a repeatable "up by (n)", but I cannot do otherwise
+
+;   first and next stop(s)
+;       ---   don't care
+;       FLO   floor altitude
+;       F+1   floor altitude + 1 (Doom => DF divide by 8 applied)
+;       LHF   lowest higher floor
+;       HHF   highest higher floor
+;       LLF   lowest lower floor
+;       HLF   highest lower floor
+;       HL1   highest lower floor + 1
+;       SLX   floor altitude + shorter lower texture
+;             SLX currently returns floor altitude + 4
+
+;       CEI   ceiling altitude
+;       LHC   lowest higher ceiling
+;       LH1   lowest higher ceiling - 1
+;       HHC   highest higher ceiling
+
+;       LIG   ambient light
+;       BRI   brightest adjoin
+;       DIM   dimmest adjoin
+;             else, it is a value used to add to the floor altitude
+;             this is used with variable number of steps
+;             [except in CL elevators, where it is simply an absolute value]
+;       (n)   number
+
+;   speed     this is a reference to the [Linedef_Speeds] section which contains the
+;             actual values. values 1,2,3,4 comes from Doom linedef descriptions,
+;             but you may also use 0,5,6,7,8,9 for yourself
+;       1     slow
+;       2     medium
+;       3     fast
+;       4     turbo
+
+;   hold time
+;       -     hold
+;       (v)   value
+;             if value is negative, it means that its absolute value must
+;             be used for BOTH stops (i.e. it will NOT hold at stop 0)
+
+;   special things
+;       R     key: red
+;       Y     key: yellow
+;       B     key: blue
+;       C     set crush flag
+;       S     set smart object reaction
+;       X     texture changes (only for reference, not that I can do anything to it :-))
+
+;   description
+
+
+[LineDef_Actions]
+
+; Special
+048=X -- -    - - -    - --- ---   - -    -    scrolling wall (left)
+
+; Local door
+001=A MC 1    n R N    2 FLO LHC   2 4    S    open/close
+026=A MC 1    n R N    2 FLO LHC   2 4    B    open/close (blue key required)
+027=A MC 1    n R N    2 FLO LHC   2 4    Y    open/close (yellow key required)
+028=A MC 1    n R N    2 FLO LHC   2 4    R    open/close (red key required)
+031=A MC 1    n 1 O    2 FLO LHC   2 -    -    open
+032=A MC 1    S 1 O    2 FLO LHC   2 -    B    open (blue key required)
+033=A MC 1    S 1 O    2 FLO LHC   2 -    R    open (red key required)
+034=A MC 1    S 1 O    2 FLO LHC   2 -    Y    open (yellow key required)
+046=A MC 1    G 1 O    2 FLO LHC   2 -    -    open
+117=A MC 1    n R O    2 FLO LHC   4 4    -    open/close (turbo)
+118=A MC 1    S 1 O    2 FLO LHC   4 -    -    open (turbo)
+
+; Remote door
+004=T MC 1    W 1 N    2 FLO LHC   2 4    -    open/close
+029=T MC 1    S 1 N    2 FLO LHC   2 4    -    open/close
+090=T MC 1    W R N    2 FLO LHC   2 4    -    open/close
+063=T MC 1    S R N    2 FLO LHC   2 4    -    open/close
+002=T MC 1    W 1 O    2 FLO LHC   2 -    -    open
+103=T MC 1    S 1 O    2 FLO LHC   2 -    -    open
+086=T MC 1    W R O    2 FLO LHC   2 -    -    open
+061=T MC 1    S R O    2 FLO LHC   2 -    -    open
+003=T MC 1    W 1 Z    2 FLO LHC   2 -    -    close
+050=T MC 1    S 1 Z    2 FLO LHC   2 -    -    close
+075=T MC 1    W R Z    2 FLO LHC   2 -    -    close
+042=T MC 1    S R Z    2 FLO LHC   2 -    -    close
+016=T MC 1    W 1 O    2 LHC FLO   2 30   -    close/open (30 seconds)
+076=T MC 1    W R O    2 LHC FLO   2 30   -    close/open (30 seconds)
+108=T MC 1    W 1 N    2 FLO LHC   4 4    -    open/close (turbo)
+111=T MC 1    W R N    2 FLO LHC   4 4    -    open/close (turbo)
+105=T MC 1    S 1 N    2 FLO LHC   4 4    -    open/close (turbo)
+114=T MC 1    S R N    2 FLO LHC   4 4    -    open/close (turbo)
+109=T MC 1    W 1 O    2 FLO LHC   4 -    -    open (turbo)
+112=T MC 1    S 1 O    2 FLO LHC   4 -    -    open (turbo)
+106=T MC 1    W R O    2 FLO LHC   4 -    -    open (turbo)
+115=T MC 1    S R O    2 FLO LHC   4 -    -    open (turbo)
+110=T MC 1    W 1 Z    2 FLO LHC   4 -    -    close (turbo)
+113=T MC 1    S 1 Z    2 FLO LHC   4 -    -    close (turbo)
+107=T MC 1    W R Z    2 FLO LHC   4 -    -    close (turbo)
+116=T MC 1    S R Z    2 FLO LHC   4 -    -    close (turbo)
+113=T MC 1    S 1 O    2 FLO LHC   4 -    B    open (turbo, blue key required)
+099=T MC 1    S R O    2 FLO LHC   4 -    B    open (turbo, blue key required)
+135=T MC 1    S 1 O    2 FLO LHC   4 -    R    open (turbo, red key required)
+134=T MC 1    S R O    2 FLO LHC   4 -    R    open (turbo, red key required)
+137=T MC 1    S 1 O    2 FLO LHC   4 -    Y    open (turbo, yellow key required)
+136=T MC 1    S R O    2 FLO LHC   4 -    Y    open (turbo, yellow key required)
+
+; Ceiling
+040=T MC 1    W 1 O    2 CEI HHC   1 -    -    up to heighest ceiling
+041=T MC 1    S 1 O    2 CEI FLO   1 -    -    down to floor
+043=T MC 1    S R O    2 CEI FLO   1 -    -    down to floor
+044=T MC 1    W 1 O    2 CEI F+1   1 -    -    down to floor + 8
+049=T MC 1    S 1 O    2 CEI F+1   1 -    -    down to floor + 8
+072=T MC 1    W R O    2 CEI F+1   1 -    -    down to floor + 8
+
+; Crushing ceiling
+006=T MC 0    W 1 O    2 CEI F+1   2 0    C    start fast crush
+025=T MC 0    W 1 O    2 CEI F+1   2 0    C    start slow crush
+073=T MC 0    W R O    2 CEI F+1   1 0    C    start slow crush
+077=T MC 0    W R O    2 CEI F+1   2 0    C    start fast crush
+141=T MC 0    W 1 O    2 CEI F+1   1 0    C    start slow crush (silent)
+
+; those two cannot create the elevator, because they don't know its speed !
+057=T -- -    W 1 Z    2 CEI F+1   - -    C    stop crush
+074=T -- -    W R Z    2 CEI F+1   - -    C    stop crush
+
+
+; Lift
+010=T MF 1    W 1 N    2 FLO HLF   3 3    -    lift (fast)
+021=T MF 1    S 1 N    2 FLO HLF   3 3    -    lift (fast)
+088=T MF 1    W R N    2 FLO HLF   3 3    S    lift (fast)
+062=T MF 1    S R N    2 FLO HLF   3 3    -    lift (fast)
+121=T MF 1    W 1 N    2 FLO HLF   4 3    -    lift (turbo)
+122=T MF 1    S 1 N    2 FLO HLF   4 3    -    lift (turbo)
+120=T MF 1    W R N    2 FLO HLF   4 3    -    lift (turbo)
+123=T MF 1    S R N    2 FLO HLF   4 3    -    lift (turbo)
+
+; Floor
+119=T MF 1    W 1 O    2 FLO LHF   1 -    -    up to next highest floor
+128=T MF 1    W R O    2 FLO LHF   1 -    -    up to next highest floor
+018=T MF 1    S 1 O    2 FLO LHF   1 -    -    up to next highest floor
+069=T MF 1    S R O    2 FLO LHF   1 -    -    up to next highest floor
+022=T MF 1    W 1 O    2 FLO LHF   1 -    X    up to next highest floor + texture
+095=T MF 1    W R O    2 FLO LHF   1 -    X    up to next highest floor + texture
+020=T MF 1    S 1 O    2 FLO LHF   1 -    X    up to next highest floor + texture
+068=T MF 1    S R O    2 FLO LHF   1 -    X    up to next highest floor + texture
+047=T MF 1    G 1 O    2 FLO LHF   1 -    X    up to next highest floor + texture
+005=T MF 1    W 1 O    2 FLO LHC   1 -    -    up to lowest ceiling
+091=T MF 1    W R O    2 FLO LHC   1 -    -    up to lowest ceiling
+101=T MF 1    S 1 O    2 FLO LHC   1 -    -    up to lowest ceiling
+064=T MF 1    S R O    2 FLO LHC   1 -    -    up to lowest ceiling
+024=T MF 1    G 1 O    2 FLO LHC   1 -    -    up to lowest ceiling
+130=T MF 1    W 1 O    2 FLO LHF   4 -    -    up to next highest floor (turbo)
+131=T MF 1    S 1 O    2 FLO LHF   4 -    -    up to next highest floor (turbo)
+129=T MF 1    W R O    2 FLO LHF   4 -    -    up to next highest floor (turbo)
+132=T MF 1    S R O    2 FLO LHF   4 -    -    up to next highest floor (turbo)
+056=T MF 1    W 1 O    2 FLO LH1   1 -    C    up to lowest ceiling - 8, crush
+094=T MF 1    W R O    2 FLO LH1   1 -    C    up to lowest ceiling - 8, crush
+055=T MF 1    S 1 O    2 FLO LH1   1 -    C    up to lowest ceiling - 8, crush
+065=T MF 1    S R O    2 FLO LH1   1 -    C    up to lowest ceiling - 8, crush
+058=T MF 1    W 1 O    V FLO 3     1 -    -    up 24
+092=T MF 1    W R O    V FLO 3     1 -    -    up 24
+015=T MF 1    S 1 O    V FLO 3     1 -    X    up 24 + texture
+066=T MF 1    S R O    V FLO 3     1 -    X    up 24 + texture
+059=T MF 1    W 1 O    V FLO 3     1 -    X    up 24 + sector texture
+093=T MF 1    W R O    V FLO 3     1 -    X    up 24 + sector texture
+014=T MF 1    S 1 O    V FLO 4     1 -    X    up 32 + texture
+067=T MF 1    S R O    V FLO 4     1 -    X    up 32 + texture
+140=T MF 1    S 1 O    V FLO 64    2 -    -    up 512
+030=T MF 1    W 1 O    2 FLO SLX   1 -    -    up by shortest lower texture
+096=T MF 1    W R O    2 FLO SLX   1 -    -    up by shortest lower texture
+038=T MF 1    W 1 O    2 FLO LLF   1 -    -    down to lowest floor
+023=T MF 1    S 1 O    2 FLO LLF   1 -    -    down to lowest floor
+082=T MF 1    W R O    2 FLO LLF   1 -    -    down to lowest floor
+060=T MF 1    S R O    2 FLO LLF   1 -    -    down to lowest floor
+037=T MF 1    W 1 O    2 FLO LLF   1 -    X    down to lowest floor + sector texture
+084=T MF 1    W R O    2 FLO LLF   1 -    X    down to lowest floor + sector texture
+019=T MF 1    W 1 O    2 FLO HLF   1 -    -    down to highest floor
+102=T MF 1    S 1 O    2 FLO HLF   1 -    -    down to highest floor
+083=T MF 1    W R O    2 FLO HLF   1 -    -    down to highest floor
+045=T MF 1    S R O    2 FLO HLF   1 -    -    down to highest floor
+036=T MF 1    W 1 O    2 FLO HL1   3 -    -    down to highest floor + 8
+071=T MF 1    S 1 O    2 FLO HL1   3 -    -    down to highest floor + 8
+098=T MF 1    W R O    2 FLO HL1   3 -    -    down to highest floor + 8
+070=T MF 1    S R O    2 FLO HL1   3 -    -    down to highest floor + 8
+009=T MF 1    S 1 O    2 FLO HLF   1 -    X    donut + sector texture
+
+; Moving floor
+053=T MF 0    W 1 1    2 LLF HHF   1 -3   -    start moving floor
+054=T MF 0    W 1 0    2 LLF HHF   1 -3   -    stop moving floor
+087=T MF 0    W R 1    2 LLF HHF   1 -3   -    start moving floor
+089=T MF 0    W R 0    2 LLF HHF   1 -3   -    stop moving floor
+
+; Stairs
+; will have to construct a variant elevator that will handle all the
+; steps elevators when triggered and an elevator per step
+; This requires an in depth analysis of the map (even Doom cannot always do it :-) )
+008=X -- -    W 1 1    2 --- ---   1 -    -    stairs (8)
+007=X -- -    S 1 1    2 --- ---   1 -    -    stairs (8)
+100=X -- -    W 1 1    2 --- ---   4 -    C    stairs (16) + crush
+127=X -- -    S 1 1    2 --- ---   4 -    C    stairs (16) + crush
+
+; Exit
+; will call a terminate level construct
+011=C -- -    S 1 N    - --- ---   - -    -    end level, go to next
+051=C -- -    S 1 N    - --- ---   - -    -    end level, go to secret
+052=C -- -    W 1 N    - --- ---   - -    -    end level, go to next
+124=C -- -    W 1 N    - --- ---   - -    -    end level, go to secret
+
+; Teleport
+039=X -- -    W 1 -    - --- ---   - -    S    teleport
+097=X -- -    W R -    - --- ---   - -    S    teleport
+125=X -- -    W 1 -    - --- ---   - -    S    teleport monsters only
+126=X -- -    W R -    - --- ---   - -    S    teleport monsters only
+
+; Lighting
+035=T CL 1    W 1 O    2 LIG 0     - -    -    off
+104=T CL 1    W 1 O    2 LIG DIM   - -    -    set to dimmest near
+012=T CL 1    W 1 O    2 LIG BRI   - -    -    set to brightest near
+013=T CL 1    W 1 O    2 LIG 31    - -    -    on maximum
+079=T CL 1    W R O    2 LIG 0     - -    -    off
+080=T CL 1    W R O    2 LIG BRI   - -    -    set to brightest near
+081=T CL 1    W R O    2 LIG 31    - -    -    on maximum
+017=T CL 1    W 1 O    2 LIG DIM   4 1    -    start blinking
+138=T CL 1    S R O    2 LIG 31    - -    -    on maximum
+139=T CL 1    S R O    2 LIG 0     - -    -    off
+
+[Linedef_Speeds]
+
+0=1
+1=5
+2=15
+3=30
+4=45

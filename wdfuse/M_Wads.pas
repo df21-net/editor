@@ -413,7 +413,7 @@ begin
    WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMIZED);
   end;
 
- MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : SECTORS';
+ MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : SECTORS';
 end;
 
 procedure DO_ReadWADSectors(wf : Integer; numsectors : LongInt);

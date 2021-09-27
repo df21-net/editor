@@ -33,6 +33,8 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
 procedure TFlagEditor.FormCreate(Sender: TObject);
 begin
   FlagEditor.Left   := Ini.ReadInteger('WINDOWS', 'Flag Editor    X', 72);
@@ -59,7 +61,7 @@ procedure TFlagEditor.FormKeyUp(Sender: TObject; var Key: Word;
 begin
 if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_secondary');
+      VK_F1     :  MapWindow.HelpTutorialClick(NIL);
       VK_F2,
       VK_RETURN : FlagEditor.ModalResult := mrOk;
       VK_ESCAPE : FlagEditor.ModalResult := mrCancel;
@@ -78,7 +80,7 @@ end;
 
 procedure TFlagEditor.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_secondary');
+  MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

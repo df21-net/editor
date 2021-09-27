@@ -35,6 +35,8 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
 procedure TSmallTextEditor.FormActivate(Sender: TObject);
 begin
   SmallTextEditor.Caption := 'WDFUSE Small Textfile Editor - ' + TheFile;
@@ -69,7 +71,7 @@ procedure TSmallTextEditor.FormKeyUp(Sender: TObject; var Key: Word;
 begin
  if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_otherfiles');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2     : SpeedButtonCommitClick(NIL);
       VK_ESCAPE : SpeedButtonRollbackClick(NIL);
     end;
@@ -77,7 +79,7 @@ end;
 
 procedure TSmallTextEditor.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_otherfiles');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

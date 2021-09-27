@@ -7,16 +7,8 @@ uses WinTypes, WinProcs, Classes, Graphics, Forms, Controls, Buttons,
 
 type
   TRegisterWindow = class(TForm)
-    OKBtn: TBitBtn;
-    CancelBtn: TBitBtn;
     Memo1: TMemo;
-    Label1: TLabel;
-    Label15: TLabel;
-    EDEmail: TEdit;
-    EDName: TEdit;
-    Label2: TLabel;
-    EDReg: TEdit;
-    LabelINFO: TLabel;
+    OKButton: TBitBtn;
     procedure OKBtnClick(Sender: TObject);
    
    
@@ -36,9 +28,9 @@ uses Mapper;
 
 procedure TRegisterWindow.OKBtnClick(Sender: TObject);
 begin
- USERname  := EDName.Text;
- USERemail := EDEmail.Text;
- USERreg   := EDReg.Text;
+ USERname  := 'DF-21.NET';
+ USERemail := 'DF21.NET@GMAIL.COM';
+ USERreg   := '0000';
  Ini.WriteString('REGISTRATION', 'Name',  USERname);
  Ini.WriteString('REGISTRATION', 'email', USERemail);
  Ini.WriteString('REGISTRATION', 'Reg',   USERreg);

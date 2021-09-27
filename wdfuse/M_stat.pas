@@ -51,28 +51,20 @@ type
     PanelMaxL: TPanel;
     GroupBox2: TGroupBox;
     Label10: TLabel;
-    Label11: TLabel;
     Label12: TLabel;
     Label14: TLabel;
     Label13: TLabel;
-    Label15: TLabel;
     Label16: TLabel;
     Label17: TLabel;
     Label18: TLabel;
-    Label19: TLabel;
-    Label20: TLabel;
-    Label21: TLabel;
     Label22: TLabel;
     Label23: TLabel;
     DriveCombo: TDriveComboBox;
     PanelVER: TPanel;
     PanelMEM: TPanel;
-    PanelFSR: TPanel;
     PanelDSK: TPanel;
     PanelMEMMAX: TPanel;
     PanelDSKMAX: TPanel;
-    PanelGDI: TPanel;
-    PanelUSR: TPanel;
     procedure FormActivate(Sender: TObject);
     procedure DriveComboChange(Sender: TObject);
   private
@@ -102,26 +94,19 @@ var long      : LongInt;
     maxX,
     maxY,
     maxZ      : Real;
+    memory: TMemoryStatusEx;
 begin
+
+  memory.dwLength := SizeOf(memory);
+  GlobalMemoryStatusEx(memory);
+
   long                := GetVersion;
   w2                  := LoWord(long);
   b1                  := LoByte(w2);
   b2                  := HiByte(w2);
   PanelVER.Caption    := IntToStr(b1) + '.' + IntToStr(b2);
-
-{$IFNDEF WDF32}
-  PanelFSR.Caption    := IntToStr(GetFreeSystemResources(GFSR_SYSTEMRESOURCES));
-  PanelGDI.Caption    := IntToStr(GetFreeSystemResources(GFSR_GDIRESOURCES));
-  PanelUSR.Caption    := IntToStr(GetFreeSystemResources(GFSR_USERRESOURCES));
-  PanelMEM.Caption    := IntToStr(MemAvail div 1024);
-  PanelMEMMAX.Caption := IntToStr(MaxAvail div 1024);
-{$ELSE}
-  PanelFSR.Caption    := '??';
-  PanelGDI.Caption    := '??';
-  PanelUSR.Caption    := '??';
-  PanelMEM.Caption    := '??';
-  PanelMEMMAX.Caption := '??';
-{$ENDIF}
+  PanelMEM.Caption    := IntToStr(memory.ullAvailPhys div (1024*1024));
+  PanelMEMMAX.Caption := IntToStr(memory.ullTotalPhys div (1024*1024));
 
   PanelDSK.Caption    := IntToStr((DiskFree(3) div 1024) div 1024);
   PanelDSKMAX.Caption := IntToStr((DiskSize(3) div 1024) div 1024);

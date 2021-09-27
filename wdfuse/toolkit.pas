@@ -5,7 +5,7 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Buttons, ExtCtrls, IniFiles,
-  StdCtrls, FileCtrl, Grids, Menus, TabNotBk,
+  StdCtrls, FileCtrl, Grids, Menus, TabNotBk, System.Strutils,
   Gobs, Lfds,
   M_About, M_Global, M_Stat, V_Util, C_Util, R_Util,
   T_Info, T_Convrt, T_PalOpt,
@@ -35,7 +35,6 @@ type
     ViewerDrive: TDriveComboBox;
     ViewerDirectory: TDirectoryListBox;
     ViewerFilter: TFilterComboBox;
-    Panel12: TPanel;
     ViewerPalette: TEdit;
     ViewerPaletteSelect: TBitBtn;
     LabelViewPalette: TLabel;
@@ -48,14 +47,12 @@ type
     SpeedButtonLfdFM: TSpeedButton;
     BNViewRefresh: TBitBtn;
     LabelDELTSetOffsets: TLabel;
-    ScrollBox: TScrollBox;
     LabelSND: TLabel;
     OpenPALorPLTT: TOpenDialog;
     LabelViewFilter: TLabel;
     LabelViewDirectory: TLabel;
     LabelViewFile: TLabel;
     LabelViewDrive: TLabel;
-    Image: TImage;
     SEcontrast: TSpinEdit;
     SBFirstFrame: TSpeedButton;
     SBPrevFrame: TSpeedButton;
@@ -205,6 +202,9 @@ type
     FILMLabClear: TBitBtn;
     Shape17: TShape;
     Shape18: TShape;
+    Panel12: TPanel;
+    ScrollBox: TScrollBox;
+    Image: TImage;
     procedure FormActivate(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -261,6 +261,7 @@ type
     procedure FILMLabImportClick(Sender: TObject);
     procedure FILMLabNewClick(Sender: TObject);
     procedure FILMLabClearClick(Sender: TObject);
+    procedure LoadPAL(FileName : String; FilterIndex : Integer);
   private
     { Private declarations }
   protected
@@ -273,14 +274,16 @@ type
   end;
 
 var
-  TktWindow  : TTktWindow;
-  TktHelp    : String;
-  TheBMP     : TBitmap;
-  OldRes     : String;
-  MinusFrame : Integer;
+  TktWindow   : TTktWindow;
+  TktHelp     : String;
+  TheBMP      : TBitmap;
+  OldRes      : String;
+  MinusFrame  : Integer;
 
 implementation
 {$R *.DFM}
+
+uses MAPPER;
 
 procedure TTktWindow.DisplayHint(Sender: TObject);
 begin
@@ -293,8 +296,8 @@ procedure TTktWindow.FormCreate(Sender: TObject);
 begin
   TktWindow.Left   := Ini.ReadInteger('WINDOWS', 'WDFUSE Toolkit X', 0);
   TktWindow.Top    := Ini.ReadInteger('WINDOWS', 'WDFUSE Toolkit Y', 72);
-  TktWindow.Width  := Ini.ReadInteger('WINDOWS', 'WDFUSE Toolkit W', 629);
-  TktWindow.Height := Ini.ReadInteger('WINDOWS', 'WDFUSE Toolkit H', 440);
+  TktWindow.Width  := Ini.ReadInteger('WINDOWS', 'WDFUSE Toolkit W', 1638);
+  TktWindow.Height := Ini.ReadInteger('WINDOWS', 'WDFUSE Toolkit H', 1002);
 
   Application.CreateForm(TTktInfoWindow, TktInfoWindow);
   Application.CreateForm(TConvertWindow, ConvertWindow);
@@ -303,6 +306,8 @@ begin
   SEcontrast.Value := _VGA_MULTIPLIER;
   OldRes     := '';
   ThePAL     := '';
+  OpenPALorPLTT.FilterIndex := 1;
+  LoadPAL(ThePAL, OpenPALorPLTT.FilterIndex);
   MinusFrame := -1;
   TktHelp    := 'wdftkt_help_viewconvert';
 end;
@@ -384,7 +389,7 @@ end;
 
 procedure TTktWindow.SpeedButtonHelpClick(Sender: TObject);
 begin
- Application.HelpJump(TktHelp);
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 procedure TTktWindow.SpeedButtonGobFMClick(Sender: TObject);
@@ -446,23 +451,11 @@ begin
 
     if Execute then
      begin
-      ViewerPalette.Text := LowerCase(FileName);
-      ThePAL             := LowerCase(FileName);
-      if FilterIndex = 1 then
-       begin
-        n := PAL_HISTORY.IndexOf(LowerCase(FileName));
-        if n <> -1 then PAL_History.Delete(n);
-        PAL_History.Insert(0, LowerCase(FileName));
-       end
-      else
-       begin
-        n := PLT_HISTORY.IndexOf(LowerCase(FileName));
-        if n <> -1 then PLT_History.Delete(n);
-        PLT_History.Insert(0, LowerCase(FileName));
-       end;
+       LoadPAL(Filename, FilterIndex);
      end;
    END;
 end;
+
 
 procedure TTktWindow.ViewerFilterClick(Sender: TObject);
 begin
@@ -502,7 +495,7 @@ begin
    OpenPALorPLTT.FilterIndex := 2;
 
  if ViewerFilter.Mask = '*.FLM' then
-   OpenPALorPLTT.FilterIndex := 1;
+   OpenPALorPLTT.FilterIndex := 2;
 
  if ViewerFilter.Mask = '*.FME' then
    OpenPALorPLTT.FilterIndex := 1;
@@ -511,11 +504,12 @@ begin
    OpenPALorPLTT.FilterIndex := 1;
 
  if ViewerFilter.Mask = '*.PLT' then
-   OpenPALorPLTT.FilterIndex := 1;
+   OpenPALorPLTT.FilterIndex := 2;
 
  if ViewerFilter.Mask = '*.WAX' then
    OpenPALorPLTT.FilterIndex := 1;
 
+ LoadPAL('', OpenPALorPLTT.FilterIndex);
  Image.Height := 0;
  Image.Width := 0;
  Image.ReFresh;
@@ -1358,6 +1352,48 @@ end;
 procedure TTktWindow.FILMLabClearClick(Sender: TObject);
 begin
  FILMLabMemo.Clear;
+end;
+
+procedure TTktWindow.LoadPAL(FileName : String; FilterIndex : Integer);
+var n : Integer;
+begin
+
+  if FileName = '' then
+   begin
+     if (FilterIndex = 1) then
+       begin
+        if (UpperCase(RightStr(ThePAL,3)) <> 'PAL') then
+         begin
+          FileName := WDFUSEdir + '\WDFDATA\SECBASE.PAL';
+         end
+        else
+          FileName := ThePAL;
+       end
+     else
+      begin
+       if (UpperCase(RightStr(ThePAL,3)) <> 'PLT') then
+        begin
+         FileName := WDFUSEdir + '\WDFDATA\BRF-JAN.PLT';
+        end
+       else
+        FileName := ThePAL;
+      end;
+   end;
+
+  ViewerPalette.Text := LowerCase(FileName);
+  ThePAL             := LowerCase(FileName);
+  if FilterIndex = 1 then
+   begin
+    n := PAL_HISTORY.IndexOf(LowerCase(FileName));
+    if n <> -1 then PAL_History.Delete(n);
+    PAL_History.Insert(0, LowerCase(FileName));
+   end
+  else
+   begin
+    n := PLT_HISTORY.IndexOf(LowerCase(FileName));
+    if n <> -1 then PLT_History.Delete(n);
+    PLT_History.Insert(0, LowerCase(FileName));
+   end;
 end;
 
 end.

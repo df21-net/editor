@@ -1,0 +1,20 @@
+     1 WAD: Impassable
+     2 WAD: Block Monsters
+     4 WAD: Two Sided
+     8 WAD: Upper TX Unpegged
+    16 WAD: Lower TX Unpegged
+    32 WAD: Secret
+    64 WAD: Block Sound
+   128 WAD: Never on Map
+   256 WAD: Always on Map
+   512 never used in Dark Forces
+  1024 never used in Dark Forces
+  2048 never used in Dark Forces
+  4096 never used in Dark Forces
+  8192 never used in Dark Forces
+ 16384 never used in Dark Forces
+ 32768 never used in Dark Forces
+ 65536 never used in Dark Forces
+131072 never used in Dark Forces
+262144 never used in Dark Forces
+524288 never used in Dark Forces

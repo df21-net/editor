@@ -64,6 +64,8 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
 procedure TConvertWindow.FormActivate(Sender: TObject);
 begin
  ConvertWindow.Caption := 'TOOLKIT Convert - ' + TheRES;
@@ -430,7 +432,7 @@ end;
 
 procedure TConvertWindow.BNHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdftkt_help_convertdialog');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

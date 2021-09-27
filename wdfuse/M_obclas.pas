@@ -32,6 +32,8 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
 procedure TOBClassWindow.FormCreate(Sender: TObject);
 begin
   OBClassWindow.Left   := Ini.ReadInteger('WINDOWS', 'OBClass Select X', 0);
@@ -60,7 +62,7 @@ procedure TOBClassWindow.FormKeyUp(Sender: TObject; var Key: Word;
 begin
 if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_secondary');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2     : OKBtnClick(NIL);
       VK_ESCAPE : CancelBtnClick(NIL);
     end;
@@ -68,7 +70,7 @@ end;
 
 procedure TOBClassWindow.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_secondary');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

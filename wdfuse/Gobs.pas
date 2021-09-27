@@ -1,4 +1,4 @@
-unit Gobs;
+ unit Gobs;
 
 interface
 
@@ -13,14 +13,12 @@ type
     SP_Main: TPanel;
     SP_Progress: TPanel;
     SP_Text: TPanel;
-    GOBBrowse: TBitBtn;
     GOBDirList: TListBox;
     DirectoryListBox1: TDirectoryListBox;
     DriveComboBox1: TDriveComboBox;
     FilterComboBox1: TFilterComboBox;
     FileNameEdit: TEdit;
     ProgressBar: TGauge;
-    Bevel1: TBevel;
     GOBBrowseGOB: TOpenDialog;
     DirLabel: TLabel;
     GOBAdd: TBitBtn;
@@ -109,6 +107,9 @@ type
     Label1: TLabel;
     RadioGroup1: TRadioGroup;
     GOBChkBx: TCheckBox;
+    GOBBrowse: TBitBtn;
+    GOBOKBtn: TBitBtn;
+    GOBCancelBtn: TBitBtn;
     procedure SpeedButtonExitClick(Sender: TObject);
     procedure Popup_ExitClick(Sender: TObject);
     procedure GOBBrowseClick(Sender: TObject);
@@ -116,7 +117,6 @@ type
     procedure FormActivate(Sender: TObject);
     procedure GOBCreateClick(Sender: TObject);
     procedure GOBDeleteClick(Sender: TObject);
-    procedure FileNameEditKeyPress(Sender: TObject; var Key: Char);
     procedure GOBExtractClick(Sender: TObject);
     procedure FileListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure FileListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
@@ -147,10 +147,17 @@ type
     procedure FormKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure RadioGroup1Click(Sender: TObject);
-     procedure DoChangeColorNormal;
-        procedure DoChangeColorDark ;
+    procedure DoChangeColorNormal;
+    procedure DoChangeColorDark ;
+    procedure DoChangeColorNone;
     procedure GOBChkBxClick(Sender: TObject);
-
+    procedure FSTextChange(Sender: TObject);
+    procedure FileListBox1Change(Sender: TObject);
+    // procedure FormKeyPress(Sender: TObject; var Key: Char);
+    procedure GOBOKBtnClick(Sender: TObject);
+    procedure GOBCancelBtnClick(Sender: TObject);
+    procedure GOBUpdateINI;
+    procedure FileNameEditKeyPress(Sender: TObject; var Key: Char);
 
   private
     { Private declarations }
@@ -166,6 +173,16 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
+procedure TGOBWindow.GOBUpdateINI;
+begin
+  Ini.WriteInteger('WINDOWS', 'GOB Manager    X', GOBWindow.Left);
+  Ini.WriteInteger('WINDOWS', 'GOB Manager    Y', GOBWindow.Top);
+  Ini.WriteInteger('WINDOWS', 'GOB Manager    W', GOBWindow.Width);
+  Ini.WriteInteger('WINDOWS', 'GOB Manager    H', GOBWindow.Height);
+end;
+
 procedure TGOBWindow.DisplayHint(Sender: TObject);
 begin
   SP_Text.Caption := Application.Hint;
@@ -175,19 +192,18 @@ procedure TGOBWindow.FormCreate(Sender: TObject);
 begin
   GOBWindow.Left   := Ini.ReadInteger('WINDOWS', 'GOB Manager    X', 0);
   GOBWindow.Top    := Ini.ReadInteger('WINDOWS', 'GOB Manager    Y', 72);
-  GOBWindow.Width  := Ini.ReadInteger('WINDOWS', 'GOB Manager    W', 629);
-  GOBWindow.Height := Ini.ReadInteger('WINDOWS', 'GOB Manager    H', 440);
+  GOBWindow.Width  := Ini.ReadInteger('WINDOWS', 'GOB Manager    W', 888);
+  GOBWindow.Height := Ini.ReadInteger('WINDOWS', 'GOB Manager    H', 908);
 
   Application.CreateForm(TGOBDIRWindow, GOBDIRWindow);
-   GOBChkBx.Checked := GOBText
+  GOBChkBx.Checked := GOBText;
+  RadioGroup1.ItemIndex := 0;
+  FSTextChange(Sender);
 end;
 
 procedure TGOBWindow.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  Ini.WriteInteger('WINDOWS', 'GOB Manager    X', GOBWindow.Left);
-  Ini.WriteInteger('WINDOWS', 'GOB Manager    Y', GOBWindow.Top);
-  Ini.WriteInteger('WINDOWS', 'GOB Manager    W', GOBWindow.Width);
-  Ini.WriteInteger('WINDOWS', 'GOB Manager    H', GOBWindow.Height);
+  GOBUpdateINI;
   GOBDIRWindow.Destroy;
 end;
 
@@ -209,12 +225,12 @@ begin
   HistoryList := GOB_History;
   if Execute then
     begin
-      InitialDir := ExtractFilePath(FileName);
+      CurrentGOBDir := ExtractFilePath(FileName);
 
       CASE GOB_GetDirList(FileName , GOBDirList) OF
         0 : begin
-             CurrentGOB := FileName;
-             PanelGOBName.Caption    := ExtractFileName(FileName);
+             CurrentGOB := ExtractFileName(FileName);
+             PanelGOBName.Caption    := FileName;
              PanelGOBEntries.Caption := IntTOStr(GOBDirList.Items.Count);
              PanelGOBName.Hint  := FileName + ' | Name of the currently selected GOB file';
              GOBDelete.Enabled  := TRUE;
@@ -239,6 +255,11 @@ begin
   Application.OnHint := DisplayHint;
 end;
 
+procedure TGOBWindow.GOBOKBtnClick(Sender: TObject);
+begin
+  GOBUpdateINI;
+end;
+
 procedure TGOBWindow.FormActivate(Sender: TObject);
 begin
   Application.OnHint := DisplayHint;
@@ -249,11 +270,11 @@ begin
  with GOBCreateSaveDialog do
   if Execute then
     begin
-      InitialDir := ExtractFilePath(FileName);
+      CurrentGOBDir := ExtractFilePath(FileName);
       GOBDirList.Items.Clear;
       GOB_CreateEmpty(FileName);
-      CurrentGOB := FileName;
-      PanelGOBName.Caption := ExtractFileName(FileName);
+      CurrentGOB := ExtractFileName(FileName);
+      PanelGOBName.Caption := FileName;
       PanelGOBEntries.Caption := '0';
       PanelGOBName.Hint := FileName + ' | Name of the currently selected GOB file';
       GOBDelete.Enabled  := TRUE;
@@ -266,8 +287,9 @@ begin
     end;
 end;
 
+
 procedure TGOBWindow.GOBDeleteClick(Sender: TObject);
-var tmp, tmp2 : array[0..127] of char;
+var tmp, tmp2 : array[0..255] of char;
     n         : Integer;
 begin
   strcopy(tmp, 'Delete ');
@@ -275,12 +297,13 @@ begin
   if Application.MessageBox(tmp, 'GOB File Manager', mb_YesNo or mb_IconQuestion) =  IDYes
    then
     begin
-      SysUtils.DeleteFile(CurrentGOB);
+      SysUtils.DeleteFile(CurrentGOBDir + '\' + CurrentGOB);
       PanelGOBName.Caption := '';
       PanelGOBEntries.Caption := '';
       n := GOB_HISTORY.IndexOf(LowerCase(CurrentGOB));
       if n <> -1 then GOB_History.Delete(n);
       CurrentGOB := '';
+      CurrentGOBDir := '';
       PanelGOBName.Hint := 'GOB Name | Name of the currently selected GOB file';
       GOBDelete.Enabled  := FALSE;
       GOBInfo.Enabled    := FALSE;
@@ -291,6 +314,7 @@ begin
       FileListBox1.Update;
     end;
 end;
+
 
 procedure TGOBWindow.SelectAll1Click(Sender: TObject);
 var i : LongInt;
@@ -361,12 +385,18 @@ begin
   begin
     FileListBox1.ApplyFilePath(FileNameEdit.Text);
     Key := #0;
-  end;
+  end
+end;
+
+procedure TGOBWindow.FSTextChange(Sender: TObject);
+begin
+   FileNameEdit.Text := FilterComboBox1.Mask;
+   FileListBox1.ApplyFilePath(FileNameEdit.Text);
 end;
 
 procedure TGOBWindow.GOBExtractClick(Sender: TObject);
 begin
-   GOB_ExtractFiles(DirectoryListBox1.Directory, CurrentGOB, GOBDirList, ProgressBar);
+   GOB_ExtractFiles(DirectoryListBox1.Directory, CurrentGOBDir + '\' + CurrentGOB, GOBDirList, ProgressBar);
    FileListBox1.Update;
 end;
 
@@ -375,7 +405,7 @@ procedure TGOBWindow.FileListBox1DragDrop(Sender, Source: TObject; X,
 begin
   if Source = GOBDirList then
   begin
-    GOB_ExtractFiles(DirectoryListBox1.Directory, CurrentGOB, GOBDirList, ProgressBar);
+    GOB_ExtractFiles(DirectoryListBox1.Directory, CurrentGOBDir + '\' + CurrentGOB, GOBDirList, ProgressBar);
     FileListBox1.Update;
   end;
 end;
@@ -481,14 +511,15 @@ end;
 procedure TGOBWindow.PanelGOBNameDragDrop(Sender, Source: TObject; X,
   Y: Integer);
 var FileName : TFileName;
-    tmp      : array[0..127] of char;
+    tmp      : array[0..255] of char;
 begin
   FileName := DirectoryListBox1.Directory;
   if Length(Filename) <> 3 then FileName := FileName + '\';
   FileName := FileName + FileNameEdit.Text;
   if GOB_GetDirList(FileName , GOBDirList) = 0 then
     begin
-      CurrentGOB := FileName;
+      CurrentGOBDir :=  ExtractFilePath(FileName);
+      CurrentGOB := ExtractFileName(FileName);
       PanelGOBName.Caption    := ExtractFileName(FileName);
       PanelGOBEntries.Caption := IntToStr(GOBDirList.Items.Count);
       PanelGOBName.Hint  := FileName + ' | Name of the currently selected GOB file';
@@ -507,8 +538,8 @@ end;
 
 procedure TGOBWindow.GOBAddClick(Sender: TObject);
 begin
-  GOB_AddFiles(DirectoryListBox1.Directory, CurrentGOB, FileListBox1, ProgressBar);
-  GOB_GetDirList(CurrentGOB , GOBDirList);
+  GOB_AddFiles(DirectoryListBox1.Directory, CurrentGOBDir + '\' + CurrentGOB, FileListBox1, ProgressBar);
+  GOB_GetDirList(CurrentGOBDir + '\' + CurrentGOB , GOBDirList);
   PanelGOBEntries.Caption := IntToStr(GOBDirList.Items.Count);
 end;
 
@@ -517,8 +548,8 @@ procedure TGOBWindow.GOBDirListDragDrop(Sender, Source: TObject; X,
 begin
   if Source = FileListBox1 then
   begin
-    GOB_AddFiles(DirectoryListBox1.Directory, CurrentGOB, FileListBox1, ProgressBar);
-    GOB_GetDirList(CurrentGOB , GOBDirList);
+    GOB_AddFiles(DirectoryListBox1.Directory, CurrentGOBDir + '\' + CurrentGOB, FileListBox1, ProgressBar);
+    GOB_GetDirList(CurrentGOBDir + '\' + CurrentGOB , GOBDirList);
     PanelGOBEntries.Caption := IntToStr(GOBDirList.Items.Count);
   end;
 end;
@@ -531,8 +562,8 @@ end;
 
 procedure TGOBWindow.GOBRemoveClick(Sender: TObject);
 begin
-  GOB_RemoveFiles(CurrentGOB, GOBDirList, ProgressBar);
-  GOB_GetDirList(CurrentGOB , GOBDirList);
+  GOB_RemoveFiles(CurrentGOBDir + '\' + CurrentGOB, GOBDirList, ProgressBar);
+  GOB_GetDirList(CurrentGOBDir + '\' + CurrentGOB , GOBDirList);
   PanelGOBEntries.Caption := IntToStr(GOBDirList.Items.Count);
 end;
 
@@ -541,35 +572,72 @@ begin
   FileListBox1.Update;
 end;
 
-
 procedure TGOBWindow.SpeedButtonHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfgob_help_title');
+ MapWindow.HelpTutorialClick(NIL);
 end;
+
 
 procedure TGOBWindow.FormKeyUp(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
+      Shift: TShiftState);
+var Action : TCloseAction;
 begin
- if (Shift = []) and (Key = VK_F1) then
-  SpeedButtonHelpClick(NIL);
+  Action := cafree;
+  if Key = VK_DELETE then
+   begin
+    GOB_RemoveFiles(CurrentGOBDir + '\' + CurrentGOB, GOBDirList, ProgressBar);
+    GOB_GetDirList(CurrentGOBDir + '\' + CurrentGOB , GOBDirList);
+    PanelGOBEntries.Caption := IntToStr(GOBDirList.Items.Count);
+   end;
+  if (Key = VK_ESCAPE) and GOBDIRWindow.Visible then
+  begin
+    Key := Word(#0);
+    ModalResult := mrCancel;
+    GOBWindow.FormClose(Sender, Action);
+  end;
 end;
-
-
-
 
 procedure TGOBWindow.RadioGroup1Click(Sender: TObject);
  begin
- If RadioGroup1.ItemIndex=-1 then RadioGroup1.ItemIndex := 0 ;
-If RadioGroup1.ItemIndex=0 then
-begin
- DoChangeColorNormal ;
+  If RadioGroup1.ItemIndex=-1 then RadioGroup1.ItemIndex := 0 ;
+  If RadioGroup1.ItemIndex=0 then
+    begin
+     DoChangeColorNone ;
     end;
-
- If RadioGroup1.ItemIndex=1 Then
-  begin
-   DoChangeColorDark;
-     end;
+  If RadioGroup1.ItemIndex=1 Then
+    begin
+     DoChangeColorNormal;
+    end;
+  If RadioGroup1.ItemIndex=2 Then
+    begin
+     DoChangeColorDark;
+    end;
  end;
+
+
+procedure TGOBWindow.DoChangeColorNone ;
+  begin
+FileNameEdit.Color := clBtnFace;
+FileNameEdit.Font.Color := clBlack ;
+DirectoryListBox1.Color := clBtnFace ;
+DirectoryListBox1.Font.Color := clBlack ;
+FileListBox1.Color := clBtnFace ;
+FileListBox1.Font.Color := clBlack ;
+DriveComboBox1.Color := clBtnFace ;
+DriveComboBox1.Font.Color := clBlack ;
+PanelGOBName.Color := clBtnFace;
+PanelGOBName.Font.Color := clBlack ;
+GOBDirList.Color := clBtnFace ;
+GOBDirList.Font.Color := clBlack ;
+PanelGOBEntries.Color := clBtnFace ;
+PanelGOBEntries.Font.Color := clBlack ;
+SP_Text.Color := clBtnFace ;
+SP_Text.Font.Color :=clBlack ;
+ProgressBar.BackColor := clBtnFace ;
+ProgressBar.Font.Color := clBlack ;
+  GOBHintListBox.Color := clBtnFace ;
+   GOBHintListBox.Font.Color := clBlack ;
+end;
 
 procedure TGOBWindow.DoChangeColorNormal ;
   begin
@@ -622,6 +690,11 @@ GOBHintListBox.Color := clGray ;
   end;
 
 
+procedure TGOBWindow.GOBCancelBtnClick(Sender: TObject);
+begin
+  GOBUpdateINI;
+end;
+
 procedure TGOBWindow.GOBChkBxClick(Sender: TObject);
 begin
 
@@ -634,12 +707,36 @@ if GOBChkBx.Checked then
     begin
    GOBHintListBox.Visible := True;
    GOBTEXT := False;
+ end;
 end;
-    end;
 
-
-
-
+procedure TGOBWindow.FileListBox1Change(Sender: TObject);
+var i : Integer;
+    n : Integer;
+    FileName : String;
+    InitialDir : String;
+begin
+   for i := 0 to FileListBox1.Items.Count - 1 do
+    if FileListBox1.Selected[i] = True then
+      if UpperCase(ExtractFileExt(FileListBox1.Items[i])) = '.GOB' then
+       begin
+        CurrentGOBDir := DirectoryListBox1.Directory;
+        FileName := FileListBox1.Items[i];
+        CurrentGOB := ExtractFileName(FileName);
+        GOB_GetDirList(CurrentGOBDir + '\' + FileName , GOBDirList);
+        PanelGOBName.Caption    := CurrentGOBDir + '\' + CurrentGOB;
+        PanelGOBEntries.Caption := IntTOStr(GOBDirList.Items.Count);
+        PanelGOBName.Hint  := FileName + ' | Name of the currently selected GOB file';
+        GOBDelete.Enabled  := TRUE;
+        GOBInfo.Enabled    := TRUE;
+        GOBAdd.Enabled     := TRUE;
+        GOBExtract.Enabled := TRUE;
+        GOBRemove.Enabled  := TRUE;
+        n := GOB_HISTORY.IndexOf(LowerCase(FileName));
+        if n <> -1 then GOB_History.Delete(n);
+        GOB_History.Insert(0, LowerCase(FileName));
+       end;
+end;
 
 
 end.

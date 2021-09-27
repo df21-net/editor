@@ -1252,6 +1252,9 @@ var i,j,n        : Integer;
     Scale3DO     : Real;
 begin
  {Extract from gob, or copy file}
+
+ log.Info('Loading 3D ' + ResName, logName);
+
  SysUtils.DeleteFile(WDFUSEdir + '\WDFGRAPH\' + 'WDF$$$$$.3DO');
  if GraphFile[1] = '[' then
   begin
@@ -1286,111 +1289,119 @@ begin
 
       AssignFile(f3do, WDFUSEdir + '\WDFGRAPH\' + 'WDF$$$$$.3DO');
       Reset(f3do);
-      while not SeekEof(f3do) do
-        begin
-          Readln(f3do, strin);
-          if Pos('#', strin) = 1 then
-            begin
-            end
-          else
-          if (Pos('VERTICES', UpperCase(strin)) = 1)  then
-            begin
-              if fVERTICES then
-               fVERTICES := FALSE
-              else
-               begin
+      try
+        while not SeekEof(f3do) do
+          begin
+            Readln(f3do, strin);
+            if Pos('#', strin) = 1 then
+              begin
+              end
+            else
+            if (Pos('VERTICES', UpperCase(strin)) = 1)  then
+              begin
+                if fVERTICES then
+                 fVERTICES := FALSE
+                else
+                 begin
+                  pars := TStringParser.Create(strin);
+                  n    := StrToInt(pars[2]);
+                  pars.Free;
+                  while n > 0 do
+                   begin
+                    Readln(f3do, strin);
+                    if (strin <> '') and (strin[1] <> '#') then
+                     begin
+                      The3DOVertex := T3DO_Vertex.Create;
+                      with The3DOVertex do
+                       begin
+                        pars := TStringParser.Create(strin);
+                        Val(pars[2], X, code);
+                        Val(pars[3], Y, code);
+                        Val(pars[4], Z, code);
+                        pars.Free;
+                        if X < minX then minX := X;
+                        if Y < minY then minY := Y;
+                        if Z < minZ then minZ := Z;
+                        if X > maxX then maxX := X;
+                        if Y > maxY then maxY := Y;
+                        if Z > maxZ then maxZ := Z;
+                        The3DOObject.Vertices.AddObject('V', The3DOVertex);
+                       end;
+                      Dec(n);
+                     end;
+                   end;
+                 end;
+              end
+            else
+            if Pos('TRIANGLES', UpperCase(strin)) = 1 then
+              begin
                 pars := TStringParser.Create(strin);
                 n    := StrToInt(pars[2]);
                 pars.Free;
                 while n > 0 do
                  begin
                   Readln(f3do, strin);
-                  if strin[1] <> '#' then
+                  if (strin <> '') and (strin[1] <> '#') then
                    begin
-                    The3DOVertex := T3DO_Vertex.Create;
-                    with The3DOVertex do
+                    The3DOTriangle := T3DO_Triangle.Create;
+                    with The3DOTriangle do
                      begin
                       pars := TStringParser.Create(strin);
-                      Val(pars[2], X, code);
-                      Val(pars[3], Y, code);
-                      Val(pars[4], Z, code);
+                      Val(pars[2], A, code);
+                      Val(pars[3], B, code);
+                      Val(pars[4], C, code);
                       pars.Free;
-                      if X < minX then minX := X;
-                      if Y < minY then minY := Y;
-                      if Z < minZ then minZ := Z;
-                      if X > maxX then maxX := X;
-                      if Y > maxY then maxY := Y;
-                      if Z > maxZ then maxZ := Z;
-                      The3DOObject.Vertices.AddObject('V', The3DOVertex);
+                      The3DOObject.Triangles.AddObject('T', The3DOTriangle);
                      end;
                     Dec(n);
                    end;
                  end;
-               end;
-            end
-          else
-          if Pos('TRIANGLES', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              n    := StrToInt(pars[2]);
-              pars.Free;
-              while n > 0 do
-               begin
-                Readln(f3do, strin);
-                if strin[1] <> '#' then
+              end
+            else
+            if Pos('QUADS', UpperCase(strin)) = 1 then
+              begin
+                pars := TStringParser.Create(strin);
+                n    := StrToInt(pars[2]);
+                pars.Free;
+                while n > 0 do
                  begin
-                  The3DOTriangle := T3DO_Triangle.Create;
-                  with The3DOTriangle do
+                  Readln(f3do, strin);
+                  if (strin <> '') and (strin[1] <> '#') then
                    begin
-                    pars := TStringParser.Create(strin);
-                    Val(pars[2], A, code);
-                    Val(pars[3], B, code);
-                    Val(pars[4], C, code);
-                    pars.Free;
-                    The3DOObject.Triangles.AddObject('T', The3DOTriangle);
+                    The3DOQuad := T3DO_Quad.Create;
+                    with The3DOQuad do
+                     begin
+                      pars := TStringParser.Create(strin);
+                      Val(pars[2], A, code);
+                      Val(pars[3], B, code);
+                      Val(pars[4], C, code);
+                      Val(pars[5], D, code);
+                      pars.Free;
+                      The3DOObject.Quads.AddObject('Q', The3DOQuad);
+                     end;
+                    Dec(n);
                    end;
-                  Dec(n);
                  end;
-               end;
-            end
-          else
-          if Pos('QUADS', UpperCase(strin)) = 1 then
-            begin
-              pars := TStringParser.Create(strin);
-              n    := StrToInt(pars[2]);
-              pars.Free;
-              while n > 0 do
-               begin
-                Readln(f3do, strin);
-                if strin[1] <> '#' then
-                 begin
-                  The3DOQuad := T3DO_Quad.Create;
-                  with The3DOQuad do
-                   begin
-                    pars := TStringParser.Create(strin);
-                    Val(pars[2], A, code);
-                    Val(pars[3], B, code);
-                    Val(pars[4], C, code);
-                    Val(pars[5], D, code);
-                    pars.Free;
-                    The3DOObject.Quads.AddObject('Q', The3DOQuad);
-                   end;
-                  Dec(n);
-                 end;
-               end;
-            end
-          else
-          if Pos('OBJECT ', UpperCase(strin)) = 1 then
-            begin
-              if not First then _3DO.AddObject(The3DOObject.Name, The3DOObject);
-              The3DOObject := T3DO_object.Create;
-              pars := TStringParser.Create(strin);
-              The3DOObject.Name := pars[2];
-              pars.Free;
-              First := FALSE;
-            end
-          else ;
-        end;
+              end
+            else
+            if Pos('OBJECT ', UpperCase(strin)) = 1 then
+              begin
+                if not First then _3DO.AddObject(The3DOObject.Name, The3DOObject);
+                The3DOObject := T3DO_object.Create;
+                pars := TStringParser.Create(strin);
+                The3DOObject.Name := pars[2];
+                pars.Free;
+                First := FALSE;
+              end
+            else ;
+          end
+    except
+        on E : Exception do
+          begin
+            Log.error('3D Parse Error ' + E.Message + ' error raised, with message : '+E.Message, LogName);
+            CloseFile(f3do);
+          end
+      end;
 
      { add last }
      _3DO.AddObject(The3DOObject.Name, The3DOObject);

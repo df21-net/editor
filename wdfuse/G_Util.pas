@@ -2,7 +2,7 @@ unit G_util;
 
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes,
-     StdCtrls, Gauges, FileCtrl, Forms;
+     StdCtrls, Gauges, FileCtrl, Forms, Dialogs;
 
 CONST
  ERRGOB_NOERROR   =  0;
@@ -266,7 +266,7 @@ var i       : LongInt;
     fs_NAME : String;
     S_NAME  : String;
     position  : LongInt;
-    tmp,tmp2  : array[0..127] of char;
+    tmp,tmp2  : array[0..255] of char;
     go        : Boolean;
     OldCursor : HCursor;
     Buffer  : array[0..4095] of AnsiChar;
@@ -369,7 +369,7 @@ var i           : LongInt;
     GOBBAKName  : TFileName;   {original GOB }
     GOBDIRName  : TFileName;   {dynamic GOB dir }
     position    : LongInt;
-    tmp,tmp2    : array[0..127] of Char;
+    tmp,tmp2    : array[0..255] of Char;
     go          : Boolean;
     OldCursor   : HCursor;
     Buffer      : array[0..4095] of Char;
@@ -469,7 +469,10 @@ begin
 
  FileClose(gbf);
  {3}
- for i := 0 to DirList.Items.Count - 1 do
+
+
+ for i := 0 to (DirList.Items.Count - 1) do
+  begin
    if DirList.Selected[i] then
      begin
        fs_NAME  := InputDir;
@@ -493,6 +496,7 @@ begin
         ProgressBar.Progress := ProgressBar.Progress + 1;
        Inc(Counter);
      end;
+  end;
 
   FileClose(gdf);
 

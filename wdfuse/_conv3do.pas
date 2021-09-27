@@ -13,6 +13,7 @@ type
     RG3DOOptions: TRadioGroup;
     BNHelp: TBitBtn;
     procedure OKBtnClick(Sender: TObject);
+    procedure BNHelpClick(Sender: TObject);
   
   private
     { Private declarations }
@@ -24,10 +25,16 @@ var
   CONV3do: TCONV3do;
 
 implementation
+ uses Mapper;
 
 {$R *.DFM}
 
 
+
+procedure TCONV3do.BNHelpClick(Sender: TObject);
+begin
+    MapWindow.HelpTutorialClick(NIL);
+end;
 
 procedure TCONV3do.OKBtnClick(Sender: TObject);
 begin

@@ -34,13 +34,13 @@ Shift State	Key/Mouse	Applies in	Function
 [none]		P		Map VX		Select Previous Vertex in Sector
 [none]		P		Map OB		Select Previous Object 
 [none]		Q		Map SC,WL,OB	Multiselection by Query
-[none]		U		Map WL	                Super Stitch Right
-[none]		Y		Map WL	                Super Stitch Left
-Alt		A		Map WL	                Unadjoin Wall(s)
+[none]		U		Map WL	        Super Stitch Right
+[none]		Y		Map WL	        Super Stitch Left
+Alt		A		Map WL	        Unadjoin Wall(s)
 Ctrl		C		Map SC, OB	Copy Sectors or Objects
-Ctrl		K		Map SC	                Close Sector
-Ctrl		L		Map OB	                Toggle altitude behavior of objects
+Ctrl		K		Map SC	        Close Sector
+Ctrl		L		Map OB	        Toggle altitude behavior of objects
 Ctrl		V		Map SC, OB	Paste Sectors or Objects
 Ctrl + Shift	Mouse Left Clck	Map VX		Select Next Nearest VX
-Shift		A		Map WL	                Adjoin Wall(s) in Current Layer
-Shift		L		Map OB	                Set object to floor
+Shift		A		Map WL	        Adjoin Wall(s) in Current Layer
+Shift		L		Map OB	        Set object to floor

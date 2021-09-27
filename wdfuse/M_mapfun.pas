@@ -45,6 +45,8 @@ function  GetCycleLen(sc, cy : Integer) : Integer;
 function  GetCycleFirstWl(sc, cy : Integer) : Integer;
 function  GetCycleFirstVx(sc, cy : Integer) : Integer;
 
+function  VxToPoint(vx : TVertex) : TPoint;
+
 {
 function GetCycleNextVx(sc, cy, vx : Integer) : Integer;
 function GetCycleNextWl(sc, cy, wl : Integer) : Integer;
@@ -1156,6 +1158,11 @@ begin
   end;
 
  MODIFIED := TRUE;
+end;
+
+function  VxToPoint(vx : TVertex) : TPoint;
+begin
+  Result := Point(M2SX(vx.X), M2SZ(vx.z));
 end;
 
 {-----------------------------------------------------------------------------}

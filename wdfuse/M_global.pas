@@ -2,7 +2,9 @@ unit M_global;
 
 interface
 uses
-  SysUtils, WinTypes, WinProcs, Messages, Classes, IniFiles, Graphics, Generics.Collections;
+  SysUtils, WinTypes, WinProcs, Messages, Classes, IniFiles, Graphics,
+  Generics.Collections, Vcl.Dialogs, StrUtils, LoggerPro, LoggerPro.FileAppender,
+  LoggerPro.OutputDebugStringAppender, VCL.forms;
 
 TYPE Integ16 =
 {$IFNDEF WDF32}
@@ -11,12 +13,13 @@ TYPE Integ16 =
                SmallInt;
 {$ENDIF}
 
+
 { CONSTANTS }
 CONST
-{$IFNDEF WDF32}
- WDFUSE_VERSION      = 'Version 2.50 beta 3 (16 bits)';
+{$IFNDEF WDF32}napi.
+ WDFUSE_VERSION      = 'Version 2.60 Beta 1 (16 bits)';
 {$ELSE}
- WDFUSE_VERSION      = 'Version 2.50 beta 3 (32 bits)';
+ WDFUSE_VERSION      = 'Version 2.60 Beta 1 (32 bits)';
 {$ENDIF}
 
  MM_SC               = 0;
@@ -29,6 +32,7 @@ CONST
  MT_DM               = 2;
  MT_2A               = 3;
  MT_SP               = 4;
+ MT_SF               = 5;
 
  RST_BM              = 0;
  RST_3DO             = 2;
@@ -79,6 +83,10 @@ CONST
  Ccol_2a_catwlk      = clGray;
  Ccol_sp_sky         = clAqua;
  Ccol_sp_pit         = clGray;
+ Ccol_sec_inner      = clWebChartreuse;
+
+ STEAM_REG           = '\Software\Wow6432Node\Valve\Steam';
+ GOG_REG             = '\Software\Wow6432Node\GOG.com\Games\1421404433';
 
 const rs  = 20; {size of the palette squares}
 const rcs = 12; {size of the colormap squares}
@@ -119,7 +127,7 @@ TINFCls = class
  Flags       : String[15];
  event,
  event_mask,
- entity_mask : String[15];        {convert to longint only when needed
+ entity_mask : string[15];        {convert to longint only when needed
                                    ! entity_mask may be '*' !}
  key,
  key1        : String[15];
@@ -128,7 +136,7 @@ TINFCls = class
  angle       : String[15];
  centerX,
  centerZ     : String[15];        {! precision may be 4 decimals !}
- 
+
  Constructor Create;
  Procedure   Free;
 end;
@@ -161,9 +169,9 @@ end;
 
 { SECTOR }
 TSECTOR = class(TObject)
-  Mark          : Integ16; { reserved for multiple selection }
   Vx            : TStringList;
   Wl            : TStringList;
+  Mark          : Integ16; { reserved for multiple selection }
   Name          : String[20];
   Layer         : Integ16;
   Floor_alt     : Real;
@@ -187,11 +195,11 @@ end;
 
 { WALL }
 TWALL = class(TObject)
-  Mark          : Integ16;  { reserved for multiple selection }
   Left_vx       : Integ16;
   Right_vx      : Integ16;
   Adjoin        : Integ16;
   Mirror        : Integ16;
+  Mark          : Integ16;  { reserved for multiple selection }
   Walk          : Integ16;
   Light         : Integ16;
   Flag1         : LongInt;
@@ -348,8 +356,9 @@ end;
 
 VAR
  Ini                 : TIniFile;
- WDFUSEdir           : String[128];
+ WDFUSEdir           : String[255];
  DarkInst            : TFileName;
+ RenderInst          : TFileName;
  DarkCD              : String[20];
 
  DARKgob,
@@ -364,6 +373,8 @@ VAR
  Backup_Method       : Integer;
  CurrentGOB          : TFileName;
  CurrentLFD          : TFileName;
+ CurrentLFDir        : TFileName;
+ CurrentGOBDir       : TFileName;
 
  inf                 : System.TextFile;
  INFLoaded           : Boolean;
@@ -386,8 +397,8 @@ VAR
  _VGA_MULTIPLIER     : Integer;
  HPALPalette         : HPalette;
  HPLTTPalette        : HPalette;
- TheRES              : String[128];
- ThePAL              : String[128];
+ TheRES              : String[255];
+ ThePAL              : String[255];
  CONFIRMMultiDelete  : Boolean;
  CONFIRMMultiUpdate  : Boolean;
  CONFIRMMultiInsert  : Boolean;
@@ -404,6 +415,11 @@ VAR
  num1                : Integer;
  num2                : Integer;
  num3                : Integer;
+ XOffsetStart        : Integer;
+ ZOffsetStart        : Integer;
+ MoveXOffset         : Integer;
+ MoveYOffset         : Integer;
+ MenuYOffset         : Integer;
 
  { History Lists }
  GOB_History         : TStringList;
@@ -449,8 +465,12 @@ VAR
  col_2a_catwlk : TColor;
  col_sp_sky    : TColor;
  col_sp_pit    : TColor;
+ col_sec_inner : TColor;
 
 DOOM          : Boolean;
+FIRSTLOAD     : Boolean;
+NO_INI        : Boolean;
+LOADPREVPRJ   : Boolean;
 MAP_RECT      : TRect;
 MAP_SEC       : TStringList;
 MAP_DEBUG     : TSector;
@@ -480,8 +500,12 @@ INF_VERSION,
 INF_LEVELNAME : String[20];
 GOL_VERSION   : String[20];
 Scale         : Real;
+ZoomInLock      : Boolean;
+ZoomOutLock     : Boolean;
+ZoomTimer       : Integer;
 GridON        : Boolean;
-GRID          : Float;
+GRID          : Real;
+GRID_OFFSET   : Integer;
 ScreenX       : Integer;
 ScreenZ       : Integer;
 ScreenCenterX : Integer;
@@ -501,7 +525,11 @@ MAP_TYPE      : Integer;
 SC_HILITE,
 WL_HILITE,
 VX_HILITE,
-OB_HILITE     : Integer;
+OB_HILITE,
+SC_HILITE_ORG,
+WL_HILITE_ORG,
+VX_HILITE_ORG,
+OB_HILITE_ORG : Integer;
 SUPERHILITE   : Integer;
 SC_MULTIS,
 WL_MULTIS,
@@ -513,9 +541,11 @@ MAP_GLOBAL_UNDO_INDEX : Integer;
 MAP_SEC_UNDO     : TStringList;
 MAP_OBJ_UNDO     : TStringList;
 MAP_GUI_UNDO     : TStringList;
+UNDO_LIMIT       : Integer;
 
 { Sometimes there are recursive calls - only store the root Undo }
 IGNORE_UNDO      : Boolean;
+APPLYING_UNDO    : Boolean;
 MAP_MODE_UNDO    : Integer;
 SC_HILITE_UNDO,
 WL_HILITE_UNDO,
@@ -531,12 +561,15 @@ LAYER_MAX_UNDO   : Integer;
 MAP_SEC_CLIP     : TStringList;
 MAP_OBJ_CLIP     : TStringList;
 
+MULTISEL_RECT : Boolean;
 MULTISEL_MODE : String[1];
+MULTISEL_SPC  : Boolean;
 FlagEditorVal : LongInt;
 FastSCROLL    : Boolean;
 FastDRAG      : Boolean;
 IsDRAG        : Boolean;
 FirstDRAG     : Boolean;
+FirstMDown    : Boolean;
 ORIGIN        : TPoint;
 DESTIN        : TPoint;
 IsFOCUSRECT   : Boolean;
@@ -577,12 +610,35 @@ DUKE_XOFFSET  : LongInt;
 DUKE_ZOFFSET  : LongInt;
 DUKE_YOFFSET  : LongInt;
 
+DOSBOX_PATH   : String;
+DOSBOX_CONF   : String;
+LAUNCHER_TYPE : String;
+ShortCutProc  : TShortCutEvent;
+
+ZoneInfo : TTimeZoneInformation;
+
+Log: ILogWriter;
+LogName : String;
+LogFilePath : String;
+LogPath : String;
+UseLog : Boolean;
+
+EOL : String;
+INF_SEP     : String;
+INF_READ    : Boolean;
+INFCache    : TDictionary<String, String>;
+
+
+{ Screen to Map and Map to Screen converters - Karjala
+  This basically converts the X/Y screen positions to the DF map offsets }
 function S2MX(x : Real) : Real;
 function S2MZ(z : Real) : Real;
 function M2SX(x : Real) : Integer;
 function M2SZ(z : Real) : Integer;
 
 function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
+
+
 
 {*****************************************************************************}
 implementation
@@ -690,23 +746,31 @@ begin
   inherited Free;
 end;
 
-
 function S2MX(x : Real) : Real;
+var s2mx_result : Real;
+    s2mx_key : String;
 begin
   S2MX := Xoffset + ((x - ScreenCenterX) / scale);
 end;
 
-function S2MZ(z : Real) : Real;
+function S2Mz(z : Real) : Real;
+var s2mz_result : Real;
+    s2mz_key : String;
 begin
   S2MZ := Zoffset + ((ScreenCenterZ - z) / scale);
 end;
 
+
 function M2SX(x : Real) : Integer;
+var m2sx_result : Integer;
+    m2sx_key : String;
 begin
-  M2SX := Round( ScreenCenterX + ((x - xoffset) * scale) );
+  M2SX := Round( ScreenCenterX + ( (x - xoffset) * scale) );
 end;
 
 function M2SZ(z : Real) : Integer;
+var m2sz_result : Integer;
+    m2sz_key : String;
 begin
   M2SZ := Round( ScreenCenterZ + ((Zoffset - z) * scale) );
 end;
@@ -732,23 +796,48 @@ begin
         begin
           if w1 < w2 then
             Result := 1
-          else 
+          else
             if w1 = w2 then
               Result := 0
-            else 
+            else
               Result := -1
         end;
     end;
 end;
 
 begin
-  //DecimalSeparator  := '.';
-  //ThousandSeparator := ',';
 
+  // First time launching or deleted ini file
+  NO_INI := FileExists(ExtractFilePath(ParamStr(0)) + 'wdfuse.ini');
+
+  Ini  := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'wdfuse.ini');
+  UseLog   := Ini.ReadBool('DARK FORCES', 'Logger', True);
+  LogPath  := ExtractFilePath(ParamStr(0)) + 'log';
+
+  if UseLog then
+    begin
+      if not directoryexists(LogPath) then CreateDir(LogPath);
+      Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5000, LogPath)])
+    end
+  else
+    Log := BuildLogWriter([]);
+
+  LogName := formatdatetime('_mmm-d-yyy_hh-nn-ss',Now);
+  LogFilePath := LogPath + '\' + 'wdfuse32.00.' + LogName + '.log';
+  Log.Info('Starting WDFUSE...',LogName);
+  Log.info('Will Write Logs to ' + LogFilePath, LogName);
+  log.Info('WDFUSE Compile Timestamp ' + floattostr(PImageNtHeaders(HInstance +
+   Cardinal(PImageDosHeader(HInstance)^._lfanew))^.FileHeader.TimeDateStamp), LogName);
+
+
+
+  // to be overriden later
+  UNDO_LIMIT  := 32;
+  FIRSTLOAD   := TRUE;
   DOOM        := FALSE;
   MAP_MODE    := MM_VX;
   MAP_TYPE    := MT_NO;
-  SHADOW      := FALSE;
+  SHADOW      := TRUE;
   OBSHADOW    := FALSE;
   OBDIFF      := 0;
   GridON      := FALSE;
@@ -770,15 +859,25 @@ begin
   VX_MULTIS   := TStringList.Create;
   OB_MULTIS   := TStringList.Create;
 
+  MULTISEL_RECT := False;
   MULTISEL_MODE := 'T';
+  MULTISEL_SPC  := FALSE;
 
   FastSCROLL  := TRUE;
   FastDRAG    := TRUE;
   IsDRAG      := FALSE;
   IsFOCUSRECT := FALSE;
 
+  ZoomTimer := GetTickCount;
+
   num1        := 13;
   num2        := 20;
   num3        := 57;
+
+  EOL         := AnsiString(#13#10);
+  INF_SEP     := StringOfChar('-', 100);
+
+  ShortCutProc := NIL;
+
 end.
 

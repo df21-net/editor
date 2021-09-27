@@ -345,7 +345,7 @@ end;
 
 procedure TQueryWindow.HelpBtnClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_query');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 procedure TQueryWindow.OKBtnClick(Sender: TObject);

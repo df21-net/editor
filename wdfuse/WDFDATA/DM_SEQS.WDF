@@ -1,0 +1,436 @@
+# ------------+
+# DM_SEQS.WDF |  Datafile for Doom Object Sequences.
+# ------------+
+#
+# WARNING: Only 1 entry allowed per object but leave CNT=1 !!!
+# 100 is the number of lines
+# 1nn is line nn of entry 
+#
+
+
+# -----<<<<< PLAYER >>>>>-----
+# This will make player the default entry for SPIRIT
+# be careful is SPIRIT is used elsewhere (SPECTRE ?)
+
+[SPIRIT]
+CNT=1
+100=2
+101=LOGIC:     PLAYER
+102=EYE:       TRUE
+
+# -----<<<<< ENEMIES >>>>>-----
+
+# - BOSSES -
+
+[SPID.WAX]
+CNT=1
+100=2
+101=LOGIC:     D_TROOP2
+102=BOSS:      TRUE
+
+[CYBR.WAX]
+CNT=1
+100=2
+101=LOGIC:     D_TROOP3
+102=BOSS:      TRUE
+
+[FATT.WAX]
+CNT=1
+100=2
+101=LOGIC:     D_TROOP2
+102=BOSS:      TRUE
+
+[BOSS.WAX]
+CNT=1
+100=2
+101=LOGIC:     D_TROOP2
+102=BOSS:      TRUE
+
+# - HUMANS -
+
+[POSS.WAX]
+CNT=1
+100=1
+101=LOGIC:     I_OFFICER
+
+[SPOS.WAX]
+CNT=1
+100=1
+101=LOGIC:     COMMANDO
+
+[SSWV.WAX]
+CNT=1
+100=1
+101=LOGIC:     COMMANDO
+
+[CPOS.WAX]
+CNT=1
+100=2
+101=LOGIC:     STORM1
+102=LOGIC:     STORM1
+
+# - NON HUMANS -
+
+[SARG.WAX]
+CNT=1
+100=1
+101=LOGIC:     G_GUARD
+
+[TROO.WAX]
+CNT=1
+100=1
+101=LOGIC:     COMMANDO
+
+[VILE.WAX]
+CNT=1
+100=1
+101=LOGIC:     BOSSK
+
+[SKEL.WAX]
+CNT=1
+100=1
+101=LOGIC:     REE_YEES
+
+[BSPI.WAX]
+CNT=1
+100=2
+101=LOGIC:     D_TROOP1
+102=LOGIC:     TURRET
+
+[BOS2.WAX]
+CNT=1
+100=1
+101=LOGIC:     D_TROOP2
+
+# - FLYING -
+
+[PAIN.WAX]
+CNT=1
+100=1
+101=LOGIC:     INT_DROID
+
+[HEAD.WAX]
+CNT=1
+100=1
+101=LOGIC:     PROBE_DROID
+
+[SKUL.WAX]
+CNT=1
+100=1
+101=LOGIC:     REMOTE
+
+# - UNKNOWN YET -
+0x048=Y SPRITE   KEEN.WAX      KEEN.WAX      - 03  KEEN     Commander Keen
+
+
+# -----<<<<< WEAPONS >>>>>-----
+
+[SGN2A0.FME]
+CNT=1
+100=1
+101=LOGIC:     FUSION
+
+[SHOTA0.FME]
+CNT=1
+100=1
+101=LOGIC:     FUSION
+
+[MGUNA0.FME]
+CNT=1
+100=1
+101=LOGIC:     RIFLE
+
+[LAUNA0.FME]
+CNT=1
+100=1
+101=LOGIC:     MORTAR
+
+[PLASA0.FME]
+CNT=1
+100=1
+101=LOGIC:     CANNON
+
+# we really cannot do the chainsaw as an addition, hence a funny bonus :-)
+
+[CSAWA0.FME]
+CNT=1
+100=1
+101=LOGIC:     DETONATORS
+
+[BFUGA0.FME]
+CNT=1
+100=1
+101=LOGIC:     CONCUSSION
+
+# -----<<<<< AMMO >>>>>-----
+
+[CLIPA0.FME]
+CNT=1
+100=1
+101=LOGIC:     ENERGY
+
+[SHELA0.FME]
+CNT=1
+100=1
+101=LOGIC:     POWER
+
+[CELLA0.FME]
+CNT=1
+100=1
+101=LOGIC:     PLASMA
+
+[ROCKA0.FME]
+CNT=1
+100=1
+101=LOGIC:     SHELL
+
+[BROKA0.FME]
+CNT=1
+100=1
+101=LOGIC:     SHELLS
+
+
+# -----<<<<< POWER UPS >>>>>-----
+
+[BPAKA0.FME]
+CNT=1
+100=1
+101=LOGIC:     SUPERCHARGE
+
+[MEGA.WAX]
+CNT=1
+100=2
+101=LOGIC:     REVIVE
+102=LOGIC:     ANIM
+
+[PINV.WAX]
+CNT=1
+100=2
+101=LOGIC:     INVINCIBLE
+102=LOGIC:     ANIM
+
+[PSTRA0.FME]
+CNT=1
+100=2
+101=LOGIC:     REVIVE
+102=LOGIC:     ANIM
+
+[PINS.WAX]
+CNT=1
+100=2
+101=LOGIC:     LIFE
+102=LOGIC:     ANIM
+
+[PMAP.WAX]
+CNT=1
+100=2
+101=LOGIC:     LIFE
+102=LOGIC:     ANIM
+
+# SUITA0.FME : provide a 'null gas mask' BM for realism ?
+
+[SUITA0.FME]
+CNT=1
+100=1
+101=LOGIC:     MASK
+
+[PVIS.WAX]
+CNT=1
+100=2
+101=LOGIC:     GOGGLES
+102=LOGIC:     ANIM
+
+
+# -----<<<<< KEYS >>>>>-----
+
+[BKEY.WAX]
+CNT=1
+100=2
+101=LOGIC:     BLUE
+102=LOGIC:     ANIM
+
+[RKEY.WAX]
+CNT=1
+100=2
+101=LOGIC:     RED
+102=LOGIC:     ANIM
+
+[YKEY.WAX]
+CNT=1
+100=2
+101=LOGIC:     YELLOW
+102=LOGIC:     ANIM
+
+# -----<<<<< ARMOR and HEAL >>>>>-----
+
+[BON1.WAX]
+CNT=1
+100=1
+101=LOGIC:     MEDKIT
+
+[BON2.WAX]
+CNT=1
+100=2
+101=LOGIC:     SHIELD
+102=LOGIC:     ANIM
+
+# -----<<<<< BARRELS >>>>>-----
+
+[FCAN.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+
+[BAR1.WAX]
+CNT=1
+100=2
+101=LOGIC:     BARREL
+
+
+# -----<<<<< DECORATIVE THINGS >>>>>-----
+
+# - SPRITES -
+
+[COL5.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[CEYE.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[FSKU.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[TBLU.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[TGRN.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[TRED.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[GOR1.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[SMBT.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[SMGT.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[SMRT.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[TLMP.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[TLP2.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+[BBRN.WAX]
+CNT=1
+100=1
+101=LOGIC:     ANIM
+
+
+# - SPRITES with RADIUS: 0 -
+
+[GOR1.WAX]
+CNT=1
+100=2
+101=LOGIC:     ANIM
+102=RADIUS:    0
+
+
+# - FRAMES with RADIUS: 0 -
+
+[SPOSU0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[TROOU0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[PLAYM0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[SPOSU0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[POL5A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[GOR2A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[GOR4A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[GOR3A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[GOR5A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[POB1A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[POB2A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+[BRS1A0.FME]
+CNT=1
+100=1
+101=RADIUS:    0
+
+
+# - UNKNOWN YET -
+
+0x019=N ?        POL6          -             - 07  POL6     Pole w/dead player
+0x01a=N ?        POL6          -             - 07  POL6     Pole w/dying player

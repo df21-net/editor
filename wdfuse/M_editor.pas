@@ -6,7 +6,7 @@ uses
   _Math, _Strings,
   M_Global,
   M_SCedit, M_WLedit, M_VXedit, M_OBedit, M_FlagEd, M_Diff,
-  M_Resour, M_OBClas, M_ObSeq, M_ObSel;
+  M_Resour, M_OBClas, M_ObSeq, M_ObSel, RichEdit, Grids;
 
 function  IsBitSet(value : LongInt; bit : Integer) : Boolean;
 function  FlagEdit(cellvalue, flagfile, title : String) : String;
@@ -184,11 +184,14 @@ var
   TheVertex : TVertex;
   numvx     : Integer;
   awall     : Integer;
+  VXEd2     : TStringGrid;
+  phandle   : HWND;
 begin
  TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
  numvx     := TheSector.Vx.Count;
  TheVertex := TVertex(TheSector.Vx.Objects[VX_HILITE]);
  VertexEditor.Caption := Format('VX %d of %d, SC %d', [VX_HILITE, numvx, SC_HILITE]);
+
  VertexEditor.VXEd.Cells[1,  0] := RTrim(Format('%-5.2f', [TheVertex.X]));
  VertexEditor.VXEd.Cells[1,  1] := RTrim(Format('%-5.2f', [TheVertex.Z]));
  VertexEditor.PanelSCName.Caption := TheSector.Name;
@@ -212,6 +215,14 @@ begin
    VertexEditor.ShapeMulti.Brush.Color := clRed;
    VertexEditor.ForceCurrentField.Enabled := TRUE;
   end;
+
+ // Reset Focus
+ if not INF_READ and VertexEditor.visible then
+   begin
+     VertexEditor.FormCreate(NIL);
+     VertexEditor.SetFocus;
+     MapWindow.SetFocus;
+   end;
 end;
 
 function  Check_AllVertexEditor : Boolean;
@@ -408,6 +419,14 @@ begin
  SectorEditor.PanelVXNum.Caption := IntToStr(numvx);
  SectorEditor.PanelWLNum.Caption := IntToStr(numwl);
 
+  // Reset Focus
+ if not INF_READ and not APPLYING_UNDO and SectorEditor.visible then
+   begin
+     SectorEditor.FormCreate(NIL);
+     SectorEditor.SetFocus;
+     MapWindow.SetFocus;
+   end;
+
  DO_SectorEditor_Specials_Init;
  DO_SectorEditor_Specials(0);
 
@@ -424,12 +443,13 @@ begin
 
  if TheSector.InfItems.Count = 0 then
   begin
-   SectorEditor.ShapeINF.Brush.Color := clBtnFace;
+   SectorEditor.INFBUtton.Visible := False;
   end
  else
   begin
-   SectorEditor.ShapeINF.Brush.Color := clBlue;
+   SectorEditor.INFBUtton.Visible := True;
   end;
+
 end;
 
 procedure DO_SectorEditor_Specials_Init;
@@ -1303,6 +1323,14 @@ begin
  WallEditor.Panellength.Caption := Format('%-5.2f', [length]);
  WallEditor.PanelLRVX.Caption := Format('%d && %d', [TheWall.left_vx, TheWall.right_vx]);
 
+  // Reset Focus
+ if not INF_READ and not APPLYING_UNDO and  WallEditor.visible then
+   begin
+     WallEditor.FormCreate(NIL);
+     WallEditor.SetFocus;
+     MapWindow.SetFocus;
+   end;
+
  DO_WallEditor_Specials_Init;
  DO_WallEditor_Specials(0);
 
@@ -1319,12 +1347,14 @@ begin
 
  if TheWall.InfItems.Count = 0 then
   begin
-   WallEditor.ShapeINF.Brush.Color := clBtnFace;
+   WallEditor.INFBUtton.Visible := False;
   end
  else
   begin
-   WallEditor.ShapeINF.Brush.Color := clBlue;
+   WallEditor.INFBUtton.Visible := True;
   end;
+
+
 end;
 
 procedure DO_WallEditor_Specials_Init;
@@ -2215,6 +2245,14 @@ begin
    ObjectEditor.ShapeMulti.Brush.Color := clRed;
    ObjectEditor.ForceCurrentField.Enabled := TRUE;
   end;
+
+ // Reset Focus
+ if not INF_READ and ObjectEditor.visible  then
+   begin
+     ObjectEditor.FormCreate(NIL);
+     ObjectEditor.SetFocus;
+     MapWindow.SetFocus;
+   end;
 end;
 
 function  Check_AllObjectEditor : Boolean;

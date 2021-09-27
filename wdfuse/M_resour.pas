@@ -15,7 +15,6 @@ type
     Panel1: TPanel;
     RGSource: TRadioGroup;
     CBPickLists: TComboBox;
-    Label1: TLabel;
     LBResources: TListBox;
     PanelButtonbar: TPanel;
     SpeedButtonCommit: TSpeedButton;
@@ -44,6 +43,17 @@ type
     SBHelp: TSpeedButton;
     SEcontrast: TSpinEdit;
     Panel3: TPanel;
+    StaticText1: TStaticText;
+    StaticText2: TStaticText;
+    ZoomIn: TSpeedButton;
+    N7501: TMenuItem;
+    N10001: TMenuItem;
+    PALCaption: TEdit;
+    BitBtn1: TBitBtn;
+    PALSelect: TComboBox;
+    Label2: TLabel;
+    OpenPAL: TOpenDialog;
+    Label1: TLabel;
     procedure SpeedButtonCommitClick(Sender: TObject);
     procedure RGSourceClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
@@ -54,11 +64,14 @@ type
     procedure Save1Click(Sender: TObject);
     procedure SpeedButtonRollbackClick(Sender: TObject);
     procedure BNSaveWAVClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
     procedure FormKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure SBHelpClick(Sender: TObject);
     procedure SEcontrastChange(Sender: TObject);
+    procedure ZoomInClick(Sender: TObject);
+    procedure PALSelectChange(Sender: TObject);
+    procedure BitBtn1Click(Sender: TObject);
+  //  procedure TResourcePicker.ViewerPaletteSelectClick(Sender: TObject);
   private
     { Private declarations }
     procedure ResizeImage;
@@ -82,6 +95,8 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
 procedure TResourcePicker.SpeedButtonCommitClick(Sender: TObject);
 begin
   if RES_PICKER_MODE = RST_SND then RPPlayer.Close;
@@ -100,15 +115,24 @@ begin
   begin
    LBResources.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[CBPickLists.ItemIndex]);
   end;
+  LBResources.Sorted := True
 end;
 
 procedure TResourcePicker.FormActivate(Sender: TObject);
 var f : Integer;
 begin
+
+  ResourcePicker.Left   := Ini.ReadInteger('WINDOWS', 'Resource Pickr X', 0);
+  ResourcePicker.Top    := Ini.ReadInteger('WINDOWS', 'Resource Pickr Y', 0);
+  ResourcePicker.Width  := Ini.ReadInteger('WINDOWS', 'Resource Pickr W', 1460);
+  ResourcePicker.Height := Ini.ReadInteger('WINDOWS', 'Resource Pickr H', 1000);
   {
    File names are in .WDN and labels are in .WDL
    XXXXXXXX.WDF are the lists
   }
+ GraphZoom := Ini.ReadInteger('RESOURCES', 'Default Zoom', 30);
+ _VGA_MULTIPLIER := Ini.ReadInteger('RESOURCES', 'Brightness', 5);
+
  CASE RES_PICKER_MODE OF
   RST_3DO,
   RST_BM,
@@ -122,8 +146,8 @@ begin
              SEcontrast.Value := _VGA_MULTIPLIER;
              if not DirectoryExists(WDFUSEdir + '\WDFGRAPH') then
               ForceDirectories(WDFUSEdir + '\WDFGRAPH');
-             GraphZoom  := 10;
-             PanelPercent.Caption  := '100%';
+             GraphZoom  := GraphZoom;
+             PanelPercent.Caption  := inttostr(GraphZoom) + '0%';
              PanelSelected.Caption := '';
              TheRPRes := '';
             end;
@@ -210,6 +234,8 @@ begin
    RGSource.ItemIndex := 1;
    LBResources.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[0]);
   end;
+  LBResources.Sorted := True;
+  PALCaption.Text := LEVELPath + '\' + LEVELName + '.PAL';
 end;
 
 procedure TResourcePicker.CBPickListsChange(Sender: TObject);
@@ -218,9 +244,30 @@ begin
   begin
    LBResources.Clear;
    LBResources.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[CBPickLists.ItemIndex]);
+   LBResources.Sorted := True
   end
 
 end;
+
+procedure TResourcePicker.PALSelectChange(Sender: TObject);
+var PALName : String;
+begin
+  PALName := WDFUSEdir + '\WDFDATA\' + PALSelect.text;
+  log.info('Loading Custom Pallette ' + PALName, LogName);
+  if not FileExists(PALName) then
+    begin
+      showmessage('PAL does not exist in this location. What happened? ' + EOL + PALName);
+      exit;
+    end;
+
+  CopyFile(PALName, LEVELPath + '\' + LEVELName + '.PAL');
+  LoadPALPalette(LEVELPath + '\' + LEVELName + '.PAL');
+  SetBitmapPalette(HPALPalette, Image);
+  PALCaption.Text := WDFUSEdir + '\WDFDATA\' + PALSelect.text;
+  LBResourcesClick(NIL);
+end;
+
+
 
 function ArrayToString(const a: array of Char): string;
 begin
@@ -361,6 +408,9 @@ begin
  Ini.WriteInteger('WINDOWS', 'Resource Pickr Y', ResourcePicker.Top);
  Ini.WriteInteger('WINDOWS', 'Resource Pickr W', ResourcePicker.Width);
  Ini.WriteInteger('WINDOWS', 'Resource Pickr H', ResourcePicker.Height);
+ Ini.WriteInteger('RESOURCES', 'Default Zoom', GraphZoom);
+ Ini.WriteInteger('RESOURCES', 'Brightness', _VGA_MULTIPLIER);
+
 end;
 
 procedure TResourcePicker.ResizeImage;
@@ -380,13 +430,15 @@ begin
   RST_BM,
   RST_WAX,
   RST_FME : begin
-             if Sender = N5001 then      GraphZoom  := 50;
-             if Sender = N4001 then      GraphZoom  := 40;
-             if Sender = N3001 then      GraphZoom  := 30;
-             if Sender = N2001 then      GraphZoom  := 20;
-             if Sender = N1001 then      GraphZoom  := 10;
-             if Sender = N701  then      GraphZoom  :=  7;
-             if Sender = N501  then      GraphZoom  :=  5;
+             if Sender = N10001 then     GraphZoom  := 100;
+             if Sender = N7501  then      GraphZoom  := 75;
+             if Sender = N5001  then      GraphZoom  := 50;
+             if Sender = N4001  then      GraphZoom  := 40;
+             if Sender = N3001  then      GraphZoom  := 30;
+             if Sender = N2001  then      GraphZoom  := 20;
+             if Sender = N1001  then      GraphZoom  := 10;
+             if Sender = N701   then      GraphZoom  :=  7;
+             if Sender = N501   then      GraphZoom  :=  5;
              ResizeImage;
             end;
  END;
@@ -411,26 +463,37 @@ begin
  ModalResult := mrCancel;
 end;
 
+procedure TResourcePicker.ZoomInClick(Sender: TObject);
+begin
+  PopUpMenu1.Popup(Mouse.CursorPos.X, Mouse.CursorPos.Y);
+end;
+
+procedure TResourcePicker.BitBtn1Click(Sender: TObject);
+begin
+ with OpenPAL do
+   BEGIN
+    if Execute then
+     begin
+        CopyFile(FileName, LEVELPath + '\' + LEVELName + '.PAL');
+        LoadPALPalette(LEVELPath + '\' + LEVELName + '.PAL');
+        SetBitmapPalette(HPALPalette, Image);
+        PALCaption.Text := FileName;
+        LBResourcesClick(NIL);
+     end;
+   END;
+end;
+
 procedure TResourcePicker.BNSaveWAVClick(Sender: TObject);
 begin
  CopyFile(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV', WDFUSEdir + '\WDFSOUND\' + ChangeFileExt(TheRPRes, '.WAV'));
 end;
-
-procedure TResourcePicker.FormCreate(Sender: TObject);
-begin
-  ResourcePicker.Left   := Ini.ReadInteger('WINDOWS', 'Resource Pickr X', 0);
-  ResourcePicker.Top    := Ini.ReadInteger('WINDOWS', 'Resource Pickr Y', 0);
-  ResourcePicker.Width  := Ini.ReadInteger('WINDOWS', 'Resource Pickr W', 640);
-  ResourcePicker.Height := Ini.ReadInteger('WINDOWS', 'Resource Pickr H', 480);
-end;
-
 
 procedure TResourcePicker.FormKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
 if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_respicker');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2     : SpeedButtonCommitClick(NIL);
       VK_ESCAPE : SpeedButtonRollbackClick(NIL);
     end;
@@ -438,7 +501,7 @@ end;
 
 procedure TResourcePicker.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_respicker');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 procedure TResourcePicker.SEcontrastChange(Sender: TObject);
@@ -447,4 +510,5 @@ begin
  if LBResources.Count <> 0 then
    LBResourcesClick(Sender); { hangs up, because list is not yet created}
 end;
+
 end.

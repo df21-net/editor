@@ -54,7 +54,7 @@ begin
 end;
 
 procedure TExtToolsWindow.OKBtnClick(Sender: TObject);
-var tmp : array[0..127] of char;
+var tmp : array[0..255] of char;
 begin
  if LBExtTools.ItemIndex <> -1 then
   begin
@@ -69,7 +69,7 @@ end;
 
 procedure TExtToolsWindow.HelpBtnClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_optionsexternal');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

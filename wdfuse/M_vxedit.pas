@@ -5,7 +5,7 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Buttons, ExtCtrls, Grids, IniFiles,
-  M_Global, Menus;
+  M_Global, Menus, Vcl.StdCtrls;
 
 type
   TVertexEditor = class(TForm)
@@ -27,13 +27,14 @@ type
     PanelFloorAlt: TPanel;
     PanelLeftOfWL: TPanel;
     PanelRightOfWL: TPanel;
-    ShapeMulti: TShape;
     N1: TMenuItem;
     ForceCurrentField: TMenuItem;
     N2: TMenuItem;
     StayOnTop: TMenuItem;
     Panel1: TPanel;
     SBHelp: TSpeedButton;
+    ShapeMulti: TShape;
+    VXStayOnTopCheckBox: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure SBRollbackClick(Sender: TObject);
@@ -43,6 +44,8 @@ type
     procedure ForceCurrentFieldClick(Sender: TObject);
     procedure SBHelpClick(Sender: TObject);
     procedure StayOnTopClick(Sender: TObject);
+    procedure VXStayOnTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
   public
@@ -62,19 +65,21 @@ var OnTop : Integer;
 begin
   VertexEditor.Left   := Ini.ReadInteger('WINDOWS', 'Vertex Editor  X', 0);
   VertexEditor.Top    := Ini.ReadInteger('WINDOWS', 'Vertex Editor  Y', 72);
-  VertexEditor.Width  := Ini.ReadInteger('WINDOWS', 'Vertex Editor  W', 186);
-  VertexEditor.Height := Ini.ReadInteger('WINDOWS', 'Vertex Editor  H', 156);
-  OnTop               := Ini.ReadInteger('WINDOWS', 'Vertex Editor  T', 0);
+  VertexEditor.Width  := Ini.ReadInteger('WINDOWS', 'Vertex Editor  W', 280);
+  VertexEditor.Height := Ini.ReadInteger('WINDOWS', 'Vertex Editor  H', 250);
+  OnTop               := Ini.ReadInteger('WINDOWS', 'Vertex Editor  T', 1);
   VxEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Vertex Editor  G', 73);
   PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Vertex Editor  G', 73);
   if OnTop = 0 then
    begin
     StayOnTop.Checked := FALSE;
+    VXStayOnTopCheckBox.Checked := FALSE;
     VertexEditor.FormStyle := fsNormal;
    end
   else
    begin
     StayOnTop.Checked := TRUE;
+    VXStayOnTopCheckBox.Checked := TRUE;
     VertexEditor.FormStyle := fsStayOnTop;
    end;
 
@@ -93,6 +98,7 @@ begin
   else
    Ini.WriteInteger('WINDOWS', 'Vertex Editor  T', 0);
   Ini.WriteInteger('WINDOWS', 'Vertex Editor  G', VxEd.ColWidths[0]);
+  VertexEditor.VXEd.Font.Style := [];
 end;
 
 procedure TVertexEditor.SBRollbackClick(Sender: TObject);
@@ -112,7 +118,7 @@ procedure TVertexEditor.VXEdKeyUp(Sender: TObject; var Key: Word;
 begin
   if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_VXeditor');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2     : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
@@ -133,6 +139,23 @@ begin
     end;
 end;
 
+
+
+procedure TVertexEditor.VXStayOnTopCheckBoxMouseUp(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  if StayOnTop.Checked then
+    begin
+      StayOnTop.Checked := FALSE;
+      VertexEditor.FormStyle := fsNormal;
+    end
+  else
+    begin
+      StayOnTop.Checked := TRUE;
+      VertexEditor.FormStyle := fsStayOnTop;
+    end;
+end;
+
 procedure TVertexEditor.ForceCurrentFieldClick(Sender: TObject);
 begin
  DO_ForceCommit_VertexEditorField(VxEd.Row);
@@ -140,7 +163,7 @@ end;
 
 procedure TVertexEditor.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_VXeditor');
+  MapWindow.HelpTutorialClick(NIL);
 end;
 
 procedure TVertexEditor.StayOnTopClick(Sender: TObject);
@@ -148,11 +171,13 @@ begin
  if StayOnTop.Checked then
   begin
    StayOnTop.Checked := FALSE;
+   VXStayOnTopCheckBox.Checked := FALSE;
    VertexEditor.FormStyle := fsNormal;
   end
  else
   begin
    StayOnTop.Checked := TRUE;
+   VXStayOnTopCheckBox.Checked := TRUE;
    VertexEditor.FormStyle := fsStayOnTop;
   end;
 end;

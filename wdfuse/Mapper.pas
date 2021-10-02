@@ -381,9 +381,6 @@ type
       MousePos: TPoint; var Handled: Boolean);
     procedure ToolsGOBFileManagerClick(Sender: TObject);
     procedure ToolsLFDFileManagerClick(Sender: TObject);
-<<<<<<< HEAD
-    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-=======
     procedure ToolsToolkitClick(Sender: TObject);
     procedure DO_Clear_MultiSelClick(Sender: TObject);
     procedure PopUpUndoClick(Sender: TObject);
@@ -408,7 +405,6 @@ type
 
 
 
->>>>>>> origin/mouselook_center
 
   private
     { Private declarations }
@@ -2316,20 +2312,6 @@ begin
   DO_Grid_8;
 end;
 
-<<<<<<< HEAD
-procedure TMapWindow.FormKeyDown(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
-begin
- if LEVELLoaded then
-   begin
-     case Key of
-      VK_LEFT    : DO_Scroll_Left;
-      VK_UP      : DO_Scroll_Up;
-      VK_RIGHT   : DO_Scroll_Right;
-      VK_DOWN    : DO_Scroll_Down;
-     end;
-   end;
-=======
 { Use this to ignore all shortcuts except on KeyUp
   This preservces the pretty formatting in the Menus }
 procedure TMapWindow.FormShortCut(var Msg: TWMKey;
@@ -2361,7 +2343,6 @@ begin
     else
       Result := ''; // retcode < 0 indicates a dead key
   end;
->>>>>>> origin/mouselook_center
 end;
 
 procedure TMapWindow.FormKeyUp(Sender: TObject; var Key: Word;

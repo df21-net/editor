@@ -138,20 +138,20 @@
   </ProjectSortOrder>
 	<BT_BuildType>AppStore</BT_BuildType>
 	<Transactions>
-    <Transaction>2021/08/06 23:06:16.000.302,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.ConsoleAppender.pas</Transaction>
-    <Transaction>2021/08/06 23:06:16.000.501,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.OutputDebugStringAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.358,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.EMailAppender.pas</Transaction>
+    <Transaction>2021/08/06 23:06:16.000.501,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.OutputDebugStringAppender.pas</Transaction>
+    <Transaction>2021/08/06 23:06:16.000.302,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.ConsoleAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.590,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.RedisAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.620,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.RESTAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.675,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.Utils.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.533,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.648,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.UDPSyslogAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.443,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.MemoryAppender.pas</Transaction>
-    <Transaction>2021/08/06 23:06:16.000.331,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.ElasticSearchAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.703,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.VCLListViewAppender.pas</Transaction>
+    <Transaction>2021/08/06 23:06:16.000.331,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.ElasticSearchAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.561,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.Proxy.pas</Transaction>
-    <Transaction>2021/08/06 23:06:16.000.387,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.FileAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.416,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.GlobalLogger.pas</Transaction>
+    <Transaction>2021/08/06 23:06:16.000.387,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.FileAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.472,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.NSQAppender.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.757,=C:\Users\Karjala\editor\wdfuse\logger\ThreadSafeQueueU.pas</Transaction>
     <Transaction>2021/08/06 23:06:16.000.729,=C:\Users\Karjala\editor\wdfuse\logger\LoggerPro.VCLMemoAppender.pas</Transaction>

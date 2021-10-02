@@ -7,7 +7,7 @@ uses
   StdCtrls, FileCtrl, Grids,
   _Math, _Strings,
   M_Global, M_Util,   M_io, M_Progrs, M_smledt, M_Multi,
-  M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit;
+  M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, System.Math;
 
 procedure DO_Switch_To_SC_Mode;
 procedure DO_Switch_To_WL_Mode;
@@ -61,6 +61,7 @@ procedure DO_SetMAP_TYPELight;
 procedure DO_SetMAP_TYPEDamage;
 procedure DO_SetMAP_TYPE2ndAltitude;
 procedure DO_SetMAP_TYPESkyPit;
+procedure DO_SetMap_TYPESectorFill;
 
 implementation
 uses Mapper;
@@ -78,6 +79,10 @@ begin
       MapWindow.ModeVertices.Checked := FALSE;
       MapWindow.ModeWalls.Checked    := FALSE;
       MapWindow.ModeSectors.Checked  := TRUE;
+      MapWindow.EditAdjoin.Enabled := FALSE;
+      MapWindow.EditUnAdjoin.Enabled := FALSE;
+      MapWindow.EditExtrude.Enabled := FALSE;
+      MapWindow.PanelEditMode.Caption := 'SECTOR';
 
       ObjectEditor.Hide;
       VertexEditor.Hide;
@@ -85,7 +90,7 @@ begin
       SectorEditor.Show;
       DO_Fill_SectorEditor;
 
-      MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : SECTORS';
+      MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : SECTORS';
       MapWindow.Map.Invalidate;
       MapWindow.SetFocus;
     end;
@@ -113,13 +118,17 @@ begin
       MapWindow.ModeVertices.Checked := FALSE;
       MapWindow.ModeWalls.Checked    := TRUE;
       MapWindow.ModeSectors.Checked  := FALSE;
+      MapWindow.EditAdjoin.Enabled := TRUE;
+      MapWindow.EditUnAdjoin.Enabled := TRUE;
+      MapWindow.EditExtrude.Enabled := TRUE;
+      MapWindow.PanelEditMode.Caption := 'WALL';
 
       ObjectEditor.Hide;
       VertexEditor.Hide;
       SectorEditor.Hide;
       WallEditor.Show;
       DO_Fill_WallEditor;
-      MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : WALLS';
+      MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - '+ LowerCase(PROJECTFile) + ' : WALLS';
       MapWindow.Map.Invalidate;
       MapWindow.SetFocus;
     end;
@@ -151,13 +160,17 @@ begin
       MapWindow.ModeVertices.Checked := TRUE;
       MapWindow.ModeWalls.Checked    := FALSE;
       MapWindow.ModeSectors.Checked  := FALSE;
+      MapWindow.EditAdjoin.Enabled := FALSE;
+      MapWindow.EditUnAdjoin.Enabled := FALSE;
+      MapWindow.EditExtrude.Enabled := FALSE;
+      MapWindow.PanelEditMode.Caption := 'VERTEX';
 
       ObjectEditor.Hide;
       WallEditor.Hide;
       SectorEditor.Hide;
       VertexEditor.Show;
       DO_Fill_VertexEditor;
-      MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : VERTICES';
+      MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : VERTICES';
       MapWindow.Map.Invalidate;
       MapWindow.SetFocus;
     end;
@@ -179,13 +192,17 @@ begin
       MapWindow.ModeVertices.Checked := FALSE;
       MapWindow.ModeWalls.Checked    := FALSE;
       MapWindow.ModeSectors.Checked  := FALSE;
+      MapWindow.EditAdjoin.Enabled := FALSE;
+      MapWindow.EditUnAdjoin.Enabled := FALSE;
+      MapWindow.EditExtrude.Enabled := FALSE;
+      MapWindow.PanelEditMode.Caption := 'OBJECT';
 
       WallEditor.Hide;
       SectorEditor.Hide;
       VertexEditor.Hide;
       ObjectEditor.Show;
       DO_Fill_ObjectEditor;
-      MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : OBJECTS';
+      MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : OBJECTS';
       MapWindow.Map.Invalidate;
       MapWindow.SetFocus;
     end;
@@ -267,10 +284,16 @@ procedure DO_Layer_OnOff;
 begin
   SHADOW := not SHADOW;
   if SHADOW then
-     MapWindow.PanelMapLayer.Font.Color := clRed {//DL nov/11/96 }
+    begin
+     MapWindow.PanelMapLayer.Font.Color := clRed; {//DL nov/11/96 }
+     MapWindow.ShowAllLayer.Checked := True;
+    end
   else
-    MapWindow.PanelMapLayer.Font.Color := clSilver; {//DL nov/11/96 }
-    MapWindow.ModeShadow.Checked := SHADOW;
+    begin
+     MapWindow.PanelMapLayer.Font.Color := clBlack; {//DL nov/11/96 }
+     //MapWindow.ModeShadow.Checked := SHADOW;
+     MapWindow.ShowAllLayer.Checked := False;
+    end;
   MapWindow.Map.Invalidate;
 end;
 
@@ -291,6 +314,10 @@ procedure DO_Zoom_In;
 begin
   if Scale < 128 then
     begin
+      if ZoomOutLock then
+        ZoomOutLock := False;
+
+      dec(GRID_OFFSET);
       Scale := Scale * Sqrt(2);
       MapWindow.PanelZoom.Caption := Format('%-6.3f', [Scale]);
       MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
@@ -298,13 +325,26 @@ begin
       MapWindow.VScrollBar.SmallChange := Trunc(1+25/scale);
       MapWindow.VScrollBar.LargeChange := Trunc(1+100/scale);
       MapWindow.Map.Invalidate;
+    end
+  else
+    begin
+      if ZoomInLock then exit;
+      ZoomInLock := True;
+      showmessage('Maximum Zoom In Reached!');
     end;
 end;
 
 procedure DO_Zoom_Out;
 begin
+  log.Info('Zooming Out . Zoom Scale = ' + FloatToStr(Scale) + ' and zoomlock is ' + BoolToStr(ZoomInLock) +
+           ' grid = ' + floattostr(grid) + ' grid offset = ' + inttostr(GRID_OFFSET) +
+            ' colgrid = ' + inttostr(col_grid), LogName);
+
   if Scale > 0.05 then
     begin
+      if ZoomInLock then
+        ZoomInLock := False;
+      inc(GRID_OFFSET);
       Scale := Scale / Sqrt(2);
       MapWindow.PanelZoom.Caption := Format('%-6.3f', [Scale]);
       MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
@@ -312,6 +352,13 @@ begin
       MapWindow.VScrollBar.SmallChange := Trunc(1+25/scale);
       MapWindow.VScrollBar.LargeChange := Trunc(1+100/scale);
       MapWindow.Map.Invalidate;
+    end
+  else
+    begin
+      if ZoomOutLock then exit;
+      ZoomOutLock := True;
+      showmessage('Maximum Zoom Out Reached!');
+
     end;
 end;
 
@@ -320,6 +367,7 @@ begin
   if Scale <> 1 then
     begin
       Scale := 1;
+      GRID_OFFSET := 4;
       MapWindow.PanelZoom.Caption := '1,000';
       MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
       MapWindow.HScrollBar.LargeChange := Trunc(1+100/scale);
@@ -334,19 +382,21 @@ begin
   if Grid < 256 then
     begin
       Grid := 2 * Grid;
-      MapWindow.PanelGrid.Caption := IntToStr(Grid);
+      MapWindow.PanelGrid.Caption := FloatToStr(Grid);
       if GridON then MapWindow.Map.Invalidate;
     end;
 end;
 
 procedure DO_Grid_Out;
 begin
-  if Grid > 1 then
+  if Grid > 0.125 then
     begin
-      Grid := Grid div 2;
-      MapWindow.PanelGrid.Caption := IntToStr(Grid);
+      Grid := Grid / 2.0;
+      MapWindow.PanelGrid.Caption := FloatToStr(Grid);
       if GridON then MapWindow.Map.Invalidate;
-    end;
+    end
+  else
+    showmessage('Cannot make the grid any smaller!')
 end;
 
 procedure DO_Grid_OnOff;
@@ -356,7 +406,7 @@ begin
     MapWindow.PanelGrid.Font.Color := clRed
   else
     MapWindow.PanelGrid.Font.Color := clBlack;
-  MapWindow.ModeGrid.Checked := GridON;
+  MapWindow.GridOnOff1.Checked := GridON;
   MapWindow.Map.Invalidate;
 end;
 
@@ -364,9 +414,16 @@ procedure DO_Grid_8;
 begin
   if Grid <> 8 then
     begin
-      Grid := 8;
-      MapWindow.PanelGrid.Caption := '8';
-      if GridON then MapWindow.Map.Invalidate;
+      if scale * Power(2,GRID_OFFSET) > 8 then
+        showmessage('Cannot set grid to 8 at this Zoom Level. Please Zoom in!')
+      else if scale * Power(2,GRID_OFFSET+3) < 8 then
+        showmessage('Cannot set grid to 8 at this Zoom Level. Please Zoom Out!')
+      else
+        begin
+          Grid := 8;
+          MapWindow.PanelGrid.Caption := '8';
+          if GridON then MapWindow.Map.Invalidate;
+        end;
     end;
 end;
 
@@ -381,7 +438,8 @@ begin
   DO_GetMapLimits(minX, minY, minZ, maxX, maxY, maxZ);
   Xoffset := Round((minX + maxX) / 2);
   Zoffset := Round((minZ + maxZ) / 2);
-  DO_Set_ScrollBars_Ranges(round(minX), round(maxX), round(minZ), round(maxZ));
+  // TODO(azurda): This does not play nicely.
+  // DO_Set_ScrollBars_Ranges(round(minX), round(maxX), round(minZ), round(maxZ));
   MapWindow.Map.Invalidate;
 end;
 
@@ -396,10 +454,11 @@ begin
  MapWindow.HScrollBar.SetParams(XOffset, HLeft, HRight);
  MapWindow.VScrollBar.SetParams(-ZOffset, Vup, Vbottom);
  MapWindow.LScrollBar.SetParams(-LAYER, -LAYER_MAX, -LAYER_MIN);
- MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
- MapWindow.HScrollBar.LargeChange := Trunc(1+100/scale);
- MapWindow.VScrollBar.SmallChange := Trunc(1+25/scale);
- MapWindow.VScrollBar.LargeChange := Trunc(1+100/scale);
+
+ MapWindow.HScrollBar.SmallChange := SmallInt(Trunc(1+25/scale));
+ MapWindow.HScrollBar.LargeChange := SmallInt(Trunc(1+100/scale));
+ MapWindow.VScrollBar.SmallChange := SmallInt(Trunc(1+25/scale));
+ MapWindow.VScrollBar.LargeChange := SmallInt(Trunc(1+100/scale));
 end;
 
 procedure DO_GetMapLimits(VAR minX, minY, minZ, maxX, maxY, maxZ : Real);
@@ -627,6 +686,16 @@ begin
  MapWindow.Panel1MapType.Caption := 'Sky%Pit'; {//Added DL 12/nov/96}
  MapWindow.SkiesPitsMap.Checked := TRUE;
  MapWindow.MMSkiesPits.Checked := TRUE;
+ MapWindow.Map.Invalidate;
+end;
+
+procedure DO_SetMap_TYPESectorFill;
+begin
+ MAP_TYPE := MT_SF;
+ MapWindow.PanelMapType.Caption := 'Sector Fill';
+ MapWindow.Panel1MapType.Caption := 'Sector Fill'; {//Added Karjala 16/jul/2021}
+ MapWindow.SectorFill.Checked := TRUE;
+ MapWindow.MMSectorFill.Checked := TRUE;
  MapWindow.Map.Invalidate;
 end;
 

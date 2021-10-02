@@ -5,7 +5,7 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Buttons, ExtCtrls, Menus, StdCtrls, IniFiles,
-  FileCtrl, Gauges, M_About, L_Util, Lfddir, M_Global;
+  FileCtrl, Gauges, M_About, L_Util, Lfddir, M_Global, ClipBrd;
 
 type
   TLFDWindow = class(TForm)
@@ -13,14 +13,12 @@ type
     SP_Main: TPanel;
     SP_Progress: TPanel;
     SP_Text: TPanel;
-    LFDBrowse: TBitBtn;
     LFDDirList: TListBox;
     DirectoryListBox1: TDirectoryListBox;
     DriveComboBox1: TDriveComboBox;
     FilterComboBox1: TFilterComboBox;
     FileNameEdit: TEdit;
     ProgressBar: TGauge;
-    Bevel1: TBevel;
     LFDBrowseLFD: TOpenDialog;
     DirLabel: TLabel;
     LFDAdd: TBitBtn;
@@ -65,6 +63,11 @@ type
     Label1: TLabel;
     RadioGroup1: TRadioGroup;
     LFDChkBx: TCheckBox;
+    Open: TBitBtn;
+    Bevel1: TBevel;
+    LabelTitle: TLabel;
+    LFDCancelBtn: TBitBtn;
+    LFDOKBtn: TBitBtn;
     procedure SpeedButtonExitClick(Sender: TObject);
     procedure Popup_ExitClick(Sender: TObject);
     procedure LFDBrowseClick(Sender: TObject);
@@ -103,7 +106,14 @@ type
     procedure RadioGroup1Click(Sender: TObject);
     procedure DoChangeColorNormal ;
     procedure DoChangeColorDark ;
+    procedure DoChangeColorNone;
     procedure LFDChkBxClick(Sender: TObject);
+    procedure FSTextChange(Sender: TObject);
+    procedure FileListBox1Change(Sender: TObject);
+    procedure PanelLFDNameClick(Sender: TObject);
+    procedure LFDCancelBtnClick(Sender: TObject);
+    procedure LFDOKBtnClick(Sender: TObject);
+    procedure LFDUpdateINI;
 
 
   private
@@ -122,6 +132,16 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
+procedure TLFDWindow.LFDUpdateINI;
+begin
+  Ini.WriteInteger('WINDOWS', 'LFD Manager    X', LFDWindow.Left);
+  Ini.WriteInteger('WINDOWS', 'LFD Manager    Y', LFDWindow.Top);
+  Ini.WriteInteger('WINDOWS', 'LFD Manager    W', LFDWindow.Width);
+  Ini.WriteInteger('WINDOWS', 'LFD Manager    H', LFDWindow.Height);
+end;
+
 procedure TLFDWindow.DisplayHint(Sender: TObject);
 begin
   SP_Text.Caption := Application.Hint;
@@ -131,27 +151,29 @@ procedure TLFDWindow.FormCreate(Sender: TObject);
 begin
   LFDWindow.Left   := Ini.ReadInteger('WINDOWS', 'LFD Manager    X', 0);
   LFDWindow.Top    := Ini.ReadInteger('WINDOWS', 'LFD Manager    Y', 72);
-  LFDWindow.Width  := Ini.ReadInteger('WINDOWS', 'LFD Manager    W', 629);
-  LFDWindow.Height := Ini.ReadInteger('WINDOWS', 'LFD Manager    H', 440);
+  LFDWindow.Width  := Ini.ReadInteger('WINDOWS', 'LFD Manager    W', 983);
+  LFDWindow.Height := Ini.ReadInteger('WINDOWS', 'LFD Manager    H', 932);
   Application.CreateForm(TLFDDIRWindow, LFDDIRWindow);
+  LFDChkBx.Checked := LFDText;
+  RadioGroup1.ItemIndex := 0;
+  FSTextChange(Sender);
 end;
 
 procedure TLFDWindow.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  Ini.WriteInteger('WINDOWS', 'LFD Manager    X', LFDWindow.Left);
-  Ini.WriteInteger('WINDOWS', 'LFD Manager    Y', LFDWindow.Top);
-  Ini.WriteInteger('WINDOWS', 'LFD Manager    W', LFDWindow.Width);
-  Ini.WriteInteger('WINDOWS', 'LFD Manager    H', LFDWindow.Height);
+  LFDUpdateINI;
   LFDDIRWindow.Destroy;
 end;
 
 procedure TLFDWindow.SpeedButtonExitClick(Sender: TObject);
 begin
+  LFDUpdateINI;
   LFDWindow.Close;
 end;
 
 procedure TLFDWindow.Popup_ExitClick(Sender: TObject);
 begin
+  LFDUpdateINI;
   LFDWindow.Close;
 end;
 
@@ -167,8 +189,9 @@ begin
 
       CASE LFD_GetDirList(FileName , LFDDirList) OF
         0 : begin
-             CurrentLFD := FileName;
-             PanelLFDName.Caption    := ExtractFileName(FileName);
+             CurrentLFDir := ExtractFilePath(FileName);
+             CurrentLFD := ExtractFileName(FileName);
+             PanelLFDName.Caption    := FileName;
              PanelLFDEntries.Caption := IntTOStr(LFDDirList.Items.Count);
              PanelLFDName.Hint  := FileName + ' | Name of the currently selected LFD file';
              LFDDelete.Enabled  := TRUE;
@@ -193,6 +216,11 @@ begin
   Application.OnHint := DisplayHint;
 end;
 
+procedure TLFDWindow.LFDOKBtnClick(Sender: TObject);
+begin
+  LFDUpdateINI;
+end;
+
 procedure TLFDWindow.FormActivate(Sender: TObject);
 begin
   Application.OnHint := DisplayHint;
@@ -203,11 +231,11 @@ begin
  with LFDCreateSaveDialog do
   if Execute then
     begin
-      InitialDir := ExtractFilePath(FileName);
+      CurrentLFDir := ExtractFilePath(FileName);
       LFDDirList.Items.Clear;
       LFD_CreateEmpty(FileName);
-      CurrentLFD := FileName;
-      PanelLFDName.Caption := ExtractFileName(FileName);
+      CurrentLFD := ExtractFileName(FileName);
+      PanelLFDName.Caption := FileName;
       PanelLFDEntries.Caption := '0';
       PanelLFDName.Hint := FileName + ' | Name of the currently selected LFD file';
       LFDDelete.Enabled  := TRUE;
@@ -221,7 +249,7 @@ begin
 end;
 
 procedure TLFDWindow.LFDDeleteClick(Sender: TObject);
-var tmp, tmp2 : array[0..127] of char;
+var tmp, tmp2 : array[0..255] of char;
     n         : Integer;
 begin
   strcopy(tmp, 'Delete ');
@@ -229,12 +257,13 @@ begin
   if Application.MessageBox(tmp, 'LFD File Manager', mb_YesNo or mb_IconQuestion) =  IDYes
    then
     begin
-      SysUtils.DeleteFile(CurrentLFD);
+      SysUtils.DeleteFile(CurrentLFDir + '\' + CurrentLFD);
       PanelLFDName.Caption := '';
       PanelLFDEntries.Caption := '';
       n := LFD_HISTORY.IndexOf(LowerCase(CurrentLFD));
       if n <> -1 then LFD_History.Delete(n);
       CurrentLFD := '';
+      CurrentLFDir := '';
       PanelLFDName.Hint := 'LFD Name | Name of the currently selected LFD file';
       LFDDelete.Enabled  := FALSE;
       LFDInfo.Enabled    := FALSE;
@@ -271,7 +300,7 @@ end;
 
 procedure TLFDWindow.LFDExtractClick(Sender: TObject);
 begin
-   LFD_ExtractFiles(DirectoryListBox1.Directory, CurrentLFD, LFDDirList, ProgressBar);
+   LFD_ExtractFiles(DirectoryListBox1.Directory, CurrentLFDir + '\' + CurrentLFD, LFDDirList, ProgressBar);
    FileListBox1.Update;
 end;
 
@@ -280,8 +309,7 @@ procedure TLFDWindow.FileListBox1DragDrop(Sender, Source: TObject; X,
 begin
   if Source = LFDDirList then
   begin
-    LFD_ExtractFiles(DirectoryListBox1.Directory, CurrentLFD, LFDDirList, ProgressBar);
-    FileListBox1.Update;
+    LFDExtractClick(Sender);
   end;
 end;
 
@@ -319,6 +347,8 @@ begin
     LFDDirList.Selected[i] := not LFDDirList.Selected[i];
 end;
 
+
+
 procedure TLFDWindow.SpeedButtonAboutClick(Sender: TObject);
 begin
   Application.CreateForm(TAboutBox, AboutBox);
@@ -335,10 +365,19 @@ begin
   if UpperCase(ExtractFileExt(FileNameEdit.Text)) <> '.LFD' then Accept := FALSE;
 end;
 
+procedure TLFDWindow.PanelLFDNameClick(Sender: TObject);
+begin
+ if PanelLFDName.Caption <> '' then
+  begin
+   Clipboard.AsText := PanelLFDName.Caption;
+   showmessage('Copied ' + PanelLFDName.Caption + ' to clipboard !');
+  end;
+end;
+
 procedure TLFDWindow.PanelLFDNameDragDrop(Sender, Source: TObject; X,
   Y: Integer);
 var FileName : TFileName;
-    tmp      : array[0..127] of char;
+    tmp      : array[0..255] of char;
 begin
   FileName := DirectoryListBox1.Directory;
   if Length(Filename) <> 3 then FileName := FileName + '\';
@@ -362,21 +401,21 @@ begin
    end;
 end;
 
+
 procedure TLFDWindow.LFDAddClick(Sender: TObject);
 begin
-  LFD_AddFiles(DirectoryListBox1.Directory, CurrentLFD, FileListBox1, ProgressBar);
-  LFD_GetDirList(CurrentLFD , LFDDirList);
-  PanelLFDEntries.Caption := IntToStr(LFDDirList.Items.Count);
+    LFD_AddFiles(DirectoryListBox1.Directory, CurrentLFDir + '\' + CurrentLFD, FileListBox1, ProgressBar);
+    LFD_GetDirList(CurrentLFDir + '\' + CurrentLFD , LFDDirList);
+    PanelLFDEntries.Caption := IntToStr(LFDDirList.Items.Count);
 end;
+
 
 procedure TLFDWindow.LFDDirListDragDrop(Sender, Source: TObject; X,
   Y: Integer);
 begin
   if Source = FileListBox1 then
   begin
-    LFD_AddFiles(DirectoryListBox1.Directory, CurrentLFD, FileListBox1, ProgressBar);
-    LFD_GetDirList(CurrentLFD , LFDDirList);
-    PanelLFDEntries.Caption := IntToStr(LFDDirList.Items.Count);
+    LFDAddClick(Sender);
   end;
 end;
 
@@ -388,10 +427,11 @@ end;
 
 procedure TLFDWindow.LFDRemoveClick(Sender: TObject);
 begin
-  LFD_RemoveFiles(CurrentLFD, LFDDirList, ProgressBar);
-  LFD_GetDirList(CurrentLFD , LFDDirList);
+  LFD_RemoveFiles(CurrentLFDir + '\' + CurrentLFD, LFDDirList, ProgressBar);
+  LFD_GetDirList(CurrentLFDir + '\' + CurrentLFD , LFDDirList);
   PanelLFDEntries.Caption := IntToStr(LFDDirList.Items.Count);
 end;
+
 
 procedure TLFDWindow.BNRefreshClick(Sender: TObject);
 begin
@@ -399,9 +439,16 @@ begin
 end;
 
 
+procedure TLFDWindow.FSTextChange(Sender: TObject);
+begin
+   FileNameEdit.Text := FilterComboBox1.Mask;
+   FileListBox1.ApplyFilePath(FileNameEdit.Text);
+end;
+
+
 procedure TLFDWindow.SpeedButtonHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdflfd_help_title');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 procedure TLFDWindow.FormKeyUp(Sender: TObject; var Key: Word;
@@ -409,6 +456,10 @@ procedure TLFDWindow.FormKeyUp(Sender: TObject; var Key: Word;
 begin
  if (Shift = []) and (Key = VK_F1) then
   SpeedButtonHelpClick(NIL);
+    if Key = VK_DELETE then
+     begin
+      LFDRemoveClick(Sender);
+     end;
 end;
 
 procedure TLFDWindow.SelectANM1Click(Sender: TObject);
@@ -452,17 +503,46 @@ end;
 procedure TLFDWindow.RadioGroup1Click(Sender: TObject);
 
  begin
- If RadioGroup1.ItemIndex=-1 then RadioGroup1.ItemIndex := 0 ;
- If RadioGroup1.ItemIndex=0 then
- begin
- DoChangeColorNormal ;
+  If RadioGroup1.ItemIndex=-1 then RadioGroup1.ItemIndex := 0 ;
+  If RadioGroup1.ItemIndex=0 then
+    begin
+     DoChangeColorNone ;
     end;
-
- If RadioGroup1.ItemIndex=1 Then
-  begin
-   DoChangeColorDark;
-     end;
+  If RadioGroup1.ItemIndex=1 Then
+    begin
+     DoChangeColorNormal;
+    end;
+  If RadioGroup1.ItemIndex=2 Then
+    begin
+     DoChangeColorDark;
+    end;
  end;
+
+
+
+procedure TLFDWindow.DoChangeColorNone ;
+  begin
+FileNameEdit.Color := clBtnFace;
+FileNameEdit.Font.Color := clBlack ;
+DirectoryListBox1.Color := clBtnFace ;
+DirectoryListBox1.Font.Color := clBlack ;
+FileListBox1.Color := clBtnFace ;
+FileListBox1.Font.Color := clBlack ;
+DriveComboBox1.Color := clBtnFace ;
+DriveComboBox1.Font.Color := clBlack ;
+PanelLFDName.Color := clBtnFace;
+PanelLFDName.Font.Color := clBlack ;
+LFDDirList.Color := clBtnFace ;
+LFDDirList.Font.Color := clBlack ;
+PanelLFDEntries.Color := clBtnFace ;
+PanelLFDEntries.Font.Color := clBlack ;
+SP_Text.Color := clBtnFace ;
+SP_Text.Font.Color :=clBlack ;
+ProgressBar.BackColor := clBtnFace ;
+ProgressBar.Font.Color := clBlack ;
+LFDHintListBox.Color := clBtnFace ;
+LFDHintListBox.Font.Color := clBlack ;
+end;
 
 procedure TLFDWindow.DoChangeColorNormal ;
   begin
@@ -515,18 +595,51 @@ LFDHintListBox.Color := clGray ;
   end;
 
 
+procedure TLFDWindow.LFDCancelBtnClick(Sender: TObject);
+begin
+  LFDUpdateINI;
+end;
+
 procedure TLFDWindow.LFDChkBxClick(Sender: TObject);
 begin
  if LFDChkBx.Checked then
-begin
-   LFDHintListBox.Visible := False;
-   LFDTEXT := TRUE;
-      end
+    begin
+       LFDHintListBox.Visible := False;
+       LFDTEXT := TRUE;
+    end
  else
-begin
-   LFDHintListBox.Visible := True;
-   LFDTEXT := False;
-  end;
-     end;
+   begin
+      LFDHintListBox.Visible := True;
+      LFDTEXT := False;
+   end;
+end;
 
+
+
+procedure TLFDWindow.FileListBox1Change(Sender: TObject);
+var i : Integer;
+    n : Integer;
+    FileName : String;
+begin
+   for i := 0 to FileListBox1.Items.Count - 1 do
+    if FileListBox1.Selected[i] = True then
+     if UpperCase(ExtractFileExt(FileListBox1.Items[i])) = '.LFD' then
+       begin
+        CurrentLFDir := DirectoryListBox1.Directory;
+        FileName := FileListBox1.Items[i];
+        CurrentLFD := FileName;
+        LFD_GetDirList(CurrentLFDir + '\' + FileName , LFDDirList);
+        PanelLFDName.Caption    := CurrentLFDir + '\' + FileName;
+        PanelLFDEntries.Caption := IntTOStr(LFDDirList.Items.Count);
+        PanelLFDName.Hint  := FileName + ' | Name of the currently selected LFD file';
+        LFDDelete.Enabled  := TRUE;
+        LFDInfo.Enabled    := TRUE;
+        LFDAdd.Enabled     := TRUE;
+        LFDExtract.Enabled := TRUE;
+        LFDRemove.Enabled  := TRUE;
+        n := LFD_HISTORY.IndexOf(LowerCase(FileName));
+        if n <> -1 then LFD_History.Delete(n);
+        LFD_History.Insert(0, LowerCase(FileName));
+       end;
+end;
 end.

@@ -39,12 +39,14 @@ type
     N1: TMenuItem;
     ForceCurrentField: TMenuItem;
     N2: TMenuItem;
-    StayOnTop: TMenuItem;
+    WLStayOnTop: TMenuItem;
     ShapeINF: TShape;
     N3: TMenuItem;
     CopyMIDTxtoTOPandBOT1: TMenuItem;
     Panel1: TPanel;
     SBHelp: TSpeedButton;
+    INFButton: TSpeedButton;
+    WLStayonTopCheckBox: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure SBCommitClick(Sender: TObject);
@@ -56,8 +58,10 @@ type
     procedure CBSlaCliClick(Sender: TObject);
     procedure ForceCurrentFieldClick(Sender: TObject);
     procedure SBHelpClick(Sender: TObject);
-    procedure StayOnTopClick(Sender: TObject);
     procedure CopyMIDTxtoTOPandBOT1Click(Sender: TObject);
+    procedure SBOpenINFClick(Sender: TObject);
+    procedure WLStayonTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
   public
@@ -77,21 +81,24 @@ var OnTop : Integer;
 begin
   WallEditor.Left     := Ini.ReadInteger('WINDOWS', 'Wall Editor    X', 0);
   WallEditor.Top      := Ini.ReadInteger('WINDOWS', 'Wall Editor    Y', 72);
-  WallEditor.Width    := Ini.ReadInteger('WINDOWS', 'Wall Editor    W', 186);
-  WallEditor.Height   := Ini.ReadInteger('WINDOWS', 'Wall Editor    H', 494);
-  OnTop               := Ini.ReadInteger('WINDOWS', 'Wall Editor    T', 0);
-  WlEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Wall Editor    G', 73);
-  PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Wall Editor    G', 73);
+  WallEditor.Width    := Ini.ReadInteger('WINDOWS', 'Wall Editor    W', 295);
+  WallEditor.Height   := Ini.ReadInteger('WINDOWS', 'Wall Editor    H', 730);
+  WlEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Wall Editor    G', 95);
+  PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Wall Editor    G', 95);
+  OnTop               := Ini.ReadInteger('WINDOWS', 'Wall Editor    T', 1);
+
   if OnTop = 0 then
-   begin
-    StayOnTop.Checked := FALSE;
-    WallEditor.FormStyle := fsNormal;
-   end
+    begin
+     WLStayOnTop.Checked := FALSE;
+     WLStayonTopCheckBox.Checked := FALSE;
+     WallEditor.FormStyle := fsNormal;
+    end
   else
-   begin
-    StayOnTop.Checked := TRUE;
-    WallEditor.FormStyle := fsStayOnTop;
-   end;
+    begin
+     WLStayOnTop.Checked := TRUE;
+     WLStayonTopCheckBox.Checked := True;
+     WallEditor.FormStyle := fsStayOnTop;
+    end;
 
   WLEd.Cells[0,  0] := 'Adjoin';
   WLEd.Cells[0,  1] := 'Mirror';
@@ -132,6 +139,11 @@ begin
   Ini.WriteInteger('WINDOWS', 'Wall Editor    G', WlEd.ColWidths[0]);
 end;
 
+procedure TWallEditor.SBOpenINFClick(Sender: TObject);
+begin
+  MapWindow.SpeedButtonINFClick(Sender);
+end;
+
 procedure TWallEditor.SBCommitClick(Sender: TObject);
 begin
   DO_Commit_WallEditor;
@@ -155,7 +167,7 @@ procedure TWallEditor.WLEdKeyUp(Sender: TObject; var Key: Word;
 begin
   if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_WLeditor');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2     : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
@@ -226,19 +238,20 @@ end;
 
 procedure TWallEditor.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_WLeditor');
+  MapWindow.HelpTutorialClick(NIL);
 end;
 
-procedure TWallEditor.StayOnTopClick(Sender: TObject);
+procedure TWallEditor.WLStayonTopCheckBoxMouseUp(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
- if StayOnTop.Checked then
+   if WLStayOnTop.Checked then
   begin
-   StayOnTop.Checked := FALSE;
+   WLStayOnTop.Checked := FALSE;
    WallEditor.FormStyle := fsNormal;
   end
  else
   begin
-   StayOnTop.Checked := TRUE;
+   WLStayOnTop.Checked := TRUE;
    WallEditor.FormStyle := fsStayOnTop;
   end;
 end;

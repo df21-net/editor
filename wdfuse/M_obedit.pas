@@ -40,6 +40,7 @@ type
     StayOnTop: TMenuItem;
     Panel1: TPanel;
     SBHelp: TSpeedButton;
+    OBStayOnTopCheckBox: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure SBRollbackClick(Sender: TObject);
@@ -52,7 +53,8 @@ type
     procedure SBSelClick(Sender: TObject);
     procedure ForceCurrentFieldClick(Sender: TObject);
     procedure SBHelpClick(Sender: TObject);
-    procedure StayOnTopClick(Sender: TObject);
+    procedure OBStayOnTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
   public
@@ -72,19 +74,21 @@ var OnTop : Integer;
 begin
   ObjectEditor.Left   := Ini.ReadInteger('WINDOWS', 'Object Editor  X', 0);
   ObjectEditor.Top    := Ini.ReadInteger('WINDOWS', 'Object Editor  Y', 72);
-  ObjectEditor.Width  := Ini.ReadInteger('WINDOWS', 'Object Editor  W', 186);
-  ObjectEditor.Height := Ini.ReadInteger('WINDOWS', 'Object Editor  H', 470);
-  OnTop               := Ini.ReadInteger('WINDOWS', 'Object Editor  T', 0);
-  ObEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Object Editor  G', 73);
-  PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Object Editor  G', 73);
+  ObjectEditor.Width  := Ini.ReadInteger('WINDOWS', 'Object Editor  W', 400);
+  ObjectEditor.Height := Ini.ReadInteger('WINDOWS', 'Object Editor  H', 700);
+  OnTop               := Ini.ReadInteger('WINDOWS', 'Object Editor  T', 1);
+  ObEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Object Editor  G', 85);
+  PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Object Editor  G', 85);
   if OnTop = 0 then
    begin
     StayOnTop.Checked := FALSE;
+    OBStayOnTopCheckBox.Checked := FALSE;
     ObjectEditor.FormStyle := fsNormal;
    end
   else
    begin
     StayOnTop.Checked := TRUE;
+    OBStayOnTopCheckBox.Checked := TRUE;
     ObjectEditor.FormStyle := fsStayOnTop;
    end;
 
@@ -134,7 +138,7 @@ procedure TObjectEditor.OBEdKeyUp(Sender: TObject; var Key: Word;
 begin
   if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_OBeditor');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2     : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
@@ -155,6 +159,21 @@ begin
                    PanelInfoLeft.Width := PanelInfoLeft.Width + 1;
                   end;
     end;
+end;
+
+procedure TObjectEditor.OBStayOnTopCheckBoxMouseUp(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+ if StayOnTop.Checked then
+  begin
+   StayOnTop.Checked := FALSE;
+   ObjectEditor.FormStyle := fsNormal;
+  end
+ else
+  begin
+   StayOnTop.Checked := TRUE;
+   ObjectEditor.FormStyle := fsStayOnTop;
+  end;
 end;
 
 procedure TObjectEditor.OBEdDblClick(Sender: TObject);
@@ -213,21 +232,7 @@ end;
 
 procedure TObjectEditor.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_OBeditor');
-end;
-
-procedure TObjectEditor.StayOnTopClick(Sender: TObject);
-begin
- if StayOnTop.Checked then
-  begin
-   StayOnTop.Checked := FALSE;
-   ObjectEditor.FormStyle := fsNormal;
-  end
- else
-  begin
-   StayOnTop.Checked := TRUE;
-   ObjectEditor.FormStyle := fsStayOnTop;
-  end;
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

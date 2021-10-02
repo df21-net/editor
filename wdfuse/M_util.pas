@@ -6,13 +6,16 @@ uses
   _Math, _Strings, _Files,
   M_Global, M_io, M_Progrs, M_Find, M_Multi, M_Checks,
   M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit,
-  V_Util, I_Util, G_Util;
+  V_Util, I_Util, G_Util, Generics.Collections, clipBrd,  System.JSON,
+  REST.JsonReflect, StrUtils, Jsons, JsonsUtilsEx, IOUTils, System.diagnostics,
+  System.TimeSpan;
 
 procedure DO_Help;
 function  DO_InitGOBS : Boolean;
 procedure DO_LoadLevel;
-procedure DO_OpenProject;
+Procedure DO_OpenProject;
 procedure DO_SaveProject;
+procedure DO_SaveProjectAs(NewProjectWDFFile : String);
 
 procedure DO_SetMapButtonsState;
 
@@ -63,17 +66,20 @@ procedure DO_RecomputeTexturesLists(usegauge : Boolean; maintitle : string);
 procedure DO_RecomputeObjectsLists(usegauge : Boolean; maintitle : string);
 
 procedure DO_StoreUndo;
-procedure DO_FreeUndo;
-procedure DO_ApplyUndo;
+procedure DO_FreeUndo(UndoIndex : Integer = -1);
+procedure DEBUG_UNDO;
+procedure DO_ApplyUndo(reverse : Boolean = False);
 
 procedure DO_FreeGeometryClip;
 procedure DO_FreeObjectsClip;
 
 procedure DO_CopyGeometry;
-procedure DO_PasteGeometry(cursX, cursZ : Real);
+procedure DO_PasteGeometry(cursX, cursZ : Real; payload : TJson);
 
 procedure DO_CopyObjects;
-procedure DO_PasteObjects(cursX, cursZ : Real);
+procedure DO_PasteObjects(cursX, cursZ : Real; payload : TJson);
+
+procedure DO_PasteWrapper(cursX, cursZ : Real);
 
 {  **********  **********  **********  **********  **********  **********  }
 
@@ -83,7 +89,7 @@ uses Mapper, M_MapUt, M_MapFun, M_Option;
 
 procedure DO_Help;
 begin
- Application.HelpJump('wdfuse_help_title');
+  MapWindow.HelpTutorialClick(NIL);
 end;
 
 function  DO_InitGOBS : Boolean;
@@ -198,6 +204,8 @@ begin
       Xoffset       := 0;
       Zoffset       := 0;
       Scale         := 1;
+      grid          := 8;
+      grid_offset   := 4;
       ScreenX       := MapWindow.Map.Width;
       ScreenZ       := MapWindow.Map.Height;
       ScreenCenterX := MapWindow.Map.Width div 2;
@@ -212,7 +220,8 @@ begin
       DO_Init_Markers;
       MAP_MODE := MM_VX;
       DO_Switch_To_SC_Mode;
-      MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : SECTORS';
+      MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : SECTORS';
+      DO_FreeUndo;
      end
   end
  else
@@ -232,18 +241,66 @@ begin
     if Execute then
      if not (ofExtensionDifferent in Options) then
       begin
+       Log.Info('Opened New Project ' + PROJECTFile, LogName);
+       if LEVELLoaded then FreeLevel;
        MapWindow.Update;
        PROJECTFile := FileName;
+       Ini.WriteString('DARK FORCES',  'PROJECTFile', PROJECTFile);
        DO_LoadLevel;
        BACKUPED := FALSE;
+       MapWindow.Map.Invalidate;
       end
      else
       Application.MessageBox('You must select a WDFUSE Project File (.WDP)',
                              'WDFUSE Mapper - Open Project',
                              mb_Ok or mb_IconExclamation);
+
   end;
 {do an invalidate in any case, if only to clear an old screen}
-MapWindow.Map.Invalidate;
+
+end;
+
+procedure DO_SaveProjectAs(NewProjectWDFFile : String);
+var prj, targetPrj : TIniFile;
+    OldPrjPath, NewLEVELPATH, NewPrjName  : String;
+begin
+ Log.Info('Saving Project As ' + NewProjectWDFFile, LogName);
+ { Copy project file to new location }
+ CopyFile(PROJECTFile, NewProjectWDFFile);
+ NewPrjName := TPath.GetFileNameWithoutExtension(NewProjectWDFFile);
+ NewLEVELPATH := ExtractFilePath(NewProjectWDFFile) + NewPrjName;
+
+ prj := TIniFile.Create(PROJECTFile);
+ try
+   OldPrjPath := prj.ReadString('WDFUSE Project', 'DIRECTORY', '');
+ finally
+  prj.Free;
+ end;
+
+ TDirectory.Copy(OldPrjPath, NewLEVELPATH);
+
+ if TDirectory.Exists(NewLEVELPATH + '\BACKUPS') then
+   begin
+     TDirectory.Delete(NewLEVELPATH + '\BACKUPS', True);
+     TDirectory.CreateDirectory(NewLEVELPATH + '\BACKUPS');
+     LEVELBNum := -1;
+   end;
+
+ CopyFile(ChangeFileExt(PROJECTFile, '.TXT'),
+          ChangeFileExt(NewProjectWDFFile, '.TXT'));
+
+ targetPrj := TIniFile.Create(NewProjectWDFFile);
+ try
+   targetPrj.WriteString('WDFUSE Project', 'DIRECTORY', NewLEVELPATH);
+   targetPrj.WriteString('WDFUSE Project', 'LASTMODIF', DateTimeToStr(Now));
+ finally
+  targetPrj.Free;
+ end;
+ PROJECTFile := NewProjectWDFFile;
+ LEVELPath := NewLEVELPATH;
+ DO_SaveProject;
+ DO_Switch_To_SC_Mode;
+ MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : SECTORS';
 end;
 
 procedure DO_SaveProject;
@@ -258,7 +315,7 @@ begin
    Do check the free disk space however, and warn the user with a
    disk space < 10 Mb box, which will let him make room before going on
 }
-
+ Log.Info('Saving Project ' + PROJECTFile, LogName);
  drv    := Ord(LevelPATH[1]) - 96;
  if drv < 0 then drv := Ord(LevelPATH[1]) - 64;
 
@@ -320,6 +377,8 @@ begin
  IO_WriteO(LEVELPath + '\' + LEVELName + '.O');
  IO_WriteINF2(LEVELPath + '\' + LEVELName + '.INF');
 
+ Ini.WriteString('DARK FORCES',  'PROJECTFile', PROJECTFile);
+
  {set the LASTMODIF entry in the project file}
  pjf := TIniFile.Create(PROJECTFile);
  try
@@ -337,10 +396,8 @@ begin
    begin
     MAP_SEC_UNDO  := TStringList.Create;
     MAP_OBJ_UNDO  := TStringList.Create;
-   end
-  else
-   begin
-    DO_FreeUndo;
+    MAP_GUI_UNDO  := TStringList.Create;
+    MAP_GLOBAL_UNDO := TList<TStringList>.Create;
    end;
 
   MapWindow.SpeedButtonSave.Enabled      := LEVELLoaded;
@@ -365,13 +422,16 @@ begin
   MapWindow.SpeedButtonTxt.Enabled       := LEVELLoaded;
   MapWindow.SpeedButtonLevel.Enabled     := LEVELLoaded;
   MapWindow.SpeedButtonGOBTest.Enabled   := LEVELLoaded;
+{  MapWindow.PLTEDitor.Enabled            := LEVELLoaded;}
+  MapWindow.SpeedButton3DPreview.Enabled := LEVELLoaded;
+  MapWindow.SpeedButtonDF21.Enabled      := TRUE;
+  MapWindow.SpeedButtonToolsMain.Enabled := LEVELLoaded;
   MapWindow.SpeedButtonChecks.Enabled    := LEVELLoaded;
   MapWindow.SBSaveMapBMP.Enabled         := LEVELLoaded;
   MapWindow.PanelMulti.Enabled           := LEVELLoaded;
   MapWindow.PanelMapType.Enabled         := LEVELLoaded;
   MapWindow.Panel1MapType.Enabled        := LEVELLoaded;{//Added DL 12/nov/96            }
   MapWindow.SpeedButtonQuery.Enabled     := LEVELLoaded;
-  MapWindow.SpeedButtonDuke.Enabled      := LEVELLoaded;
 
 
 
@@ -387,6 +447,7 @@ begin
   MapWindow.ProjectDelete.Enabled        := not LEVELLoaded;
   MapWindow.ProjectChecks.Enabled        := LEVELLoaded;
   MapWindow.ProjectGOBTest.Enabled       := LEVELLoaded;
+  MapWindow.RenderIn3D.Enabled           := LEVELLoaded;
   MapWindow.EditMenu.Enabled             := LEVELLoaded;
   MapWindow.ViewEditors.Enabled          := LEVELLoaded;
   MapWindow.ModeMenu.Enabled             := LEVELLoaded;
@@ -427,6 +488,8 @@ begin
        MT_2A : MapWindow.Panel1MapType.Caption := '2 Alts'; {// added DL 12/nov/96 }
     { //  MT_SP : MapWindow.PanelMapType.Caption  := 'S&&P'; }
        MT_SP : MapWindow.Panel1MapType.Caption := 'Skies%Pits';{// added DL 12/nov/96 }
+   { //  MT_SF : MapWindow.PanelMapType.Caption  := 'Sector Fill'; }
+       MT_SF : MapWindow.Panel1MapType.Caption := 'Sector Fill';{// added Karjala 17/Jul/2021 }
       END;
     end
   else
@@ -1190,6 +1253,7 @@ begin
 
  if not IsRectEmpty(FOCUSRECT) then
   begin
+   MULTISEL_RECT := True;
    case MAP_MODE of
      MM_SC : begin
                for i := 0 to MAP_SEC.Count - 1 do
@@ -1272,6 +1336,7 @@ begin
                 end;
              end;
    end;
+  MULTISEL_RECT := False;
   {Update the multiselection markers}
   case MAP_MODE of
     MM_SC : begin
@@ -1289,10 +1354,10 @@ begin
              MapWindow.PanelMulti.Caption := IntToStr(WL_MULTIS.Count);
             end;
     MM_VX : begin
-             if VX_MULTIS.Count <> 0 then
+{             if VX_MULTIS.Count <> 0 then
               VertexEditor.ShapeMulti.Brush.Color := clRed
              else
-              VertexEditor.ShapeMulti.Brush.Color := clBtnFace;
+              VertexEditor.ShapeMulti.Brush.Color := clBtnFace;}
              MapWindow.PanelMulti.Caption := IntToStr(VX_MULTIS.Count);
             end;
     MM_OB : begin
@@ -1321,8 +1386,8 @@ begin
    GZ := Grid * Trunc(tz / Grid);
 
    {but the method for finding it is slightly different in negative areas!}
-   if X < -Grid div 2 then GX := GX - Grid;
-   if Z < -Grid div 2 then GZ := GZ - Grid;
+   if X < -Grid / 2.0 then GX := GX - Grid;
+   if Z < -Grid / 2.0 then GZ := GZ - Grid;
 
    GetNearestGridPoint := TRUE;
   end
@@ -1665,6 +1730,8 @@ begin
    for w := 0 to TheSector.Wl.Count - 1 do
     begin
      INFList := TStringList.Create;
+     if not ((s = 2) and (w=50)) then continue;
+
      if ParseINFItemsSCWL(s, w, INFList, errmsg) > -1 then
       if OptionsDialog.CBChecksParsing.Checked then
        ChecksWindow.LBChecks.Items.Add(Format('wl %4d sc %4d    INF entry does not parse correctly', [w, s]))
@@ -1924,7 +1991,7 @@ begin
       LAYER := LAYER_MIN
      else
       LAYER := Lay;
-     Scale := ZoomFactor;
+     //Scale := ZoomFactor;
     end;
  MapWindow.PanelZoom.Caption := Format('%-6.3f', [Scale]);
  MapWindow.HScrollBar.SmallChange := Trunc(1+25/scale);
@@ -2044,22 +2111,33 @@ var i,j,k     : Integer;
     NewVertex : TVertex;
     NewObject : TOB;
 begin
- DO_FreeUndo;
+
+ { DO_FreeUndo;}
+ if IGNORE_UNDO = True then exit;
+
+
+ { If you UNDO a few times and then make a STORE operation
+  Wipe the UNDO history to the RIGHT (newer) than now }
+ if (MAP_GLOBAL_UNDO.Count / 3) > MAP_GLOBAL_UNDO_INDEX  then
+    begin
+      for i := MAP_GLOBAL_UNDO_INDEX to round((MAP_GLOBAL_UNDO.Count / 3) - 1)  do
+        begin
+           DO_FreeUndo(MAP_GLOBAL_UNDO_INDEX);
+           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
+           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
+           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
+        end;
+    end;
 
  MAP_SEC_UNDO := TStringList.Create;
  MAP_OBJ_UNDO := TStringList.Create;
+ MAP_GUI_UNDO := TStringList.Create;
 
- MAP_MODE_UNDO    := MAP_MODE;
- SC_HILITE_UNDO   := SC_HILITE;
- WL_HILITE_UNDO   := WL_HILITE;
- VX_HILITE_UNDO   := VX_HILITE;
- OB_HILITE_UNDO   := OB_HILITE;
- XOffset_UNDO     := XOffset;
- ZOffset_UNDO     := ZOffset;
- Scale_UNDO       := Scale;
- LAYER_UNDO       := LAYER;
- LAYER_MIN_UNDO   := LAYER_MIN;
- LAYER_MAX_UNDO   := LAYER_MAX;
+ { Store the UI assets }
+ MAP_GUI_UNDO.CommaText := Format('MAP_MODE=%d, SC_HILITE=%d, WL_HILITE=%d, ' +
+ 'VX_HILITE=%d, OB_HILITE=%d, XOffset=%d, ZOffset=%d, LAYER=%d, LAYER_MIN=%d, LAYER_MAX=%d',
+ [MAP_MODE,SC_HILITE,WL_HILITE,VX_HILITE,OB_HILITE,XOffset,ZOffset,LAYER,LAYER_MIN,LAYER_MAX]);
+                                                                                   {                      }
 
  for i := 0 to MAP_SEC.Count - 1 do
   begin
@@ -2168,32 +2246,116 @@ begin
    MAP_OBJ_UNDO.AddObject('OB', newObject);
   end;
 
+  MAP_GLOBAL_UNDO.Add(MAP_SEC_UNDO);
+  MAP_GLOBAL_UNDO.Add(MAP_OBJ_UNDO);
+  MAP_GLOBAL_UNDO.Add(MAP_GUI_UNDO);
+
+  // Trim the excess if past the limit.
+  if (MAP_GLOBAL_UNDO.Count / 3) >= UNDO_LIMIT  then
+    begin
+      DO_FreeUndo(0);
+      MAP_GLOBAL_UNDO.Delete(0);
+      MAP_GLOBAL_UNDO.Delete(0);
+      MAP_GLOBAL_UNDO.Delete(0);
+    end
+  else
+    MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX + 1;
+
 end;
 
-procedure DO_FreeUndo;
+procedure DO_FreeUndo(UndoIndex : Integer = -1);
 var i,j,k     : Integer;
     TheSector : TSector;
     TheWall   : TWall;
     TheObject : TOB;
+    start,
+    stop : Integer;
 begin
-  for i := 0 to MAP_SEC_UNDO.Count - 1 do
-   begin
-    TheSector := TSector(MAP_SEC_UNDO.Objects[i]);
-    for j := 0 to TheSector.Vx.Count - 1 do
-     TVertex(TheSector.Vx.Objects[j]).Free;
-    for j := 0 to TheSector.Wl.Count - 1 do
-     TWall(TheSector.Wl.Objects[j]).Free;
-    TheSector.Free;
-   end;
+  if (UndoIndex = -1) then
+    begin
+      start := 0;
+      stop := Trunc(MAP_GLOBAL_UNDO.Count/3)- 1;
+    end
+  else
+    begin
+      start := UndoIndex;
+      stop := UndoIndex;
+    end;
 
- for i := 0 to MAP_OBJ_UNDO.Count - 1 do
-  TOB(MAP_OBJ_UNDO.Objects[i]).Free;
+  for k:=start to stop do
+    begin
+        MAP_SEC_UNDO := MAP_GLOBAL_UNDO[k*3];
+        MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[k*3+1];
+        MAP_GUI_UNDO := MAP_GLOBAL_UNDO[k*3+2];
 
- MAP_SEC_UNDO.Free;
- MAP_OBJ_UNDO.Free;
+        for i := 0 to MAP_SEC_UNDO.Count - 1 do
+         begin
+          TheSector := TSector(MAP_SEC_UNDO.Objects[i]);
+          for j := 0 to TheSector.Vx.Count - 1 do
+            begin
+             TVertex(TheSector.Vx.Objects[j]).Free;
+            end;
+          for j := 0 to TheSector.Wl.Count - 1 do
+            begin
+             TWall(TheSector.Wl.Objects[j]).Free;
+            end;
+          TheSector.Free;
+         end;
+
+       for i := 0 to MAP_OBJ_UNDO.Count - 1 do
+        TOB(MAP_OBJ_UNDO.Objects[i]).Free;
+
+       MAP_SEC_UNDO.Free;
+       MAP_OBJ_UNDO.Free;
+       MAP_GUI_UNDO.Free;
+    end;
+
+  // Wipe everything
+  if (UndoIndex = -1) then
+    begin
+       MAP_GLOBAL_UNDO.Clear;
+       MAP_GLOBAL_UNDO_INDEX := 0;
+    end;
 end;
 
-procedure DO_ApplyUndo;
+{ FOR DEBUGGING - REMOVE THIS FOR RELEASE }
+procedure DEBUG_UNDO;
+var debugstr : string;
+    i,j : Integer;
+    tmpSector : TSector;
+    arrowsuffix : String;
+    foundIdx : boolean;
+    endloop : integer;
+begin
+ debugstr := 'GLOBAL UNDO count [' +  inttostr(MAP_GLOBAL_UNDO.Count)  + '] IDX = '
+             + inttostr(MAP_GLOBAL_UNDO_INDEX) + ' --> ' + EOL;
+
+ foundIdx := False;
+ endloop := round(MAP_GLOBAL_UNDO.Count/3)-1;
+ log.Info('endloop = ' + inttostr(endloop), logName);
+ for i := 0 to endloop do
+  begin
+   j := MAP_GLOBAL_UNDO[i*3].count;
+   tmpSector := TSector(MAP_GLOBAL_UNDO[i*3].Objects[0]);
+   arrowsuffix := '';
+   if i = MAP_GLOBAL_UNDO_INDEX then
+    begin
+      arrowsuffix := ' <---IDX';
+      foundIdx := True;
+    end;
+
+   debugstr := debugstr + 'index = ' + inttostr(i) + ': Num Sec = ' + inttostr(j)
+     + ' first sector name = ' + tmpSector.name + ',' + arrowsuffix + EOL;
+  end;
+
+  if not foundIdx then
+    debugstr := debugstr + arrowsuffix + ' END';
+
+  showmessage(debugstr);
+end;
+
+{ Reversing an Undo means a Redo }
+procedure DO_ApplyUndo(reverse : Boolean = False);
 var i,j,k     : Integer;
     TheSector : TSector;
     TheWall   : TWall;
@@ -2203,14 +2365,49 @@ var i,j,k     : Integer;
     NewWall   : TWall;
     NewVertex : TVertex;
     NewObject : TOB;
+    Stopwatch: TStopwatch;
+    Elapsed: TTimeSpan;
+    TimerStr : String;
 begin
- if (MAP_SEC_UNDO.Count = 0) or (MAP_OBJ_UNDO.Count = 0) then
+ if ((MAP_GLOBAL_UNDO_INDEX = 0) and (Not reverse)) then
   begin
    ShowMessage('Undo lists are empty !!!');
    exit;
   end;
 
+ log.info('Starting an Undo operation', LogName);
+ TimerStr := '';
+ Stopwatch := TStopwatch.StartNew;
+ TimerStr :=  'Start:' + FormatDateTime('hh:nn:ss.zzz', Time) + EOL;
+
+ { If you are at the end of the Undo list and are restoring
+   then store current state in case you want to Redo here again }
+ if not reverse then
+   begin
+
+    if (MAP_GLOBAL_UNDO.Count / 3) = MAP_GLOBAL_UNDO_INDEX then
+     begin
+      Do_StoreUndo;
+      MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
+     end;
+ end;
+
+ { If you are at the end of the Redo then throw an error,
+   otherwise jump ahead into the Undo array and retrieve state }
+ if reverse = True then
+  begin
+   if MAP_GLOBAL_UNDO.Count / 3 <= MAP_GLOBAL_UNDO_INDEX + 1  then
+    begin
+
+     showmessage('You cannot Redo this command. You are the end of the Undo List');
+     exit;
+    end
+  else
+    MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX  + 2;
+ end;
+
  {first, empty the MAP completely}
+
  for i := 0 to MAP_SEC.Count - 1 do
     begin
       TheSector := TSector(MAP_SEC.Objects[i]);
@@ -2230,13 +2427,18 @@ begin
     end;
   for i := 0 to MAP_OBJ.Count - 1 do
    TOB(MAP_OBJ.Objects[i]).Free;
-
+ TimerStr :=  TimerStr + 'Done Empty:' + FormatDateTime('hh:nn:ss.zzz', Time) + AnsiString(#13#10);
  MAP_SEC.Free;
  MAP_OBJ.Free;
  MAP_SEC := TStringList.Create;
  MAP_OBJ := TStringList.Create;
 
- {then copy the UNDO in the map}
+ { LOAD the UNDO Lists from the Global Mapper }
+
+ MAP_SEC_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3];
+ MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+1];
+ MAP_GUI_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+2];
+ MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
 
  for i := 0 to MAP_SEC_UNDO.Count - 1 do
   begin
@@ -2317,6 +2519,7 @@ begin
    MAP_SEC.AddObject('SC', NewSector);
   end;
 
+ TimerStr :=  TimerStr + 'Done Sectors:' + FormatDateTime('hh:nn:ss.zzz', Time) + AnsiString(#13#10);
  for i := 0 to MAP_OBJ_UNDO.Count - 1 do
   begin
    TheObject := TOB(MAP_OBJ_UNDO.Objects[i]);
@@ -2339,14 +2542,30 @@ begin
 
    NewObject.Seq.AddStrings(TheObject.Seq);
    MAP_OBJ.AddObject('OB', newObject);
-  end;
+ end;
+
+ TimerStr :=  TimerStr + 'Done Objects:' + FormatDateTime('hh:nn:ss.zzz', Time) + AnsiString(#13#10);
+ { Reload the highlights of the map }
+
+ MAP_MODE    := StrToInt(MAP_GUI_UNDO.Values['MAP_MODE']);
+ SC_HILITE   := StrToInt(MAP_GUI_UNDO.Values['SC_HILITE']);
+ WL_HILITE   := StrToInt(MAP_GUI_UNDO.Values['WL_HILITE']);
+ VX_HILITE   := StrToInt(MAP_GUI_UNDO.Values['VX_HILITE']);
+ OB_HILITE   := StrToInt(MAP_GUI_UNDO.Values['OB_HILITE']);
+ XOffset     := StrToInt(MAP_GUI_UNDO.Values['XOffset']);
+ ZOffset     := StrToInt(MAP_GUI_UNDO.Values['ZOffset']);
+ //Scale       := Real(StrToInt(MAP_GUI_UNDO.Values['Scale']));
+ LAYER       := StrToInt(MAP_GUI_UNDO.Values['LAYER']);
+ LAYER_MIN   := StrToInt(MAP_GUI_UNDO.Values['LAYER_MIN']);
+ LAYER_MAX   := StrToInt(MAP_GUI_UNDO.Values['LAYER_MAX']);
 
  {then recompute the INFClasses
   the following two lines are mandatory because ComputeINFClasses
   does update the sector/wall editor, so we must be sure there is
   a valid value in there}
- SC_HILITE   := SC_HILITE_UNDO;
- WL_HILITE   := WL_HILITE_UNDO;
+
+  // To prevent full INF recalculation
+  APPLYING_UNDO := True;
 
   for i := 0 to MAP_SEC.Count - 1 do
    begin
@@ -2361,23 +2580,15 @@ begin
      end;
    end;
 
- MAP_MODE    := MAP_MODE_UNDO;
- SC_HILITE   := SC_HILITE_UNDO;
- WL_HILITE   := WL_HILITE_UNDO;
- VX_HILITE   := VX_HILITE_UNDO;
- OB_HILITE   := OB_HILITE_UNDO;
- XOffset     := XOffset_UNDO;
- ZOffset     := ZOffset_UNDO;
- Scale       := Scale_UNDO;
- LAYER       := LAYER_UNDO;
- LAYER_MIN   := LAYER_MIN_UNDO;
- LAYER_MAX   := LAYER_MAX_UNDO;
+  APPLYING_UNDO := FALSE;
 
+ TimerStr :=  TimerStr + 'Done INF/Highlights:' + FormatDateTime('hh:nn:ss.zzz', Time) + AnsiString(#13#10);
  {recompute the textures and objects, etc.}
  ProgressWindow.Show;
  DO_RecomputeTexturesLists(TRUE, 'Undo');
  DO_RecomputeObjectsLists(TRUE, 'Undo');
  ProgressWindow.Hide;
+ TimerStr :=  TimerStr + 'Done TextureReloads:' + FormatDateTime('hh:nn:ss.zzz', Time) + AnsiString(#13#10);
 
  CASE MAP_MODE of
   MM_SC : DO_Switch_To_SC_Mode;
@@ -2389,9 +2600,12 @@ begin
  {this will ensure multisels are cleared, and the editors
   refreshed correctly, as well as repaint the map.}
  DO_Clear_MultiSel;
+ Elapsed := Stopwatch.Elapsed;
+
+log.info('Finished an Undo operation', LogName);
 end;
 
-{Clipboard functions}
+{Free functions - deprecated Karjala 2021 }
 procedure DO_FreeGeometryClip;
 var i,j,k     : Integer;
     TheSector : TSector;
@@ -2409,6 +2623,7 @@ begin
  MAP_SEC_Clip.Clear;
 end;
 
+{Free functions - deprecated Karjala 2021 }
 procedure DO_FreeObjectsClip;
 var i,j,k     : Integer;
     TheObject : TOB;
@@ -2418,7 +2633,35 @@ begin
  MAP_OBJ_Clip.Clear;
 end;
 
+procedure DO_WriteToClipBoard(ClipText : String);
+var
+  Success : boolean;
+  RetryCount : integer;
+begin
 
+  RetryCount := 0;
+  Success := false;
+  while not Success do
+    try
+      Log.Info('Copying to ClipBoard Attempt ' + IntToStr(RetryCount), LogName);
+      Clipboard.AsText := ClipText;
+      Success := True;
+    except
+      on Exception do
+      begin
+        Log.error('Failed to Copy to ClipBoard on Attempt ' + IntToStr(RetryCount), LogName);
+        Inc(RetryCount);
+        if RetryCount < 30 then
+          Sleep(RetryCount * 100)
+        else
+          begin
+            log.error('Failed after 30 tries to Copy to ClipBoard', LogName);
+            raise Exception.Create('Cannot set clipboard after ten attempts');
+          end;
+      end
+    end;
+    Log.Info('Done Copying to ClipBoard', LogName);
+end;
 
 procedure DO_CopyGeometry;
 var i,j,k     : Integer;
@@ -2428,10 +2671,18 @@ var i,j,k     : Integer;
     NewSector : TSector;
     NewWall   : TWall;
     NewVertex : TVertex;
+    RootJson : TJSon;
+    SecJson: TJson;
+    WallJson: TJson;
+    VxJson : TJson;
+    SectorsJson : TJson;
+    VertexesJson : TJson;
+    WallsJson : TJson;
+    ClipStr: String;
 begin
- {first empty the geometry clipboard}
- DO_FreeGeometryClip;
+ Log.Info('Copying Geometry', LogName);
 
+ RootJson := TJson.Create();
  {here, it is different : we take only the multiselected
   sectors and their objects, not the full map}
 
@@ -2439,10 +2690,14 @@ begin
  if SC_MULTIS.IndexOf(Format('%4d%4d', [SC_HILITE, SC_HILITE])) = -1 then
   SC_MULTIS.Add(Format('%4d%4d', [SC_HILITE, SC_HILITE]));
 
+
+ SectorsJson := TJson.Create();
  for i := 0 to SC_MULTIS.Count - 1 do
   begin
     TheSector := TSector(MAP_SEC.Objects[StrToInt(Copy(SC_MULTIS[i],1,4))]);
     NewSector := TSector.Create;
+
+    SecJson := TJson.Create();
 
     NewSector.Name       := TheSector.Name;
     NewSector.Ambient    := TheSector.Ambient;
@@ -2466,11 +2721,38 @@ begin
     NewSector.Mark       := TheSector.Mark;
     NewSector.Reserved   := TheSector.Reserved;
     NewSector.InfItems.AddStrings(TheSector.InfItems);
+    NewSector.InfItems.Delimiter := 'ß';
+    NewSector.InfItems.QuoteChar := #0;
+
     { we don't copy the InfClasses, Elevator, Trigger !!!
       if an Clip must be made, we'll use ComputeINFClasses(SC, WL)
       to recompute them from scratch for the pasted sectors and walls
     }
 
+
+    SecJson.put('NewSector.Name',NewSector.Name);
+    SecJson.put('NewSector.Ambient',NewSector.Ambient);
+    SecJson.put('NewSector.Flag1',NewSector.Flag1);
+    SecJson.put('NewSector.Flag2',NewSector.Flag2);
+    SecJson.put('NewSector.Flag3',NewSector.Flag3);
+    SecJson.put('NewSector.Floor_Alt',NewSector.Floor_Alt);
+    SecJson.put('NewSector.Floor.Name',NewSector.Floor.Name);
+    SecJson.put('NewSector.Floor.f1',NewSector.Floor.f1);
+    SecJson.put('NewSector.Floor.f2',NewSector.Floor.f2);
+    SecJson.put('NewSector.Floor.i',NewSector.Floor.i);
+    SecJson.put('NewSector.Ceili_Alt',NewSector.Ceili_Alt);
+    SecJson.put('NewSector.Ceili.Name',NewSector.Ceili.Name);
+    SecJson.put('NewSector.Ceili.f1',NewSector.Ceili.f1);
+    SecJson.put('NewSector.Ceili.f2',NewSector.Ceili.f2);
+    SecJson.put('NewSector.Ceili.i',NewSector.Ceili.i);
+    SecJson.put('NewSector.Second_Alt',NewSector.Second_Alt);
+    SecJson.put('NewSector.Layer',NewSector.Layer);
+    SecJson.put('NewSector.Secret',NewSector.Secret);
+    SecJson.put('NewSector.Mark',NewSector.Mark);
+    SecJson.put('NewSector.Reserved',NewSector.Reserved);
+    SecJson.put('NewSector.InfItems',NewSector.InfItems.DelimitedText);
+
+    VertexesJson := TJson.Create();
     for j := 0 to TheSector.Vx.Count - 1 do
      begin
       TheVertex := TVertex(TheSector.Vx.Objects[j]);
@@ -2480,14 +2762,20 @@ begin
       NewVertex.X    := TheVertex.X;
       NewVertex.Z    := TheVertex.Z;
 
+      VxJson := TJson.Create();
+      VxJson.Put('NewVertex.Mark', NewVertex.Mark);
+      VxJson.Put('NewVertex.X', NewVertex.X);
+      VxJson.Put('NewVertex.Z', NewVertex.Z);
+      VertexesJson.Put(IntToStr(j),VXJson);
+
       NewSector.Vx.AddObject('VX', NewVertex);
      end;
-
+    SecJson.Put('vx', VertexesJson);
+    WallsJson := TJson.Create();
     for j := 0 to TheSector.Wl.Count - 1 do
      begin
       TheWall := TWall(TheSector.Wl.Objects[j]);
       NewWall := TWall.Create;
-
       NewWall.left_vx      := TheWall.left_vx;
       NewWall.right_vx     := TheWall.right_vx;
       NewWall.Adjoin       := TheWall.Adjoin;
@@ -2512,19 +2800,51 @@ begin
       NewWall.Sign.Name    := TheWall.Sign.Name;
       NewWall.Sign.f1      := TheWall.Sign.f1;
       NewWall.Sign.f2      := TheWall.Sign.f2;
-
       NewWall.Mark         := TheWall.Mark;
       NewWall.Reserved     := TheWall.Reserved;
 
       NewWall.InfItems.AddStrings(TheWall.InfItems);
+      NewWall.InfItems.Delimiter := 'ß';
+      NewWall.InfItems.QuoteChar := #0;
 
-      NewSector.Wl.AddObject('WL', NewWall);
+      WallJson := TJson.Create();
+      WallJson.put('NewWall.left_vx',NewWall.left_vx);
+      WallJson.put('NewWall.right_vx',NewWall.right_vx);
+      WallJson.put('NewWall.Adjoin',NewWall.Adjoin);
+      WallJson.put('NewWall.Mirror',NewWall.Mirror);
+      WallJson.put('NewWall.Walk',NewWall.Walk);
+      WallJson.put('NewWall.Light',NewWall.Light);
+      WallJson.put('NewWall.Flag1',NewWall.Flag1);
+      WallJson.put('NewWall.Flag2',NewWall.Flag2);
+      WallJson.put('NewWall.Flag3',NewWall.Flag3);
+      WallJson.put('NewWall.Mid.Name',NewWall.Mid.Name);
+      WallJson.put('NewWall.Mid.f1',NewWall.Mid.f1);
+      WallJson.put('NewWall.Mid.f2',NewWall.Mid.f2);
+      WallJson.put('NewWall.Mid.i',NewWall.Mid.i);
+      WallJson.put('NewWall.Top.Name',NewWall.Top.Name);
+      WallJson.put('NewWall.Top.f1',NewWall.Top.f1);
+      WallJson.put('NewWall.Top.f2',NewWall.Top.f2);
+      WallJson.put('NewWall.Top.i',NewWall.Top.i);
+      WallJson.put('NewWall.Bot.Name',NewWall.Bot.Name);
+      WallJson.put('NewWall.Bot.f1',NewWall.Bot.f1);
+      WallJson.put('NewWall.Bot.f2',NewWall.Bot.f2);
+      WallJson.put('NewWall.Bot.i',NewWall.Bot.i);
+      WallJson.put('NewWall.Sign.Name',NewWall.Sign.Name);
+      WallJson.put('NewWall.Sign.f1',NewWall.Sign.f1);
+      WallJson.put('NewWall.Sign.f2',NewWall.Sign.f2);
+      WallJson.put('NewWall.InfItems', NewWall.InfItems.DelimitedText);
+      WallsJson.Put(IntToStr(j),Walljson);
      end;
+     SecJson.Put('walls', WallsJson);
+     SectorsJson.put(IntToStr(i), SecJson);
    MAP_SEC_Clip.AddObject('SC', NewSector);
   end;
+  RootJson.Put('Sectors', SectorsJson);
+  DO_WriteToClipBoard(RootJson.Stringify);
+  log.Info('Done Copying Geometry. Total ' + IntToStr(SC_MULTIS.Count) + ' Sectors', LogName );
 end;
 
-procedure DO_PasteGeometry(cursX, cursZ : Real);
+procedure DO_PasteGeometry(cursX, cursZ : Real; payload : Tjson);
 var i,j,k     : Integer;
     TheSector : TSector;
     TheWall   : TWall;
@@ -2546,150 +2866,180 @@ var i,j,k     : Integer;
     RVertex2   : TVertex;
     found      : Boolean;
     TheInfCls  : TInfClass;
+    RootJson : TJSon;
+    SecJson: TJson;
+    WallJson: TJson;
+    VxJson : TJson;
+    SectorsJson : TJSON;
+    VertexesJson : TJson;
+    WallsJson : TJson;
+    JSONData       : String;
+    JSONObject     : TJSONObject;
+    JSONPair       : TJSONPair;
+    INFs           : TStringList;
+    firstVX        : Boolean;
 begin
-if (MAP_SEC_Clip.Count = 0) then
-  begin
-   ShowMessage('WDFUSE Geometry Clipboard is empty !');
-   exit;
-  end;
+ Log.Info('Pasting Geometry', LogName);
+ SectorsJson := TJson.Create();
+ SectorsJson.Parse(payload['Sectors'].stringify);
+ OldSCCnt :=  MAP_SEC.Count;
 
- OldSCCnt := MAP_SEC.Count;
+ firstVX := True;
+ XZero     := 0;
+ ZZero     := 0;
 
- {first compute the offset to bring the paste on the cursor pos}
- {-100000,-100000 is used from the menu and means no offsetting}
- if (cursX = -100000) and (cursZ = -100000) then
-  begin
-   XZero     := 0;
-   ZZero     := 0;
-  end
- else
-  begin
-   TheSector := TSector(MAP_SEC_Clip.Objects[0]);
-   TheVertex := TVertex(TheSector.Vx.Objects[0]);
-   XZero     := TheVertex.X - cursX;
-   ZZero     := TheVertex.Z - cursZ;
-  end;
+ for i := 0 to SectorsJson.Count - 1 do
+   begin
+     SecJson := TJSon.Create();
+     SecJson.Parse(SectorsJson[IntToStr(i)].Stringify);
+     NewSector := TSector.Create;
+     NewSector.Name       := SecJson['NewSector.Name'].AsString + '_' + IntToStr(Random(1000));
+     NewSector.Ambient    := SecJson['NewSector.Ambient'].AsInteger;
+     NewSector.Flag1      := SecJson['NewSector.Flag1'].AsInteger;
+     NewSector.Flag2      := SecJson['NewSector.Flag2'].AsInteger;
+     NewSector.Flag3      := SecJson['NewSector.Flag3'].AsInteger;
+     NewSector.Floor_Alt  := SecJson['NewSector.Floor_Alt'].AsNumber;
+     NewSector.Floor.Name := SecJson['NewSector.Floor.Name'].AsString;
+     NewSector.Floor.f1   := SecJson['NewSector.Floor.f1'].AsNumber;
+     NewSector.Floor.f2   := SecJson['NewSector.Floor.f2'].AsNumber;
+     NewSector.Floor.i    := SecJson['NewSector.Floor.i'].AsInteger;
+     NewSector.Ceili_Alt  := SecJson['NewSector.Ceili_Alt'].AsNumber;
+     NewSector.Ceili.Name := SecJson['NewSector.Ceili.Name'].AsString;
+     NewSector.Ceili.f1   := SecJson['NewSector.Ceili.f1'].AsNumber;
+     NewSector.Ceili.f2   := SecJson['NewSector.Ceili.f2'].AsNumber;
+     NewSector.Ceili.i    := SecJson['NewSector.Ceili.i'].AsInteger;
+     NewSector.Second_Alt := SecJson['NewSector.Second_Alt'].AsNumber;
+     NewSector.Layer      := SecJson['NewSector.Layer'].AsInteger;
+     NewSector.Secret     := SecJson['NewSector.Secret'].AsBoolean;
+     NewSector.Mark       := SecJson['NewSector.Mark'].AsInteger;
+     NewSector.Reserved   := SecJson['NewSector.Reserved'].asInteger;
 
- {then copy the GeomClip in the map}
- for i := 0 to MAP_SEC_Clip.Count - 1 do
-  begin
-    TheSector := TSector(MAP_SEC_Clip.Objects[i]);
-    NewSector := TSector.Create;
+     { INFs}
+     INFs := TStringList.Create;
+     INFs.delimiter := 'ß';
+     INFs.StrictDelimiter := True;
+     INFs.DelimitedText   := SecJson['NewSector.InfItems'].AsString;
 
-    NewSector.Name       := TheSector.Name;
-    NewSector.Ambient    := TheSector.Ambient;
-    NewSector.Flag1      := TheSector.Flag1;
-    NewSector.Flag2      := TheSector.Flag2;
-    NewSector.Flag3      := TheSector.Flag3;
-    NewSector.Floor_Alt  := TheSector.Floor_Alt;
-    NewSector.Floor.Name := TheSector.Floor.Name;
-    NewSector.Floor.f1   := TheSector.Floor.f1;
-    NewSector.Floor.f2   := TheSector.Floor.f2;
-    NewSector.Floor.i    := TheSector.Floor.i;
-    NewSector.Ceili_Alt  := TheSector.Ceili_Alt;
-    NewSector.Ceili.Name := TheSector.Ceili.Name;
-    NewSector.Ceili.f1   := TheSector.Ceili.f1;
-    NewSector.Ceili.f2   := TheSector.Ceili.f2;
-    NewSector.Ceili.i    := TheSector.Ceili.i;
-    NewSector.Second_Alt := TheSector.Second_Alt;
-    NewSector.Layer      := TheSector.Layer;
-    NewSector.Secret     := TheSector.Secret;
+     NewSector.InfItems.AddStrings(INFs);
 
-    NewSector.Mark       := TheSector.Mark;
-    NewSector.Reserved   := TheSector.Reserved;
-    NewSector.InfItems.AddStrings(TheSector.InfItems);
+     { Vertices }
 
-    for j := 0 to TheSector.Vx.Count - 1 do
-     begin
-      TheVertex := TVertex(TheSector.Vx.Objects[j]);
-      NewVertex := TVertex.Create;
+     VertexesJson := TJson.Create();
+     VertexesJson.Parse(SecJson['vx'].Stringify);
 
-      NewVertex.Mark := TheVertex.Mark;
-      NewVertex.X    := TheVertex.X - XZero;
-      NewVertex.Z    := TheVertex.Z - ZZero;
+     for j := 0 to VertexesJson.Count - 1 do
+       begin
+        VxJson := TJSon.Create();
+        VxJson.Parse(VertexesJson[IntToStr(j)].Stringify);
+        NewVertex := TVertex.Create;
+        NewVertex.Mark := VxJson['NewVertex.Mark'].AsInteger;
 
-      NewSector.Vx.AddObject('VX', NewVertex);
-     end;
+        { This ensures all the pasted assets are offset from a single point }
+        if firstVX then
+          begin
+            xzero :=  VxJson['NewVertex.X'].AsNumber-cursx;
+            zzero :=  VxJson['NewVertex.Z'].AsNumber-cursz;
+            firstVX := False;
+          end;
 
-    for j := 0 to TheSector.Wl.Count - 1 do
-     begin
-      TheWall := TWall(TheSector.Wl.Objects[j]);
-      NewWall := TWall.Create;
+        NewVertex.X := VxJson['NewVertex.X'].AsNumber - xzero;
+        NewVertex.Z := VxJson['NewVertex.Z'].AsNumber - zzero;
 
-      NewWall.left_vx      := TheWall.left_vx;
-      NewWall.right_vx     := TheWall.right_vx;
-      NewWall.Adjoin       := -1;
-      NewWall.Mirror       := -1;
-      NewWall.Walk         := -1;
-      NewWall.Light        := TheWall.Light;
-      NewWall.Flag1        := TheWall.Flag1;
-      NewWall.Flag2        := TheWall.Flag2;
-      NewWall.Flag3        := TheWall.Flag3;
-      NewWall.Mid.Name     := TheWall.Mid.Name;
-      NewWall.Mid.f1       := TheWall.Mid.f1;
-      NewWall.Mid.f2       := TheWall.Mid.f2;
-      NewWall.Mid.i        := TheWall.Mid.i;
-      NewWall.Top.Name     := TheWall.Top.Name;
-      NewWall.Top.f1       := TheWall.Top.f1;
-      NewWall.Top.f2       := TheWall.Top.f2;
-      NewWall.Top.i        := TheWall.Top.i;
-      NewWall.Bot.Name     := TheWall.Bot.Name;
-      NewWall.Bot.f1       := TheWall.Bot.f1;
-      NewWall.Bot.f2       := TheWall.Bot.f2;
-      NewWall.Bot.i        := TheWall.Bot.i;
-      NewWall.Sign.Name    := TheWall.Sign.Name;
-      NewWall.Sign.f1      := TheWall.Sign.f1;
-      NewWall.Sign.f2      := TheWall.Sign.f2;
+        NewSector.Vx.AddObject('VX', NewVertex);
+      end;
 
-      NewWall.Mark         := TheWall.Mark;
-      NewWall.Reserved     := TheWall.Reserved;
+     {Walls }
 
-      NewWall.InfItems.AddStrings(TheWall.InfItems);
+     WallsJson := TJson.Create();
+     WallsJson.Parse(SecJson['walls'].Stringify);
 
-      NewSector.Wl.AddObject('WL', NewWall);
-     end;
-   MAP_SEC.AddObject('SC', NewSector);
+     for j := 0 to WallsJson.Count - 1 do
+      begin
+        WallJson := TJson.Create();
+        WallJson.Parse(WallsJson[IntToStr(j)].Stringify);
+
+        NewWall := TWall.Create;
+
+        NewWall.left_vx      := WallJson['NewWall.left_vx'].AsInteger;
+        NewWall.right_vx     := WallJson['NewWall.right_vx'].AsInteger;
+        NewWall.Adjoin       := -1;
+        NewWall.Mirror       := -1;
+        NewWall.Walk         := -1;
+        NewWall.Light        := WallJson['NewWall.Light'].AsInteger;
+        NewWall.Flag1        := WallJson['NewWall.Flag1'].AsInteger;
+        NewWall.Flag2        := WallJson['NewWall.Flag2'].AsInteger;
+        NewWall.Flag3        := WallJson['NewWall.Flag3'].AsInteger;
+        NewWall.Mid.Name     := WallJson['NewWall.Mid.Name'].AsString;
+        NewWall.Mid.f1       := WallJson['NewWall.Mid.f1'].AsNumber;
+        NewWall.Mid.f2       := WallJson['NewWall.Mid.f2'].AsNumber;
+        NewWall.Mid.i        := WallJson['NewWall.Mid.i'].AsInteger;
+        NewWall.Top.Name     := WallJson['NewWall.Top.Name'].AsString;
+        NewWall.Top.f1       := WallJson['NewWall.Top.f1'].AsNumber;
+        NewWall.Top.f2       := WallJson['NewWall.Top.f2'].AsNumber;
+        NewWall.Top.i        := WallJson['NewWall.Top.i'].AsInteger;
+        NewWall.Bot.Name     := WallJson['NewWall.Bot.Name'].AsString;
+        NewWall.Bot.f1       := WallJson['NewWall.Bot.f1'].AsNumber;
+        NewWall.Bot.f2       := WallJson['NewWall.Bot.f2'].AsNumber;
+        NewWall.Bot.i        := WallJson['NewWall.Bot.i'].AsInteger;
+        NewWall.Sign.Name    := WallJson['NewWall.Sign.Name'].AsString;
+        NewWall.Sign.f1      := WallJson['NewWall.Sign.f1'].AsNumber;
+        NewWall.Sign.f2      := WallJson['NewWall.Sign.f2'].AsNumber;
+
+        NewWall.Mark         := WallJson['NewWall.Mark'].AsInteger;
+        NewWall.Reserved     := WallJson['NewWall.Reserved'].AsInteger;
+
+        {INFs}
+        INFs := TStringList.Create;
+        INFs.delimiter := 'ß';
+        INFs.StrictDelimiter := True;
+        INFs.DelimitedText   := WallJson['NewWall.InfItems'].AsString;
+
+        NewWall.InfItems.AddStrings(INFs);
+
+        NewSector.Wl.AddObject('WL', NewWall);
+      end;
+      MAP_SEC.AddObject('SC', NewSector);
   end;
 
  {try to readjoin all the new walls BUT STAY IN THOSE TO SEARCH !!!}
  for i := OldSCCnt to MAP_SEC.Count - 1 do
-  begin
-   TheSector := TSector(MAP_SEC.Objects[i]);
-   for j := 0 to TheSector.Wl.Count - 1 do
-    begin
-      TheSector1 := TSector(MAP_SEC.Objects[i]);
-      TheWall1   := TWall(TheSector1.Wl.Objects[j]);
-      LVertex1   := TVertex(TheSector1.Vx.Objects[TheWall1.left_vx]);
-      RVertex1   := TVertex(TheSector1.Vx.Objects[TheWall1.right_vx]);
-      found      := FALSE;
+   begin
+     TheSector := TSector(MAP_SEC.Objects[i]);
+     for j := 0 to TheSector.Wl.Count - 1 do
+      begin
+        TheSector1 := TSector(MAP_SEC.Objects[i]);
+        TheWall1   := TWall(TheSector1.Wl.Objects[j]);
+        LVertex1   := TVertex(TheSector1.Vx.Objects[TheWall1.left_vx]);
+        RVertex1   := TVertex(TheSector1.Vx.Objects[TheWall1.right_vx]);
+        found      := FALSE;
 
-      for s := OldSCCnt to MAP_SEC.Count - 1 do
-       begin
-        TheSector2 := TSector(MAP_SEC.Objects[s]);
-        for w := 0 to TheSector2.Wl.Count - 1 do
+        for s := OldSCCnt to MAP_SEC.Count - 1 do
          begin
-          TheWall2 := TWall(TheSector2.Wl.Objects[w]);
-          LVertex2 := TVertex(TheSector2.Vx.Objects[TheWall2.left_vx]);
-          RVertex2 := TVertex(TheSector2.Vx.Objects[TheWall2.right_vx]);
-
-          {if found do the adjoin and prepare to break out of both loops}
-          if ((LVertex1.X = RVertex2.X) and (LVertex1.Z = RVertex2.Z)) and
-             ((RVertex1.X = LVertex2.X) and (RVertex1.Z = LVertex2.Z)) then
+          TheSector2 := TSector(MAP_SEC.Objects[s]);
+          for w := 0 to TheSector2.Wl.Count - 1 do
            begin
-            TheWall2.Adjoin := i;
-            TheWall2.Mirror := j;
-            TheWall2.Walk   := i;
-            TheWall1.Adjoin := s;
-            TheWall1.Mirror := w;
-            TheWall1.Walk   := s;
-            found      := TRUE;
+            TheWall2 := TWall(TheSector2.Wl.Objects[w]);
+            LVertex2 := TVertex(TheSector2.Vx.Objects[TheWall2.left_vx]);
+            RVertex2 := TVertex(TheSector2.Vx.Objects[TheWall2.right_vx]);
+
+            {if found do the adjoin and prepare to break out of both loops}
+            if ((LVertex1.X = RVertex2.X) and (LVertex1.Z = RVertex2.Z)) and
+               ((RVertex1.X = LVertex2.X) and (RVertex1.Z = LVertex2.Z)) then
+             begin
+              TheWall2.Adjoin := i;
+              TheWall2.Mirror := j;
+              TheWall2.Walk   := i;
+              TheWall1.Adjoin := s;
+              TheWall1.Mirror := w;
+              TheWall1.Walk   := s;
+              found      := TRUE;
+             end;
+            if found then break;
            end;
-          if found then break;
+           if found then break;
          end;
-         if found then break;
-       end;
-    end;
-  end;
+     end;
+   end;
 
  {then recompute the INFClasses for the added sectors}
   for i := OldSCCnt to MAP_SEC.Count - 1 do
@@ -2739,11 +3089,15 @@ if (MAP_SEC_Clip.Count = 0) then
  DO_RecomputeTexturesLists(TRUE, 'Paste Geometry');
  ProgressWindow.Hide;
 
- DO_Clear_MultiSel2;
- {finish with creating a multiselection of the pasted sectors}
- for i := OldSCCnt to MAP_SEC.Count - 1 do
-  SC_MULTIS.Add(Format('%4d%4d', [i, i]));
- MapWindow.PanelMulti.Caption := IntToStr(SC_MULTIS.Count);
+ { Only multi select if you have more than 1 item }
+ if SectorsJson.Count > 1 then
+  begin
+    DO_Clear_MultiSel2;
+   {finish with creating a multiselection of the pasted sectors}
+    for i := OldSCCnt to MAP_SEC.Count - 1 do
+     SC_MULTIS.Add(Format('%4d%4d', [i, i]));
+    MapWindow.PanelMulti.Caption := IntToStr(SC_MULTIS.Count);
+  end;
 
  SC_HILITE := OldSCCnt;
  WL_HILITE := 0;
@@ -2752,121 +3106,194 @@ if (MAP_SEC_Clip.Count = 0) then
  MODIFIED   := TRUE;
  DO_Fill_SectorEditor;
  MapWindow.Map.Invalidate;
+ log.Info('Done Pasting Geometry. Total ' + IntToStr(SectorsJson.Count) + ' Sectors', LogName );
 end;
-
 
 procedure DO_CopyObjects;
 var i,j,k     : Integer;
     TheObject : TOB;
     NewObject : TOB;
+    RootJson : TJson;
+    ObjectsJson : TJson;
+    ObjectJson : TJson;
+    clipStr : String;
 begin
- {first empty the objects clipboard}
- DO_FreeObjectsClip;
+ Log.Info('Copying Objects', LogName);
+ RootJson := TJson.Create;
 
  {add the Selection to the MultiSelection if necessary}
+
  TheObject := TOB(MAP_OBJ.Objects[OB_HILITE]);
 
  if OB_MULTIS.IndexOf(Format('%4d%4d', [TheObject.Sec, OB_HILITE])) = -1 then
   OB_MULTIS.Add(Format('%4d%4d', [TheOBject.Sec, OB_HILITE]));
 
+ ObjectsJson := TJson.Create();
+
  for i := 0 to OB_MULTIS.Count - 1 do
   begin
    TheObject := TOB(MAP_OBJ.Objects[StrToInt(Copy(OB_MULTIS[i],5,8))]);
-   NewObject := TOB.Create;
 
-   NewObject.ClassName := TheObject.ClassName;
-   NewObject.DataName  := TheObject.DataName;
-   NewObject.X         := TheObject.X;
-   NewObject.Y         := TheObject.Y;
-   NewObject.Z         := TheObject.Z;
-   NewObject.Yaw       := TheObject.Yaw;
-   NewObject.Pch       := TheObject.Pch;
-   NewObject.Rol       := TheObject.Rol;
-   NewObject.Diff      := TheObject.Diff;
-   NewObject.Sec       := TheObject.Sec;
-   NewObject.Col       := TheObject.Col;
-   NewObject.OType     := TheObject.OType;
-   NewObject.Special   := TheObject.Special;
-   NewObject.Mark      := TheObject.Mark;
+   ObjectJson := TJson.Create;
+   ObjectJson.put('TheObject.ClassName',TheObject.ClassName);
+   ObjectJson.put('TheObject.DataName',TheObject.DataName);
+   ObjectJson.put('TheObject.X',TheObject.X);
+   ObjectJson.put('TheObject.Y',TheObject.Y);
+   ObjectJson.put('TheObject.Z',TheObject.Z);
+   ObjectJson.put('TheObject.Yaw',TheObject.Yaw);
+   ObjectJson.put('TheObject.Pch',TheObject.Pch);
+   ObjectJson.put('TheObject.Rol',TheObject.Rol);
+   ObjectJson.put('TheObject.Diff',TheObject.Diff);
+   ObjectJson.put('TheObject.Sec',TheObject.Sec);
+   ObjectJson.put('TheObject.Col',TheObject.Col);
+   ObjectJson.put('TheObject.OType',TheObject.OType);
+   ObjectJson.put('TheObject.Special',TheObject.Special);
+   ObjectJson.put('TheObject.Mark',TheObject.Mark);
+   ObjectJson.put('TheObject.Mark',TheObject.Mark);
 
-   NewObject.Seq.AddStrings(TheObject.Seq);
-   MAP_OBJ_Clip.AddObject('OB', newObject);
+   TheObject.Seq.Delimiter := 'ß';
+   TheObject.Seq.QuoteChar := #0;
+   ObjectJson.Put('TheObject.Seq', TheObject.Seq.DelimitedText);
+   ObjectsJson.Put(inttostr(i), ObjectJson);
   end;
+  RootJson.put('Objects', ObjectsJson);
+  DO_WriteToClipBoard(RootJson.Stringify);
+  log.Info('Done Copying Objects. Total ' + IntToStr(OB_MULTIS.Count) + ' Objects', LogName );
 end;
 
-procedure DO_PasteObjects(cursX, cursZ : Real);
+procedure DO_PasteObjects(cursX, cursZ : Real; payload : TJson);
 var i,j,k     : Integer;
     TheObject : TOB;
     NewObject : TOB;
     OldOBCnt  : Integer;
     XZero,
     ZZero     : Real;
+    RootJson : TJson;
+    ObjectsJson : TJson;
+    ObjectJson : TJson;
+    INFs : TStringList;
+    firstVx : Boolean;
 begin
- if MAP_OBJ_Clip.Count = 0 then
-  begin
-   ShowMessage('WDFUSE Objects Clipboard is empty !');
-   exit;
-  end;
+ Log.Info('Pasting Objects', LogName);
+ Do_StoreUndo;
+ DO_Clear_MultiSel;
+ DO_Clear_MultiSel2;
 
- OldOBCnt := MAP_OBJ.Count;
+ firstVx := True;
 
- {first compute the offset to bring the paste on the cursor pos}
- {-100000,-100000 is used from the menu and means no offsetting}
- if (cursX = -100000) and (cursZ = -100000) then
-  begin
-   XZero     := 0;
-   ZZero     := 0;
-  end
- else
-  begin
-   TheObject := TOB(MAP_OBJ_Clip.Objects[0]);
-   XZero     := TheObject.X - cursX;
-   ZZero     := TheObject.Z - cursZ;
-  end;
+ ObjectsJson := TJson.Create();
+ ObjectsJson.Parse(payload['Objects'].stringify);
+ OldOBCnt :=  MAP_SEC.Count;
 
- for i := 0 to MAP_OBJ_Clip.Count - 1 do
-  begin
-   TheObject := TOB(MAP_OBJ_Clip.Objects[i]);
-   NewObject := TOB.Create;
+ for i := 0 to ObjectsJson.Count - 1 do
+   begin
+     ObjectJson := TJSon.Create();
+     ObjectJson.Parse(ObjectsJson[IntToStr(i)].Stringify);
 
-   NewObject.ClassName := TheObject.ClassName;
-   NewObject.DataName  := TheObject.DataName;
-   NewObject.X         := TheObject.X - XZero;
-   NewObject.Y         := TheObject.Y;
-   NewObject.Z         := TheObject.Z - ZZero;
-   NewObject.Yaw       := TheObject.Yaw;
-   NewObject.Pch       := TheObject.Pch;
-   NewObject.Rol       := TheObject.Rol;
-   NewObject.Diff      := TheObject.Diff;
-   NewObject.Sec       := -1;
-   NewObject.Col       := TheObject.Col;
-   NewObject.OType     := TheObject.OType;
-   NewObject.Special   := TheObject.Special;
-   NewObject.Mark      := TheObject.Mark;
+     { This ensures all the pasted assets are offset from a single point }
+     if firstVX then
+      begin
+        xzero := (ObjectJson['TheObject.X'].asNumber - cursx);
+        zzero := (ObjectJson['TheObject.Z'].asNumber - cursz);
+        firstVX := False;
+      end;
 
-   NewObject.Seq.AddStrings(TheObject.Seq);
-   MAP_OBJ.AddObject('OB', newObject);
-  end;
+
+     NewObject := TOB.Create;
+     NewObject.ClassName := ObjectJson['TheObject.ClassName'].AsString;
+     NewObject.DataName  := ObjectJson['TheObject.DataName'].AsString;
+     NewObject.X         := ObjectJson['TheObject.X'].asNumber - xzero;
+     NewObject.Y         := ObjectJson['TheObject.Y'].asNumber;
+     NewObject.Z         := ObjectJson['TheObject.Z'].asNumber - zzero;
+     NewObject.Yaw       := ObjectJson['TheObject.Yaw'].asNumber;
+     NewObject.Pch       := ObjectJson['TheObject.Pch'].asNumber;
+     NewObject.Rol       := ObjectJson['TheObject.Rol'].asNumber;
+     NewObject.Diff      := ObjectJson['TheObject.Diff'].AsInteger;
+     NewObject.Sec       := -1;
+     NewObject.Col       := ObjectJson['TheObject.Col'].AsInteger;
+     NewObject.OType     := ObjectJson['TheObject.OType'].AsInteger;
+     NewObject.Special   := ObjectJson['TheObject.Special'].AsInteger;
+     NewObject.Mark      := ObjectJson['TheObject.Mark'].AsInteger;
+
+     {INFs}
+     INFs := TStringList.Create;
+     INFs.delimiter := 'ß';
+     INFs.StrictDelimiter := True;
+     INFs.DelimitedText   := ObjectJson['TheObject.Seq'].AsString;
+
+     NewObject.Seq.AddStrings(INFs);
+
+     MAP_OBJ.AddObject('OB', newObject);
+   end;
 
  {recompute the textures and objects, etc.}
  LayerAllObjects;
  ProgressWindow.Show;
  DO_RecomputeObjectsLists(TRUE, 'Paste Objects');
  ProgressWindow.Hide;
-
+ DO_Clear_MultiSel;
  DO_Clear_MultiSel2;
- {finish with creating a multiselection of the pasted objects}
- for i := OldOBCnt to MAP_OBJ.Count - 1 do
-  begin
-   TheObject := TOB(MAP_OBJ.Objects[i]);
-   OB_MULTIS.Add(Format('%4d%4d', [TheOBject.Sec, i]));
-  end;
- MapWindow.PanelMulti.Caption := IntToStr(OB_MULTIS.Count);
+
+ {finish with creating a multiselection of the pasted objects }
+
+
+ { Only multi select if you have more than 1 item }
+ if ObjectsJson.Count > 1 then
+   begin
+     for i := OldOBCnt to MAP_OBJ.Count - 1 do
+      begin
+       TheObject := TOB(MAP_OBJ.Objects[i]);
+       OB_MULTIS.Add(Format('%4d%4d', [TheOBject.Sec, i]));
+      end;
+     MapWindow.PanelMulti.Caption := IntToStr(OB_MULTIS.Count);
+   end;
 
  OB_HILITE := OldOBCnt;
  MODIFIED   := TRUE;
  DO_Fill_ObjectEditor;
  MapWindow.Map.Invalidate;
+
+ log.Info('Done Pasting Objects. Total ' + IntToStr(ObjectsJson.Count) + ' Objects', LogName );
+end;
+
+procedure DO_PasteWrapper(cursX, cursZ : Real);
+var WrapperJson : TJson;
+    payloadStr : string;
+
+begin
+ if ClipBoard.AsText = '' then
+  begin
+   ShowMessage('Your ClipBoard is empty!');
+   exit;
+  end;
+
+ try
+   WrapperJson := TJson.Create();
+   WrapperJson.Parse(ClipBoard.AsText);
+
+ except
+   begin
+    ShowMessage('Unable to parse the Clipboard! Maybe it is malformed?');
+    exit;
+   end;
+ end;
+
+ Do_StoreUndo;
+ DO_Clear_MultiSel;
+ DO_Clear_MultiSel2;
+
+ if not (WrapperJson['Sectors'].Stringify = 'null') then
+   begin
+    DO_Switch_To_SC_Mode;
+    DO_PasteGeometry(cursx, cursz, WrapperJson)
+   end
+ else if not (WrapperJson['Objects'].Stringify = 'null') then
+   begin
+     DO_Switch_To_OB_Mode;
+     DO_PasteObjects(cursx, cursz, WrapperJson)
+   end
+ else
+   raise Exception.Create('Invalid JSON. Missing Sector/Object data');
 end;
 
 end.

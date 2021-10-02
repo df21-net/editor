@@ -846,20 +846,31 @@ begin
    Renderer.Height   := 562;
    RenderBox.Left    := 8;
    RenderBox.Top     := 8;
-   RenderBox.Width   := 640;
-   RenderBox.Height  := 400;
-   BNSize.Caption    := '320 x 200';
-   RendererSettings.Stretched := TRUE;
-  end
- else
-  begin
-   Renderer.Width    := 500;
-   Renderer.Height   := 363;
-   RenderBox.Left    := 88;
-   RenderBox.Top     := 8;
    RenderBox.Width   := 320;
    RenderBox.Height  := 200;
+   BNSize.Caption    := '320 x 200';
+   RendererSettings.Stretched := TRUE;
+  end;
+ if BNSize.Caption = '1280 x 800' then
+  begin
+   Renderer.Width    := 663;
+   Renderer.Height   := 562;
+   RenderBox.Left    := 8;
+   RenderBox.Top     := 8;
+   RenderBox.Width   := 640;
+   RenderBox.Height  := 400;
    BNSize.Caption    := '640 x 400';
+   RendererSettings.Stretched := TRUE;
+  end;
+ if BNSize.Caption = '320 x 200' then
+  begin
+   Renderer.Width    := 1350;
+   Renderer.Height   := 890;
+   RenderBox.Left    := 8;
+   RenderBox.Top     := 8;
+   RenderBox.Width   := 1280;
+   RenderBox.Height  := 800;
+   BNSize.Caption    := '1280 x 800';
    RendererSettings.Stretched := FALSE;
   end;
 

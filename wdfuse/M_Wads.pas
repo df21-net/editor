@@ -153,6 +153,14 @@ begin
   end;
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
+
 procedure DO_LoadWADMap(TheWAD : TFileName; TheMAP : String);
 var numSECTORS,
     numVERTEXES,
@@ -396,16 +404,16 @@ begin
                  MapSelectWindow.ED_W2GSwitches.Text +
                  'doom_res.lst ' +
                  IWAD);
-   WinExec(tmp, SW_SHOWNORMAL);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWNORMAL);
   end;
 
  if MapSelectWindow.CBShowLog.Checked then
   begin
    strPcopy(tmp, 'notepad ' + ChangeFileExt(ProjectFile, '.LOG'));
-   WinExec(tmp, SW_SHOWMAXIMIZED);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMIZED);
   end;
 
- MapWindow.Caption := 'WDFUSE - ' + LowerCase(PROJECTFile) + ' : SECTORS';
+ MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : SECTORS';
 end;
 
 procedure DO_ReadWADSectors(wf : Integer; numsectors : LongInt);

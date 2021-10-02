@@ -232,6 +232,7 @@ type
     procedure BNMessageUseWLSelClick(Sender: TObject);
     procedure BNElevSCMultisClick(Sender: TObject);
     procedure SBLinksClick(Sender: TObject);
+    procedure FormDeactivate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -326,19 +327,41 @@ end;
 
 procedure TINFWindow2.FormCreate(Sender: TObject);
 begin
-  INFWindow2.Left   := Ini.ReadInteger('WINDOWS', 'INF Editor2    X', 0);
-  INFWindow2.Top    := Ini.ReadInteger('WINDOWS', 'INF Editor2    Y', 72);
-  INFWindow2.Width  := Ini.ReadInteger('WINDOWS', 'INF Editor2    W', 565);
-  INFWindow2.Height := Ini.ReadInteger('WINDOWS', 'INF Editor2    H', 444);
   CBElevType.ItemIndex := 0;
 end;
 
+procedure TINFWindow2.FormDeactivate(Sender: TObject);
+var Action: TCloseAction;
+begin
+ Action := cafree;
+ INFWindow2.FormClose(NIL, Action);
+end;
+
 procedure TINFWindow2.FormActivate(Sender: TObject);
+var sfont : TArray<String>;
+    iFont : TFont;
 begin
 {very important if INF editor is not modal,
  because FormActivate is also called when DEactivating}
 IF LEVELLOADED THEN
 BEGIN
+
+  INFWindow2.Left   := Ini.ReadInteger('WINDOWS', 'INF Editor2    X', 0);
+  INFWindow2.Top    := Ini.ReadInteger('WINDOWS', 'INF Editor2    Y', 72);
+  INFWindow2.Width  := Ini.ReadInteger('WINDOWS', 'INF Editor2    W', 712);
+  INFWindow2.Height := Ini.ReadInteger('WINDOWS', 'INF Editor2    H', 444);
+
+  iFont := TFont.create;
+  sfont := Ini.ReadString('INF Editor', 'Font', 'System:10:10').Split([':']);
+
+  iFont.Name := sfont[0];
+  iFont.size := StrToint(sfont[1]);
+  iFont.color := StrToInt(sfont[2]);
+
+  MemoINF.Font     := iFont;
+  MemoINFMisc.Font := MemoINF.Font;
+
+
  {Initialize the Misc part if first load for this level}
  if INFMisc = -1 then
   begin
@@ -365,7 +388,8 @@ begin
  {!!!!! not sufficient, must be asked if INF editor is visible at
         all the possibilities of a level close in mapper !!!!!}
  {don't put something like SBExitClick(NIL), this will loop again and again
- until a stack overflow occurs}
+ until a stack overflow occurs
+  }
 
 
   Ini.WriteInteger('WINDOWS', 'INF Editor2    X', INFWindow2.Left);
@@ -629,6 +653,7 @@ begin
 end;
 
 procedure TINFWindow2.SBFontClick(Sender: TObject);
+var sfont : string;
 begin
 with FontDialog1 do
   begin
@@ -637,6 +662,11 @@ with FontDialog1 do
     begin
      MemoINF.Font     := Font;
      MemoINFMisc.Font := Font;
+
+
+     sfont := font.name + ':' + inttostr(font.Size) + ':'
+            + inttostr(font.color);
+     Ini.WriteString('INF Editor', 'Font', sfont);
     end;
   end;
 end;
@@ -740,11 +770,7 @@ end;
 
 procedure TINFWindow2.SBHelpClick(Sender: TObject);
 begin
- CASE MainNotebook.PageIndex OF
-  0: Application.HelpJump('wdfinf_help_itemedit');
-  1: Application.HelpJump('wdfinf_help_wizardedit');
-  2: Application.HelpJump('wdfinf_help_miscedit');
- END;
+  MapWindow.HelpTutorialClick(NIL);
 end;
 
 {***************************************************************************}
@@ -758,6 +784,7 @@ procedure TINFWindow2.CBKeywordsClick(Sender: TObject);
 begin
  MemoINF.SelText := CBKeywords.Items[CBKeywords.ItemIndex];
 end;
+
 
 procedure TINFWindow2.MemoINFKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);

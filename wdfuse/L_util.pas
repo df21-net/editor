@@ -2,7 +2,7 @@ unit L_util;
 
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes,
-     StdCtrls, Gauges, FileCtrl, Forms, _Strings;
+     StdCtrls, Gauges, FileCtrl, Forms, _Strings, System.Strutils;
 
 CONST
  ERRLFD_NOERROR   =  0;
@@ -12,8 +12,8 @@ CONST
 
 TYPE
  LFD_INDEX = record
-   MAGIC  : array[1..4] of char;
-   NAME   : array[1..8] of char;
+   MAGIC  : array[1..4] of AnsiChar;
+   NAME   : array[1..8] of AnsiChar;
    LEN    : LongInt;
  end;
 
@@ -31,6 +31,7 @@ function LFD_ExtractResource(OutputDir : String ; LFDname : TFileName; ResName :
 function LFD_ExtractFiles(OutputDir : String ; LFDname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
 function LFD_AddFiles(InputDir : String ; LFDname : TFileName; DirList : TFileListBox; ProgressBar : TGauge) : Integer;
 function LFD_RemoveFiles(LFDname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
+function LFD_MagicConvert(LFDAsset : String) : String;
 
 implementation
 
@@ -65,6 +66,13 @@ begin
      IsLFD := FALSE;
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
 
 function IsResourceInLFD(LFDname, RESName : TFileName; VAR IX, LEN : LongInt) : Boolean;
 var i       : LongInt;
@@ -84,7 +92,7 @@ begin
   for i := 1 to MASTERN do
     begin
       FileRead(gf, gx, SizeOf(gx));
-      if (gx.MAGIC + gx.NAME) = RESName then
+      if AnsiString(gx.MAGIC) + AnsiString(gx.NAME) = RESName then
         begin
           IX    := cur_idx;
           LEN   := gx.LEN;
@@ -119,8 +127,8 @@ begin
        for i := 1 to MASTERN do
         begin
          FileRead(gf, gx, SizeOf(gx));
-         for j := 1 to 8 do if gx.NAME[j] = #0 then for k := j to 8 do gx.NAME[k] := ' ';
-         DirList.Items.Add(gx.MAGIC+ RTrim(gx.NAME));
+         for j := 1 to 8 do if (gx.NAME[j] = #0) then for k := j to 8 do gx.NAME[k] := ' ';
+         DirList.Items.Add(RTrim(gx.NAME) + '.' + gx.MAGIC);
         end;
        FileClose(gf);
        LFD_GetDirList := ERRLFD_NOERROR;
@@ -155,7 +163,7 @@ begin
        gf := FileOpen(LFDName, fmOpenRead);
        FileRead(gf, gs, SizeOf(gs));
        MASTERN := gs.LEN div 16;
-       cur_idx := gs.LEN + 16 + 16;
+       cur_idx := gs.LEN + 16;
 
        DirList.Clear;
        DirList.Lines.BeginUpdate;
@@ -211,7 +219,7 @@ var i       : LongInt;
     S_NAME  : String;
     position  : LongInt;
     OldCursor : HCursor;
-    Buffer  : array[0..4095] of Char;
+    Buffer  : array[0..4095] of AnsiChar;
 begin
  OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
  gf := FileOpen(LFDName, fmOpenRead);
@@ -224,7 +232,7 @@ begin
    begin
      FileRead(gf, gx, SizeOf(gx));
      sav_len := gx.LEN;
-     for j := 1 to 8 do if gx.NAME[j] = #0 then for k := j to 8 do gx.NAME[k] := ' ';
+     for j := 1 to 8 do if (gx.NAME[j] = #0) or (gx.NAME[j] = ' ') then for k := j to 8 do gx.NAME[k] := #0;
      S_NAME := gx.MAGIC + RTrim(gx.NAME);
      if S_NAME = ResName then
        begin
@@ -286,10 +294,10 @@ var i       : LongInt;
     fs_NAME : String;
     S_NAME  : String;
     position  : LongInt;
-    tmp,tmp2  : array[0..127] of Char;
+    tmp,tmp2  : array[0..255] of Char;
     go        : Boolean;
     OldCursor : HCursor;
-    Buffer  : array[0..4095] of Char;
+    Buffer  : array[0..4095] of AnsiChar;
     XList   : TStrings;
 begin
 
@@ -304,7 +312,7 @@ begin
    if DirList.Selected[i] then
     begin
       Inc(NSel);
-      XList.Add(DirList.Items[i]);
+      XList.Add(LFD_MagicConvert(DirList.Items[i]));
     end;
 
  if XList.Count = 0 then
@@ -410,10 +418,10 @@ var i       : LongInt;
     LFDBAKName  : TFileName;   {original LFD }
     LFDDATName  : TFileName;   {dynamic DATA }
     position  : LongInt;
-    tmp,tmp2  : array[0..127] of Char;
+    tmp,tmp2  : array[0..255] of Char;
     go        : Boolean;
     OldCursor : HCursor;
-    Buffer    : array[0..4095] of Char;
+    Buffer    : array[0..4095] of AnsiChar;
     Counter   : LongInt;
 begin
 {
@@ -464,7 +472,7 @@ begin
  for i := 1 to MASTERN do
    begin
      FileRead(gbf, gx, SizeOf(gx));
-     for j := 1 to 8 do if gx.NAME[j] = #0 then for k := j to 8 do gx.NAME[k] := ' ';
+     for j := 1 to 8 do if (gx.NAME[j] = #0) or (gx.NAME[j] = ' ') then for k := j to 8 do gx.NAME[k] := #0;
      S_NAME := gx.MAGIC + RTrim(gx.NAME);
 
      {test name}
@@ -529,23 +537,23 @@ begin
 
        gx.LEN  := FileSizing(fsf);
        T_NAME  := ExtractFileName(fs_NAME) + '        ';
-       for j := 1 to 8 do gx.NAME[j] := T_NAME[j];
+       for j := 1 to 8 do gx.NAME[j] := AnsiChar(T_NAME[j]);
        for j := 1 to 8 do if gx.NAME[j] = '.' then for k := j to 8 do gx.NAME[k] := ' ';
-       for j := 1 to 8 do if gx.NAME[j] = ' ' then for k := j to 8 do gx.NAME[k] := #0;
+       for j := 1 to 8 do if gx.NAME[j] = ' ' then for k := j to 8 do gx.NAME[k] := AnsiChar(0);
        T_NAME   := UpperCase(ExtractFileExt(fs_NAME));
        tmpstr   := Copy(Copy(T_NAME,2,3) + '????', 1,4);
-       gx.MAGIC[1] := tmpstr[1];
-       gx.MAGIC[2] := tmpstr[2];
-       gx.MAGIC[3] := tmpstr[3];
-       gx.MAGIC[4] := tmpstr[4];
-       if T_NAME = '.PLT' then gx.MAGIC := 'PLTT';
-       if T_NAME = '.FON' then gx.MAGIC := 'FONT';
-       if T_NAME = '.ANM' then gx.MAGIC := 'ANIM';
-       if T_NAME = '.DLT' then gx.MAGIC := 'DELT';
-       if T_NAME = '.VOC' then gx.MAGIC := 'VOIC';
-       if T_NAME = '.GMD' then gx.MAGIC := 'GMID';
-       if T_NAME = '.TXT' then gx.MAGIC := 'TEXT';
-       if T_NAME = '.FLM' then gx.MAGIC := 'FILM';
+       gx.MAGIC[1] := AnsiChar(tmpstr[1]);
+       gx.MAGIC[2] := AnsiChar(tmpstr[2]);
+       gx.MAGIC[3] := AnsiChar(tmpstr[3]);
+       gx.MAGIC[4] := AnsiChar(tmpstr[4]);
+       if (T_NAME = '.PLT') or (T_NAME = '.PLTT') then gx.MAGIC := 'PLTT';
+       if (T_NAME = '.FON') or (T_NAME = '.FONT') then gx.MAGIC := 'FONT';
+       if (T_NAME = '.ANM') or (T_NAME = '.ANIM') then gx.MAGIC := 'ANIM';
+       if (T_NAME = '.DLT') or (T_NAME = '.DELT') then gx.MAGIC := 'DELT';
+       if (T_NAME = '.VOC') or (T_NAME = '.VOIC') then gx.MAGIC := 'VOIC';
+       if (T_NAME = '.GMD') or (T_NAME = '.GMID') then gx.MAGIC := 'GMID';
+       if (T_NAME = '.TXT') or (T_NAME = '.TEXT') then gx.MAGIC := 'TEXT';
+       if (T_NAME = '.FLM') or (T_NAME = '.FILM') then gx.MAGIC := 'FILM';
 
        FileWrite(gdf, gx, SizeOf(gx));
        FileWrite(gf, gx, SizeOf(gx));
@@ -610,16 +618,25 @@ var i       : LongInt;
     position  : LongInt;
     go        : Boolean;
     OldCursor : HCursor;
-    Buffer    : array[0..4095] of Char;
+    Buffer    : array[0..4095] of AnsiChar;
     Counter   : LongInt;
     XList     : TStrings;
+    assetstr  : string;
+    lendiff   : integer;
 begin
  OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
 
- XList := TStringList.Create;
- for i := 0 to DirList.Items.Count - 1 do
+  XList := TStringList.Create;
+  for i := 0 to DirList.Items.Count - 1 do
    if DirList.Selected[i] then
-      XList.Add(DirList.Items[i]);
+    begin
+      assetstr := LFD_MagicConvert(DirList.Items[i]);
+      lendiff := 12 -length(assetstr);
+
+      for j :=  13 - lendiff to 12 do
+        assetstr := assetstr + #0;
+      XList.Add(assetstr);
+    end;
 
 if XList.Count = 0 then
  begin
@@ -655,7 +672,7 @@ if XList.Count = 0 then
  for i := 1 to MASTERN do
    begin
      FileRead(gbf, gx, SizeOf(gx));
-     for j := 1 to 8 do if gx.NAME[j] = #0 then for k := j to 8 do gx.NAME[k] := ' ';
+     for j := 1 to 8 do if (gx.NAME[j] = #0) or (gx.NAME[j] = ' ') then for k := j to 8 do gx.NAME[k] := #0;
      S_NAME := gx.MAGIC + RTrim(gx.NAME);
 
      sav_len := gx.LEN;
@@ -716,5 +733,12 @@ if XList.Count = 0 then
  LFD_RemoveFiles := ERRLFD_NOERROR;
 end;
 
+function LFD_MagicConvert(LFDAsset : String) : String;
+var LFD_FILE, LFD_TYPE : String;
+begin
+  LFD_FILE := LeftStr(LFDAsset,length(LFDAsset) - 5);
+  LFD_TYPE := RightStr(LFDAsset,4);
+  Result := LFD_TYPE + LFD_FILE;
+end;
 
 end.

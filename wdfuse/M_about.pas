@@ -3,7 +3,7 @@ unit M_about;
 interface
 
 uses WinTypes, WinProcs, Classes, Graphics, Forms, Controls, StdCtrls,
-  Buttons, ExtCtrls, M_Global;
+  Buttons, ExtCtrls, M_Global, ShellApi, Vcl.Imaging.pngimage;
 
 type
   TAboutBox = class(TForm)
@@ -13,11 +13,16 @@ type
     ProductName: TLabel;
     Version: TLabel;
     Panel2: TPanel;
-    Panel3: TPanel;
     Image1: TImage;
     Memo1: TMemo;
     Panel4: TPanel;
+    Panel5: TPanel;
+    Panel6: TPanel;
+    Panel8: TPanel;
+    Panel7: TPanel;
+    Image2: TImage;
     procedure FormCreate(Sender: TObject);
+    procedure LogoClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -34,6 +39,13 @@ implementation
 procedure TAboutBox.FormCreate(Sender: TObject);
 begin
   Version.Caption := WDFUSE_VERSION;
+end;
+
+procedure TAboutBox.LogoClick(Sender: TObject);
+var url : String;
+begin
+  url := 'https://df-21.net';
+  ShellExecute(HInstance, 'open', PChar(url), nil, nil, SW_NORMAL);
 end;
 
 end.

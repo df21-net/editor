@@ -1,0 +1,46 @@
+; INFDATA.WDF
+;
+; Data for INF generator
+
+[NAMES]
+CNT=2
+01=Platform Up
+02=Platform Down
+
+; format is 
+; number of parameters, then for each parameter 3 MANDATORY values
+;                       parameter name (matches the % variables in real INF)
+;                       parameter value
+;                         specials are allowed (FLO, CEI, LHF, ... see DOOMDATA.WDF)
+;                       description (this will be the label in param screen)
+; number of lines,      then each line things between % will be replaced by parameters
+
+[Platform Up]
+
+PAR=4
+P01=speed      50       Speed of elevator
+P02=low        FLO      Lowest Altitude
+P03=high       LHF      Highest Altitude
+P04=delay      3        Delay at Highest
+
+CNT=5
+01=class elevator move_floor
+02=event_mask: 20
+03=speed: %speed%
+04=stop: %low% hold
+05=stop: %high% %delay%
+
+[Platform Down]
+
+PAR=4
+P01=speed      50       Speed of elevator
+P02=high       FLO      Highest Altitude
+P03=low        HLF      Lowest Altitude
+P04=delay      3        Delay at Lowest
+
+CNT=4
+01=class elevator move_floor
+02=event_mask: 20
+03=speed: %speed%
+04=stop: %high% hold
+05=stop: %low% %delay%

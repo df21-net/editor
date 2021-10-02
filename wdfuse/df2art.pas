@@ -252,9 +252,9 @@ begin
  Cur_art:=-1;
  Arts:=TstringList.Create;
  hgrp:=FileOpen(GRP,fmOpenRead or fmShareDenyNone);
- if hgrp<0 then begin fail; exit; end;
+ if hgrp<0 then raise Exception.CreateFmt('Could not open GRP %s' ,[GRP]);
  FRead(gh,sizeof(gh));
- if gh.sig<>GRP_Sig then begin fail; exit; end;
+ if gh.sig<>GRP_Sig then raise Exception.CreateFmt('Could not Create GRP %s' ,[GRP]);
  Fpos:=Sizeof(gh)+gh.nentries*sizeof(ge);
  for i:=1 to gh.nentries do
  begin
@@ -802,7 +802,7 @@ const
                                $1A,$00,$0A,$01,$29,$11,$01,$4B,$04,$00,$A6,$00);
 begin
  SndGob:=TGOBFile.OpenGob(sounds_gob);
- if SndGob=nil then begin fail; exit; end;
+ if SndGob=nil then raise Exception.CreateFmt('Could not create sound GOB %s' ,[sounds_gob]);
  move(VOC_HD,blank_voc,32);
  Fillchar(blank_voc[32],1097,128);
  blank_voc[1129]:=0;

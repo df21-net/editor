@@ -33,12 +33,14 @@ implementation
 
 {$R *.DFM}
 
+uses MAPPER;
+
 procedure TDIFFEditor.FormKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
 if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_secondary');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2,
       VK_RETURN : DiffEditor.ModalResult := mrOk;
       VK_ESCAPE : DiffEditor.ModalResult := mrCancel;
@@ -57,7 +59,7 @@ end;
 
 procedure TDIFFEditor.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_secondary');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

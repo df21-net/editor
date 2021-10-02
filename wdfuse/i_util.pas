@@ -3,7 +3,7 @@ unit I_util;
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes,
      StdCtrls, FileCtrl, Forms,
-     _Strings, _Files, M_Global;
+     _Strings, _Files, M_Global, Generics.Collections;
 
 procedure FillINFSectorNames;
 function  INFItemsToMemo(SC, WL : Integer; VAR Memo : TMemo) : Boolean;
@@ -152,6 +152,7 @@ var TmpComments  : TStringList;
     Comment      : Boolean;
     pars         : TStringParserWithColon;
     strin        : string;
+    strinlo      : string;
     TheLong      : LongInt;
     TheReal      : Real;
     code         : Integer;
@@ -164,6 +165,7 @@ var TmpComments  : TStringList;
     tmpMsgType,
     tmpMsgParam1,
     tmpMsgParam2 : String[15];
+    longstr : string;
 begin
 Result := -1;
 
@@ -183,7 +185,7 @@ addon       := -1;
 for i := 0 to TheINFItems.Count - 1 do
   begin
      strin := LTrim(TheINFItems[i]);
-
+     strinlo := LowerCase(strin);
      if strin = '' then continue;
 
      if Pos('/*', strin) = 1 then
@@ -203,7 +205,7 @@ for i := 0 to TheINFItems.Count - 1 do
         TmpComments.Add(strin);
        end
      else
-     if Pos('class:', LowerCase(strin)) = 1 then
+     if Pos('class:', strinlo) = 1 then
        begin
         if not SeqBegun then
          begin
@@ -353,7 +355,7 @@ for i := 0 to TheINFItems.Count - 1 do
         pars.Free;
        end
      else
-     if Pos('master:', LowerCase(strin)) = 1 then
+     if Pos('master:', strinlo) = 1 then
        begin
         CASE CurClsTyp OF
          0,1 : begin
@@ -384,39 +386,47 @@ for i := 0 to TheINFItems.Count - 1 do
         END;
        end
      else
-     if Pos('event_mask:', LowerCase(strin)) = 1 then
+     if Pos('event_mask:', strinlo) = 1 then
        begin
-        if CurClsTyp <> 2 then
-         begin
-          pars := TStringParserWithColon.Create(strin);
-          if pars.Count = 3 then
-           begin
-            Val(pars[2], TheLong, code);
-            if code = 0 then
-             begin
-              TheINFCls.event_mask := IntToStr(TheLong);
-             end
-            else
-             begin
-              {ERROR }
-              errmsg := 'Value of event_mask: must be numeric';
-             end;
-           end
-          else
-           begin
-            {ERROR }
-            errmsg := 'Invalid event_mask: INF construction';
-           end;
-          pars.Free;
-         end
+        if not ClassBegun then
+          begin
+            errmsg := 'event_mask: not allowed before class';
+          end
         else
-         begin
-          {ERROR  }
-          errmsg := 'event_mask: not allowed in teleporter chute';
-         end;
-       end
+          begin
+            if CurClsTyp <> 2 then
+               begin
+                pars := TStringParserWithColon.Create(strin);
+                if pars.Count = 3 then
+                 begin
+                  Val(pars[2], TheLong, code);
+                  if code = 0 then
+                   begin
+                    longstr := IntToStr(TheLong);
+                    TheINFCls.event_mask := longstr;
+                   end
+                  else
+                   begin
+                    {ERROR }
+                    errmsg := 'Value of event_mask: must be numeric';
+                   end;
+                 end
+                else
+                 begin
+                  {ERROR }
+                  errmsg := 'Invalid event_mask: INF construction';
+                 end;
+                pars.Free;
+               end
+               else
+                 begin
+                  {ERROR  }
+                  errmsg := 'event_mask: not allowed in teleporter chute';
+                 end;
+             end
+         end
      else
-     if Pos('event:', LowerCase(strin)) = 1 then
+     if Pos('event:', strinlo) = 1 then
        begin
         if CurClsTyp = 1 then
          begin
@@ -448,7 +458,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('entity_mask:', LowerCase(strin)) = 1 then
+     if Pos('entity_mask:', strinlo) = 1 then
        begin
         if CurClsTyp <> 2 then
          begin
@@ -495,7 +505,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('speed:', LowerCase(strin)) = 1 then
+     if Pos('speed:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -530,7 +540,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('angle:', LowerCase(strin)) = 1 then
+     if Pos('angle:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -562,7 +572,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('center:', LowerCase(strin)) = 1 then
+     if Pos('center:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -604,7 +614,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('key:', LowerCase(strin)) = 1 then
+     if Pos('key:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -638,7 +648,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('sound:', LowerCase(strin)) = 1 then
+     if Pos('sound:', strinlo) = 1 then
        begin
         if CurClsTyp <> 2 then
          begin
@@ -688,7 +698,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('addon:', LowerCase(strin)) = 1 then
+     if Pos('addon:', strinlo) = 1 then
        begin
         if (CurClsTyp = 0) and (TheINFCls.ClsName = 'door_mid') then
          begin
@@ -730,7 +740,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('flags:', LowerCase(strin)) = 1 then
+     if Pos('flags:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -762,7 +772,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('slave:', LowerCase(strin)) = 1 then
+     if Pos('slave:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -785,7 +795,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('client:', LowerCase(strin)) = 1 then
+     if Pos('client:', strinlo) = 1 then
        begin
         if CurClsTyp = 1 then
          begin
@@ -808,7 +818,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('target:', LowerCase(strin)) = 1 then
+     if Pos('target:', strinlo) = 1 then
        begin
         if CurClsTyp = 2 then
          begin
@@ -839,7 +849,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('stop:', LowerCase(strin)) = 1 then
+     if Pos('stop:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -891,7 +901,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('adjoin:', LowerCase(strin)) = 1 then
+     if Pos('adjoin:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -943,7 +953,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('texture:', LowerCase(strin)) = 1 then
+     if Pos('texture:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -993,7 +1003,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('message:', LowerCase(strin)) = 1 then
+     if Pos('message:', strinlo) = 1 then
        begin
         {elev and trig only}
         if CurClsTyp <> 2 then
@@ -1254,7 +1264,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('page:', LowerCase(strin)) = 1 then
+     if Pos('page:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -1298,7 +1308,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('text:', LowerCase(strin)) = 1 then
+     if Pos('text:', strinlo) = 1 then
        begin
         if CurClsTyp = 1 then
          begin
@@ -1333,7 +1343,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('start:', LowerCase(strin)) = 1 then
+     if Pos('start:', strinlo) = 1 then
        begin
         if CurClsTyp = 0 then
          begin
@@ -1371,7 +1381,7 @@ for i := 0 to TheINFItems.Count - 1 do
          end;
        end
      else
-     if Pos('seqend', LowerCase(strin)) = 1 then
+     if Pos('seqend', strinlo) = 1 then
        begin
         if ClassBegun then
          begin
@@ -1405,7 +1415,7 @@ for i := 0 to TheINFItems.Count - 1 do
        end
      else
      {must be AFTER !!! seqend, else seqend is never found !!!}
-     if Pos('seq', LowerCase(strin)) = 1 then
+     if Pos('seq', strinlo) = 1 then
        begin
         if SeqBegun then
          begin
@@ -1427,7 +1437,13 @@ for i := 0 to TheINFItems.Count - 1 do
       the calling function allocated it so IT frees it }
      Result := i;
      TmpComments.Free;
-     exit;
+     TheInfItems[i] := strin + '       <------ ERROR  (' + errmsg + ')' ;
+     log.warn('PARSE ISSUE [' + errmsg + '] on line [' + strin +']',LogName);
+     if INF_READ then
+       raise Exception.Create(errmsg + ' on line [' + strin +']')
+     else
+       exit;
+
     end;
 
   end;
@@ -1436,6 +1452,8 @@ for i := 0 to TheINFItems.Count - 1 do
   begin
    Result := TheINFItems.Count - 1;
    errmsg := 'Missing seqend';
+   log.warn(errmsg,LogName);
+   raise Exception.Create(errmsg);
    TmpComments.Free;
   end;
 
@@ -1658,14 +1676,19 @@ var
    TheINFCls   : TINFCls;
    ret         : Integer;
    INFList     : TStringList;
-   msg         : String;
+   msg,
+   errmsg      : String;
 begin
  Result := TRUE;
 
 {First, clear the classes and compute the secrets and flag doors}
  if WL = -1 then
   begin
+   log.Info('SC = ' + inttostr(SC) + ' WL = ' + inttostr(WL), logname);
    {sector}
+   if sc = 190 then
+    sc := 190;
+
    TheSector := TSector(MAP_SEC.Objects[SC]);
    TheSector.Elevator := FALSE;
    TheSector.Trigger := FALSE;
@@ -1713,19 +1736,39 @@ begin
    TheWall.InfClasses.Clear;
   end;
 
+
 {Now, add the real classes computed by completely parsing the items}
  TheINFItems := TStringList.Create;
  if WL = -1 then {sector}
-  TheINFItems.AddStrings(TheSector.INFItems)
+   begin
+    TheSector.INFItems.Delimiter := 'ß';
+    TheSector.INFItems.DelimitedText;
+    TheINFItems.AddStrings(TheSector.INFItems)
+   end
  else {wall}
   TheINFItems.AddStrings(TheWall.INFItems);
 
- if TheINFItems.Count = 0 then exit;
+ if (TheINFItems.Count = 0) then exit;
 
+ //Ret := -1;
  INFList := TStringList.Create;
- Ret := ParseINFItems(TheINFItems, INFList, msg);
-
-
+ try
+   //if not APPLYING_UNDO then
+   Ret := ParseINFItems(TheINFItems, INFList, msg);
+ except
+  on E: Exception do
+    begin
+      errmsg := 'Failure to parse INF for Sector ' + inttostr(SC) + ' (' +TheSector.Name + ') and Wall ' + inttostr(WL)
+        + EOL + 'Error was [' + E.message + ']' + EOL + INF_SEP + EOL
+        + '   ' + stringreplace(String.Join(EOL + '   ',
+                                TheINFItems.ToStringArray()),
+                                '"', '', [rfReplaceAll, rfIgnoreCase]) +
+        EOL + INF_SEP;
+      if not INF_READ then log.Error(errmsg, LogName);
+      raise Exception.Create(errmsg);
+    end;
+ end;
+ log.info('done parsing',logname);
  if Ret = -1 then
   begin
    {parsing is ok, just split the classes now}
@@ -1788,6 +1831,7 @@ begin
   DO_Fill_SectorEditor
  else
   DO_Fill_WallEditor;
+
 end;
 
 end.

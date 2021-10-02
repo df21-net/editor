@@ -1,0 +1,15 @@
+# ------------+
+# DM_COLS.WDF |  Datafile for DOOM thing coloring.
+# ------------+
+#
+# If the object isn't encoded here, it will be Gray (ie color of shadow).
+# The convention I adopted is blue for ennemies (lighter = harder),
+# green for weapons (light) and ammo (dark)
+# and yellow for useful things (lighter = more useful).
+# Keys and goal items are pink, and 'true spirits' are light green.
+
+
+
+# -----<<<<< PLAYER >>>>>-----
+[SPIRIT]
+COLOR=65280

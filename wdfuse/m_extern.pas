@@ -45,14 +45,22 @@ begin
                           mb_Ok or mb_IconExclamation);
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
+
 procedure TExtToolsWindow.OKBtnClick(Sender: TObject);
-var tmp : array[0..127] of char;
+var tmp : array[0..255] of char;
 begin
  if LBExtTools.ItemIndex <> -1 then
   begin
    Chdir(WDFUSEdir);
    StrPcopy(tmp, LBHidden.Items[LBExtTools.ItemIndex] + ' ' + EDParameters.Text);
-   WinExec(tmp, SW_SHOWNORMAL);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWNORMAL);
    ShowWindow(MapWindow.Handle, SW_HIDE);
    TMPHWindow := GetActiveWindow;
    ShowWindow(MapWindow.Handle, SW_SHOW);
@@ -61,7 +69,7 @@ end;
 
 procedure TExtToolsWindow.HelpBtnClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_optionsexternal');
+ MapWindow.HelpTutorialClick(NIL);
 end;
 
 end.

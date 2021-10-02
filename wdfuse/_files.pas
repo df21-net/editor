@@ -23,12 +23,15 @@ uses Forms, ShellAPI;
 const
   SInvalidDest = 'Destination %s does not exist';
   SFCantMove = 'Cannot move file %s';
+  SFOpenError = 'Cannot open File %s';
+  SFCreateError = 'Cannot create File %s';
 
 procedure CopyFile(const FileName, DestName: TFileName);
 var
   CopyBuffer: Pointer; { buffer for copying }
   {TimeStamp,} BytesCopied: Longint;
   Source, Dest: Integer; { handles }
+  ErrString : String;
   Destination: TFileName; { holder for expanded destination name }
 const
   ChunkSize: Longint = 8192; { copy in 8K chunks }
@@ -38,10 +41,10 @@ begin
   GetMem(CopyBuffer, ChunkSize); { allocate the buffer }
   try
     Source := FileOpen(FileName, fmShareDenyWrite); { open source file }
-    if Source < 0 then raise EFOpenError.Create(FmtLoadStr(SFOpenError, [FileName]));
+    if Source < 0 then raise EFOpenError.CreateFmt(SFOpenError, [Source]);
     try
       Dest := FileCreate(Destination); { create output file; overwrite existing }
-      if Dest < 0 then raise EFCreateError.Create(FmtLoadStr(SFCreateError, [Destination]));
+      if Dest < 0 then raise EFCreateError.CreateFmt(SFCreateError,[Dest]);
       try
         repeat
           BytesCopied := FileRead(Source, CopyBuffer^, ChunkSize); { read chunk }

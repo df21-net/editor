@@ -37,9 +37,11 @@ type
     ShapeINF: TShape;
     Panel1: TPanel;
     SBHelp: TSpeedButton;
+    SCStayOnTopCheckBox: TCheckBox;
+    INFButton: TSpeedButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
-    procedure SBCommitClick(Sender: TObject);
+    procedure SBOpenINFClick(Sender: TObject);
     procedure SBRollbackClick(Sender: TObject);
     procedure SCEdKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -49,6 +51,8 @@ type
     procedure ForceCurrentFieldClick(Sender: TObject);
     procedure SBHelpClick(Sender: TObject);
     procedure StayOnTopClick(Sender: TObject);
+    procedure SBCommitClick(Sender: TObject);
+    procedure SCStayOnTopCheckBoxClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -59,28 +63,32 @@ var
   SectorEditor: TSectorEditor;
 
 implementation
-uses M_Util, M_Editor, Mapper;
+uses M_Util, M_Editor, Mapper, infedit2;
 
 {$R *.DFM}
+
 
 procedure TSectorEditor.FormCreate(Sender: TObject);
 var OnTop : Integer;
 begin
   SectorEditor.Left   := Ini.ReadInteger('WINDOWS', 'Sector Editor  X', 0);
-  SectorEditor.Top    := Ini.ReadInteger('WINDOWS', 'Sector Editor  Y', 72);
-  SectorEditor.Width  := Ini.ReadInteger('WINDOWS', 'Sector Editor  W', 186);
-  SectorEditor.Height := Ini.ReadInteger('WINDOWS', 'Sector Editor  H', 412);
-  OnTop               := Ini.ReadInteger('WINDOWS', 'Sector Editor  T', 0);
-  ScEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Sector Editor  G', 73);
-  PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Sector Editor  G', 73);
+  SectorEditor.Top    := Ini.ReadInteger('WINDOWS', 'Sector Editor  Y', 90);
+  SectorEditor.Width  := Ini.ReadInteger('WINDOWS', 'Sector Editor  W', 280);
+  SectorEditor.Height := Ini.ReadInteger('WINDOWS', 'Sector Editor  H', 550);
+  OnTop               := Ini.ReadInteger('WINDOWS', 'Sector Editor  T', 1);
+  ScEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Sector Editor  G', 90);
+  PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Sector Editor  G', 90);
+
   if OnTop = 0 then
    begin
     StayOnTop.Checked := FALSE;
+    SCStayOnTopCheckBox.Checked := FALSE;
     SectorEditor.FormStyle := fsNormal;
    end
   else
    begin
     StayOnTop.Checked := TRUE;
+    SCStayOnTopCheckBox.Checked := TRUE;
     SectorEditor.FormStyle := fsStayOnTop;
    end;
 
@@ -118,11 +126,17 @@ begin
   Ini.WriteInteger('WINDOWS', 'Sector Editor  G', ScEd.ColWidths[0]);
 end;
 
+procedure TSectorEditor.SBOpenINFClick(Sender: TObject);
+begin
+  MapWindow.SpeedButtonINFClick(Sender);
+end;
+
 procedure TSectorEditor.SBCommitClick(Sender: TObject);
 begin
   DO_Commit_SectorEditor;
   MapWindow.SetFocus;
 end;
+
 
 procedure TSectorEditor.SBRollbackClick(Sender: TObject);
 begin
@@ -135,7 +149,7 @@ procedure TSectorEditor.SCEdKeyUp(Sender: TObject; var Key: Word;
 begin
   if Shift = [] then
     Case Key of
-      VK_F1     : Application.HelpJump('wdfuse_help_SCeditor');
+      VK_F1     : MapWindow.HelpTutorialClick(NIL);
       VK_F2     : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
@@ -156,6 +170,22 @@ begin
                    PanelInfoLeft.Width := PanelInfoLeft.Width + 1;
                   end;
     end;
+end;
+
+procedure TSectorEditor.SCStayOnTopCheckBoxClick(Sender: TObject);
+begin
+  if StayOnTop.Checked then
+  begin
+   StayOnTop.Checked := FALSE;
+   SCStayOnTopCheckBox.Checked := False;
+   SectorEditor.FormStyle := fsNormal;
+  end
+ else
+  begin
+   SCStayOnTopCheckBox.Checked := True;
+   StayOnTop.Checked := TRUE;
+   SectorEditor.FormStyle := fsStayOnTop;
+  end;
 end;
 
 procedure TSectorEditor.SCEdDblClick(Sender: TObject);
@@ -204,7 +234,7 @@ end;
 
 procedure TSectorEditor.SBHelpClick(Sender: TObject);
 begin
- Application.HelpJump('wdfuse_help_SCeditor');
+  MapWindow.HelpTutorialClick(NIL);
 end;
 
 procedure TSectorEditor.StayOnTopClick(Sender: TObject);
@@ -212,10 +242,12 @@ begin
  if StayOnTop.Checked then
   begin
    StayOnTop.Checked := FALSE;
+   SCStayOnTopCheckBox.Checked := False;
    SectorEditor.FormStyle := fsNormal;
   end
  else
   begin
+   SCStayOnTopCheckBox.Checked := True;
    StayOnTop.Checked := TRUE;
    SectorEditor.FormStyle := fsStayOnTop;
   end;

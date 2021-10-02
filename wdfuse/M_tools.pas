@@ -74,10 +74,6 @@ type
     Bevel1: TBevel;
     BNSuperStitchLeft: TBitBtn;
     BNSuperStitchRight: TBitBtn;
-    RGSplitType: TRadioGroup;
-    SEStairs: TSpinEdit;
-    RGStairsType: TRadioGroup;
-    BNSplit: TBitBtn;
     procedure BNIntegrityClick(Sender: TObject);
     procedure BNRereadINFClick(Sender: TObject);
     procedure BNLayerNONClick(Sender: TObject);
@@ -99,8 +95,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BNSuperStitchLeftClick(Sender: TObject);
     procedure BNSuperStitchRightClick(Sender: TObject);
-    procedure RGSplitTypeClick(Sender: TObject);
-    procedure BNSplitClick(Sender: TObject);
+    procedure FormDeactivate(Sender: TObject);
 
   private
     { Private declarations }
@@ -170,6 +165,7 @@ end;
 procedure TToolsWindow.BNStitchClick(Sender: TObject);
 var title   : array[0..60] of char;
 begin
+ Do_StoreUndo;
  StrCopy(title, 'WDFUSE Tools - Stitching');
  if MAP_MODE <> MM_WL then
   begin
@@ -203,6 +199,7 @@ begin
    exit;
   end;
 
+ IGNORE_UNDO := True;
  if CBStitchHoriz.Checked then
   if RGStitchHoriz.ItemIndex = 0 then
    DO_StitchHorizontal(CBHMid.Checked, CBHTop.Checked, CBHBot.Checked)
@@ -212,6 +209,8 @@ begin
  if CBStitchVert.Checked  then DO_StitchVertical(CBVMid.Checked, CBVTop.Checked, CBVBot.Checked);
  MODIFIED := TRUE;
  DO_Fill_WallEditor;
+
+ IGNORE_UNDO := False;
  {MapWindow.Map.Invalidate;}
  if not CBPin.Checked then Close;
 end;
@@ -253,6 +252,7 @@ var code    : Integer;
     c_z     : Real;
     title   : array[0..60] of char;
 begin
+  DO_StoreUndo;
   StrCopy(title, 'WDFUSE Tools - Create Polygon');
 
   Val(EDPolyRadius.Text, AReal, Code);
@@ -289,7 +289,9 @@ begin
     end;
 
  {create a polygon function in m_mapfun}
+ IGNORE_UNDO := True;
  CreatePolygon(SEPolySides.Value, radius, c_x, c_z, RGPolyAs.ItemIndex, SC_HILITE);
+ IGNORE_UNDO := False;
 
  {MODIFIED, Sector Editor are handled by CreatePolygon}
  if not CBPin.Checked then Close;
@@ -302,6 +304,7 @@ var code    : Integer;
     z       : Real;
     title   : array[0..60] of char;
 begin
+  DO_StoreUndo;
   StrCopy(title, 'WDFUSE Tools - Translate');
 
   Val(EDTranslateX.Text, AReal, Code);
@@ -421,7 +424,7 @@ var code    : Integer;
     title   : array[0..60] of char;
 begin
   StrCopy(title, 'WDFUSE Tools - Offset');
-
+  DO_StoreUndo;
   IF RGOffset.ItemIndex <> 3 then
    begin
     if (MAP_MODE = MM_WL) or (MAP_MODE = MM_VX) then
@@ -479,6 +482,7 @@ end;
 procedure TToolsWindow.BNFlipClick(Sender: TObject);
 var title   : array[0..60] of char;
 begin
+ DO_StoreUndo;
  StrCopy(title, 'WDFUSE Tools - Flip');
 
  if not ((MAP_MODE = MM_SC) or (MAP_MODE = MM_OB)) then
@@ -508,15 +512,7 @@ end;
 
 procedure TToolsWindow.BNHelpClick(Sender: TObject);
 begin
- CASE ToolsNotebook.PageIndex of
-  0 : Application.HelpJump('wdfuse_help_toolsgeneral');
-  1 : Application.HelpJump('wdfuse_help_toolsstitching');
-  2 : Application.HelpJump('wdfuse_help_toolsdistribution');
-  3 : Application.HelpJump('wdfuse_help_polygons');
-  4 : Application.HelpJump('wdfuse_help_deformations');
-  5 : Application.HelpJump('wdfuse_help_offset');
-  6 : Application.HelpJump('wdfuse_help_flipping');
- END;
+  MapWindow.HelpTutorialClick(NIL);
 end;
 
 procedure TToolsWindow.FormKeyUp(Sender: TObject; var Key: Word;
@@ -546,7 +542,15 @@ begin
  ToolsWindow.Left   := Ini.ReadInteger('WINDOWS', 'Tools          X', 0);
  ToolsWindow.Top    := Ini.ReadInteger('WINDOWS', 'Tools          Y', 72);
  ToolsWindow.CBPin.Checked   := Ini.ReadBool('WINDOWS', 'Tools          P', TRUE);
- ToolsWindow.CBOnTop.Checked := Ini.ReadBool('WINDOWS', 'Tools          T', FALSE);
+ ToolsWindow.CBOnTop.Checked := Ini.ReadBool('WINDOWS', 'Tools          T', TRUE);
+end;
+
+
+procedure TToolsWindow.FormDeactivate(Sender: TObject);
+var Action : TCloseAction;
+begin
+  Action := cafree;
+  FormClose(Sender, Action);
 end;
 
 procedure TToolsWindow.FormClose(Sender: TObject;
@@ -578,15 +582,7 @@ begin
   Application.MessageBox('You must be in WALL Mode', Title, mb_Ok or mb_IconExclamation);
 end;
 
-procedure TToolsWindow.RGSplitTypeClick(Sender: TObject);
-begin
- if RGSplitType.ItemIndex = 2 then
-  RGStairsType.Enabled := TRUE
- else
-  RGStairsType.Enabled := FALSE;
-
-end;
-
+{ TO DO LATER
 procedure TToolsWindow.BNSplitClick(Sender: TObject);
 var title     : array[0..60] of char;
     TheSector : TSector;
@@ -601,7 +597,7 @@ begin
    exit;
   end;
 
- {Check that the sector is correctly conformed}
+ //Check that the sector is correctly conformed
  TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
 
  if TheSector.Wl.Count <> 4 then
@@ -640,6 +636,6 @@ begin
                 SC_HILITE, w1, w2);
 end;
 
-
+}
 
 end.

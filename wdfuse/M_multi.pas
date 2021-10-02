@@ -57,6 +57,11 @@ procedure DO_MultiSel_SC(s : Integer);
 var m : Integer;
 begin
  m := SC_MULTIS.IndexOf(Format('%4d%4d', [s, s]));
+
+ if (SC_MulTIS.Count = 0) and not MULTISEL_RECT and not MULTISEL_SPC
+                          and not (s = SC_HILITE_ORG) then
+  SC_MULTIS.Add(Format('%4d%4d', [SC_HILITE_ORG, SC_HILITE_ORG]));
+
  CASE MULTISEL_MODE[1] of
   'T' :  if  m <> -1 then
           SC_MULTIS.Delete(m)
@@ -70,16 +75,24 @@ end;
 
 procedure DO_MultiSel_VX(s, v : Integer);
 var m : Integer;
+    ms : String;
 begin
- m := VX_MULTIS.IndexOf(Format('%4d%4d', [s, v]));
+ ms := Format('%4d%4d', [s, v]);
+ m := VX_MULTIS.IndexOf(ms);
+
+ if (VX_MULTIS.Count = 0) and not MULTISEL_RECT and not MULTISEL_SPC
+                          and not ([s,v] = [SC_HILITE_ORG,VX_HILITE_ORG]) then
+  VX_MULTIS.Add(Format('%4d%4d', [SC_HILITE_ORG, VX_HILITE_ORG]));
+
  CASE MULTISEL_MODE[1] of
   'T' :  if  m <> -1 then
           VX_MULTIS.Delete(m)
          else
-          VX_MULTIS.Add(Format('%4d%4d', [s, v]));
-  '+' :  if  m  = -1 then VX_MULTIS.Add(Format('%4d%4d', [s, v]));
+          VX_MULTIS.Add(ms);
+  '+' :  if  m  = -1 then VX_MULTIS.Add(ms);
   '-' :  if  m <> -1 then VX_MULTIS.Delete(m);
  END;
+
  MapWindow.PanelMulti.Caption := IntToStr(VX_MULTIS.Count);
 end;
 
@@ -87,6 +100,11 @@ procedure DO_MultiSel_WL(s, w : Integer);
 var m : Integer;
 begin
  m := WL_MULTIS.IndexOf(Format('%4d%4d', [s, w]));
+
+ if (WL_MULTIS.Count = 0) and not MULTISEL_RECT and not MULTISEL_SPC
+                          and not ([s,w] = [SC_HILITE_ORG,WL_HILITE_ORG]) then
+  WL_MULTIS.Add(Format('%4d%4d', [SC_HILITE_ORG, WL_HILITE_ORG]));
+
  CASE MULTISEL_MODE[1] of
   'T' :  if  m <> -1 then
           WL_MULTIS.Delete(m)
@@ -104,6 +122,11 @@ var m         : Integer;
 begin
  TheObject := TOB(MAP_OBJ.Objects[o]);
  m := OB_MULTIS.IndexOf(Format('%4d%4d', [TheObject.Sec, o]));
+
+ if (OB_MULTIS.Count = 0) and not MULTISEL_RECT and not MULTISEL_SPC
+                          and not (o = OB_HILITE_ORG) then
+  OB_MULTIS.Add(Format('%4d%4d', [SC_HILITE_ORG, OB_HILITE_ORG]));
+
  CASE MULTISEL_MODE[1] of
   'T' :  if  m <> -1 then
           OB_MULTIS.Delete(m)

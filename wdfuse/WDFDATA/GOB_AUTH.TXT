@@ -1,6 +1,6 @@
 ================================================================
 Title                   :    
-Filename                : xxxxxxxx.ZIP
+Filename                : xxxx.GOB
 Author                  : Your name here
 Email Address           : 
 Misc. Author Info       : 
@@ -12,7 +12,7 @@ Additional Credits to   :
 
 * Play Information *
 
-Level replaced          : levelname
+Level(s) replaced       : levelname1(,levelname2,...)
 Difficulty Settings     : Yes/Not implemented
 New BMs                 : Yes/No
 New FMEs                : Yes/No
@@ -21,13 +21,11 @@ New 3DOs                : Yes/No
 New VOCs                : Yes/No
 New GMDs                : Yes/No
 New VUEs                : Yes/No
-New Briefings           : Yes/No
-New Cutscenes           : Yes/No
 
 * Construction *
 
 Base                    : New level from scratch/Modified levelname
-Editor(s) used          : WDFUSE 1.666
+Editor(s) used          : 
 Known Bugs              : 
 
 
@@ -38,17 +36,17 @@ levels.
 
 (One of the following)
 
-You MAY distribute this level, provided you include this file, with
+You MAY distribute this GOB, provided you include this file, with
 no modifications.  You may distribute this file in any electronic
 format (BBS, Diskette, CD, etc) as long as you include this file 
 intact.
 
-You MAY not distribute this level in any format.
+You MAY not distribute this GOB file in any format.
 
 You may do whatever you want with this file.
 
 
-* Where to get this level *
+* Where to get this GOB *
 
 FTP sites:
 

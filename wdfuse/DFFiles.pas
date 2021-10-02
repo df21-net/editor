@@ -122,9 +122,11 @@ end;
 Constructor TGOBFile.OpenGob(GobName:TFileName);
 begin
  Gobh:=FileOpen(GobName,fmOpenRead or fmShareDenyNone);
- if gobh=-1 then begin fail; exit; end;
+ if gobh=-1 then raise Exception.CreateFmt('Could not open Gob %s' ,[GobName]);
  FileRead(gobh,gh,sizeof(gh));
- if gh.magic<>'GOB'#10 then begin FileClose(gobh); fail; exit; end;
+ if gh.magic<>'GOB'#10 then
+    FileClose(gobh);
+    raise Exception.CreateFmt('Wrong Magic # in Gob %s' ,[GobName]);
  FileSeek(gobh,gh.index_ofs,0);
  FileRead(gobh,nfiles,sizeof(nfiles));
  hindex:=GlobalAlloc(GMEM_MOVEABLE,nfiles*sizeof(TGOBEntry));
@@ -432,8 +434,8 @@ end;
 Constructor TDFImage.Create;
 begin
  Inherited Create;
- HWaxStruct:=GlobalAlloc(GMEM_MOVEABLE,32000);
- if HWaxStruct=0 then fail;
+ HWaxStruct:=GlobalAlloc(GMEM_MOVEABLE, 10485760);
+ if HWaxStruct=0 then raise Exception.Create('Could not allocate memory for Wax')
 end;
 
 Destructor TDFImage.done;

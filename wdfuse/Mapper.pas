@@ -2203,6 +2203,8 @@ begin
   EditExtrude.ShortCut := TextToShortCut('E');
   EditCopy.ShortCut := TextToShortCut('Ctrl+C');
   EditPaste.ShortCut := TextToShortCut('Ctrl+V');
+  EditUndo.ShortCut := TextToShortCut('Ctrl+Z');
+  EditRedo.ShortCut := TextToShortCut('Ctrl+Y');
   EditNext.ShortCut := TextToShortCut('N');
   EditPrevious.ShortCut := TextToShortCut('P');
   EditClearMultiselect.ShortCut := TextToShortCut('BkSp');
@@ -2231,6 +2233,8 @@ begin
   EditExtrude.ShortCut := TextToShortCut('');
   EditCopy.ShortCut := TextToShortCut('');
   EditPaste.ShortCut := TextToShortCut('');
+  EditUndo.ShortCut := TextToShortCut('');
+  EditRedo.ShortCut := TextToShortCut('');
   EditNext.ShortCut := TextToShortCut('');
   EditPrevious.ShortCut := TextToShortCut('');
   EditClearMultiselect.ShortCut := TextToShortCut('');

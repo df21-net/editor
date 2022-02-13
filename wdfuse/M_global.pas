@@ -17,9 +17,9 @@ TYPE Integ16 =
 { CONSTANTS }
 CONST
 {$IFNDEF WDF32}napi.
- WDFUSE_VERSION      = 'Version 2.60 Beta 1 (16 bits)';
+ WDFUSE_VERSION      = 'Version 2.60 Beta 2 (16 bits)';
 {$ELSE}
- WDFUSE_VERSION      = 'Version 2.60 Beta 1 (32 bits)';
+ WDFUSE_VERSION      = 'Version 2.60 Beta 2 (32 bits)';
 {$ENDIF}
 
  MM_SC               = 0;

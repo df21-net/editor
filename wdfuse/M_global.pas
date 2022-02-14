@@ -17,7 +17,7 @@ TYPE Integ16 =
 { CONSTANTS }
 CONST
 {$IFNDEF WDF32}napi.
- WDFUSE_VERSION      = 'Version 2.60 Beta 2 (16 bits)';
+ WDFUSE_VERSION      = 'Version 2.60 Beta 2 (32 bits)';
 {$ELSE}
  WDFUSE_VERSION      = 'Version 2.60 Beta 2 (32 bits)';
 {$ENDIF}
@@ -808,7 +808,7 @@ end;
 begin
 
   // First time launching or deleted ini file
-  NO_INI := FileExists(ExtractFilePath(ParamStr(0)) + 'wdfuse.ini');
+  NO_INI := not FileExists(ExtractFilePath(ParamStr(0)) + 'wdfuse.ini');
 
   Ini  := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'wdfuse.ini');
   UseLog   := Ini.ReadBool('DARK FORCES', 'Logger', True);

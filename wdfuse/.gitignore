@@ -6,10 +6,13 @@
 # logging
 log/
 
+# Building
+Build/
+Intermediate/
+
+# This can probably be released when we get everything at the right place
 # subset from https://github.com/github/gitignore/blob/main/Delphi.gitignore
 # Delphi compiler-generated binaries (safe to delete)
-Release32/
-Debug32/
 *.exe
 *.dll
 *.bpl

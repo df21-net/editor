@@ -17,7 +17,7 @@ uses
 ZRender,ComCtrls,
 {$ENDIF}
   Stitch,  Tabnotbk, system.notification, ui.notifications, Math.vectors,
-  system.win.winrt;
+  system.win.winrt {, Vcl.ComCtrls};
 type
   TMapWindow = class(TForm)
     ToolbarMain: TPanel;

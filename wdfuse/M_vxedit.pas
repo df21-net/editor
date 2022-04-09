@@ -46,7 +46,7 @@ type
     procedure StayOnTopClick(Sender: TObject);
     procedure VXStayOnTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-    procedure FormMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure FormMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
@@ -112,7 +112,7 @@ begin
   VertexEditor.VXEd.Font.Style := [];
 end;
 
-procedure TVertexEditor.FormMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TVertexEditor.FormMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   // This is a hack to prevent refocus on own object
@@ -134,7 +134,6 @@ end;
 procedure TVertexEditor.SBCommitClick(Sender: TObject);
 begin
   DO_Commit_VertexEditor;
-  MapWindow.SetFocus;
 end;
 
 procedure TVertexEditor.VXEdKeyUp(Sender: TObject; var Key: Word;

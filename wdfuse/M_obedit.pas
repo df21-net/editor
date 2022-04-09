@@ -55,7 +55,7 @@ type
     procedure SBHelpClick(Sender: TObject);
     procedure OBStayOnTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-    procedure FormMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure FormMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
@@ -131,7 +131,7 @@ begin
   Ini.WriteInteger('WINDOWS', 'Object Editor  G', ObEd.ColWidths[0]);
 end;
 
-procedure TObjectEditor.FormMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TObjectEditor.FormMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   // This is a hack to prevent refocus on own object
@@ -144,7 +144,6 @@ begin
     end;
 end;
 
-
 procedure TObjectEditor.SBRollbackClick(Sender: TObject);
 begin
   DO_Fill_ObjectEditor;
@@ -154,7 +153,6 @@ end;
 procedure TObjectEditor.SBCommitClick(Sender: TObject);
 begin
   DO_Commit_ObjectEditor;
-  MapWindow.SetFocus;
 end;
 
 

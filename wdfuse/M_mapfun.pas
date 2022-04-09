@@ -5,7 +5,7 @@ uses
   SysUtils, WinTypes, WinProcs, Graphics, IniFiles, Dialogs, Forms, Classes,
   _Math, _Strings,
   M_Global, M_Util,   M_io, M_Progrs, M_smledt, M_Multi,
-  M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util  ;
+  M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util ;
 
 
 VAR
@@ -1567,8 +1567,8 @@ begin
   x  := S2MX(x);
   z  := S2MZ(z);
   if GridOn then GetNearestGridPoint(x, z , x, z);
-  ToolsWindow.EDPolyX.Text := RTrim(Format('%-5.2f', [x]));
-  ToolsWindow.EDPolyZ.Text := RTrim(Format('%-5.2f', [z]));
+  ToolsWindow.EDPolyX.Text := PosTrim(x);
+  ToolsWindow.EDPolyZ.Text := PosTrim(z);
   ToolsWindow.ToolsNotebook.PageIndex := 3;
   ToolsWindow.Show;
 end;

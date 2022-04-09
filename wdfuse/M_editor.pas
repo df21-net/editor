@@ -204,8 +204,8 @@ begin
  TheVertex := TVertex(TheSector.Vx.Objects[VX_HILITE]);
  VertexEditor.Caption := Format('VX %d of %d, SC %d', [VX_HILITE, numvx, SC_HILITE]);
 
- VertexEditor.VXEd.Cells[1,  0] := RTrim(Format('%-5.2f', [TheVertex.X]));
- VertexEditor.VXEd.Cells[1,  1] := RTrim(Format('%-5.2f', [TheVertex.Z]));
+ VertexEditor.VXEd.Cells[1,  0] := PosTrim(TheVertex.X);
+ VertexEditor.VXEd.Cells[1,  1] := PosTrim(TheVertex.Z);
  VertexEditor.PanelSCName.Caption := TheSector.Name;
  VertexEditor.PanelFloorAlt.Caption := Format('%-5.2f && %-5.2f', [TheSector.Floor_Alt, TheSector.Ceili_Alt]);
  if GetWLfromLeftVX(SC_HILITE, VX_HILITE, awall) then
@@ -428,17 +428,17 @@ begin
  SectorEditor.SCEd.Cells[1,  2] := IntToStr(TheSector.Flag1);
  SectorEditor.SCEd.Cells[1,  3] := IntToStr(TheSector.Flag2);
  SectorEditor.SCEd.Cells[1,  4] := IntToStr(TheSector.Flag3);
- SectorEditor.SCEd.Cells[1,  5] := RTrim(Format('%-5.2f', [TheSector.Floor_Alt]));
+ SectorEditor.SCEd.Cells[1,  5] := PosTrim(TheSector.Floor_Alt);
  SectorEditor.SCEd.Cells[1,  6] := TheSector.Floor.Name;
- SectorEditor.SCEd.Cells[1,  7] := RTrim(Format('%-5.2f', [TheSector.Floor.f1]));
- SectorEditor.SCEd.Cells[1,  8] := RTrim(Format('%-5.2f', [TheSector.Floor.f2]));
+ SectorEditor.SCEd.Cells[1,  7] := PosTrim(TheSector.Floor.f1);
+ SectorEditor.SCEd.Cells[1,  8] := PosTrim(TheSector.Floor.f2);
  SectorEditor.SCEd.Cells[1,  9] := IntToStr(TheSector.Floor.i);
- SectorEditor.SCEd.Cells[1, 10] := RTrim(Format('%-5.2f', [TheSector.Ceili_Alt]));
+ SectorEditor.SCEd.Cells[1, 10] := PosTrim(TheSector.Ceili_Alt);
  SectorEditor.SCEd.Cells[1, 11] := TheSector.Ceili.Name;
- SectorEditor.SCEd.Cells[1, 12] := RTrim(Format('%-5.2f', [TheSector.Ceili.f1]));
- SectorEditor.SCEd.Cells[1, 13] := RTrim(Format('%-5.2f', [TheSector.Ceili.f2]));
+ SectorEditor.SCEd.Cells[1, 12] := PosTrim(TheSector.Ceili.f1);
+ SectorEditor.SCEd.Cells[1, 13] := PosTrim(TheSector.Ceili.f2);
  SectorEditor.SCEd.Cells[1, 14] := IntToStr(TheSector.Ceili.i);
- SectorEditor.SCEd.Cells[1, 15] := RTrim(Format('%-5.2f', [TheSector.Second_Alt]));
+ SectorEditor.SCEd.Cells[1, 15] := PosTrim(TheSector.Second_Alt);
  SectorEditor.SCEd.Cells[1, 16] := IntToStr(TheSector.Layer);
 
  SectorEditor.PanelVXNum.Caption := IntToStr(numvx);
@@ -1383,33 +1383,33 @@ begin
  WallEditor.WLEd.Cells[1,  5] := IntToStr(TheWall.Flag2);
  WallEditor.WLEd.Cells[1,  6] := IntToStr(TheWall.Flag3);
  WallEditor.WLEd.Cells[1,  7] := TheWall.Mid.Name;
- WallEditor.WLEd.Cells[1,  8] := RTrim(Format('%-5.2f', [TheWall.Mid.f1]));
- WallEditor.WLEd.Cells[1,  9] := RTrim(Format('%-5.2f', [TheWall.Mid.f2]));
+ WallEditor.WLEd.Cells[1,  8] := PosTrim(TheWall.Mid.f1);
+ WallEditor.WLEd.Cells[1,  9] := PosTrim(TheWall.Mid.f2);
  WallEditor.WLEd.Cells[1, 10] := IntToStr(TheWall.Mid.i);
  WallEditor.WLEd.Cells[1, 11] := TheWall.Top.Name;
- WallEditor.WLEd.Cells[1, 12] := RTrim(Format('%-5.2f', [TheWall.Top.f1]));
- WallEditor.WLEd.Cells[1, 13] := RTrim(Format('%-5.2f', [TheWall.Top.f2]));
+ WallEditor.WLEd.Cells[1, 12] := PosTrim(TheWall.Top.f1);
+ WallEditor.WLEd.Cells[1, 13] := PosTrim(TheWall.Top.f2);
  WallEditor.WLEd.Cells[1, 14] := IntToStr(TheWall.Top.i);
  WallEditor.WLEd.Cells[1, 15] := TheWall.Bot.Name;
- WallEditor.WLEd.Cells[1, 16] := RTrim(Format('%-5.2f', [TheWall.Bot.f1]));
- WallEditor.WLEd.Cells[1, 17] := RTrim(Format('%-5.2f', [TheWall.Bot.f2]));
+ WallEditor.WLEd.Cells[1, 16] := PosTrim(TheWall.Bot.f1);
+ WallEditor.WLEd.Cells[1, 17] := PosTrim(TheWall.Bot.f2);
  WallEditor.WLEd.Cells[1, 18] := IntToStr(TheWall.Bot.i);
  WallEditor.WLEd.Cells[1, 19] := TheWall.Sign.Name;
- WallEditor.WLEd.Cells[1, 20] := RTrim(Format('%-5.2f', [TheWall.Sign.f1]));
- WallEditor.WLEd.Cells[1, 21] := RTrim(Format('%-5.2f', [TheWall.Sign.f2]));
+ WallEditor.WLEd.Cells[1, 20] := PosTrim(TheWall.Sign.f1);
+ WallEditor.WLEd.Cells[1, 21] := PosTrim(TheWall.Sign.f2);
 
  WallEditor.PanelSCName.Caption := TheSector.Name;
  WallEditor.PanelFloorAlt.Caption := Format('%-5.2f && %-5.2f', [TheSector.Floor_Alt, TheSector.Ceili_Alt]);
  height := TheSector.Ceili_Alt - TheSector.Floor_Alt;
- WallEditor.PanelHeight.Caption := Format('%-5.2f', [height]);
+ WallEditor.PanelHeight.Caption := PosTrim(height);
  vx1 := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
  vx2 := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
  length := sqrt(sqr(vx1.X - vx2.X)+sqr(vx1.Z - vx2.Z));
- WallEditor.Panellength.Caption := Format('%-5.2f', [length]);
+ WallEditor.Panellength.Caption := PosTrim(length);
  WallEditor.PanelLRVX.Caption := Format('%d && %d', [TheWall.left_vx, TheWall.right_vx]);
 
  // Add Wall Length Changing
- WallEditor.WLEd.Cells[1, 22] := RTrim(Format('%-5.2f', [length]));
+ WallEditor.WLEd.Cells[1, 22] := PosTrim(length);
 
   // Reset Focus
  if not AUTOCOMMIT_FLAG and not INF_READ and not APPLYING_UNDO and  WallEditor.visible then
@@ -2369,7 +2369,7 @@ begin
    vx2 := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
    orig_length := sqrt(sqr(vx1.X - vx2.X)+sqr(vx1.Z - vx2.Z));
 
-   tempreal := StrToFloat(RTrim(Format('%-5.2f', [orig_length])));
+   tempreal := StrToFloat(PosTrim(orig_length));
 
    if tempreal <> WallLength then
      begin
@@ -2379,11 +2379,11 @@ begin
 
        //Update X delta
        deltax := ((vx2.X-vx1.X) * (WallLength/orig_length));
-       vx2.X := vx1.X + StrToFloat(RTrim(Format('%-5.2f', [deltax])));
+       vx2.X := vx1.X + StrToFloat(PosTrim(deltax));
 
        //Update Z(Y) delta
        deltaz := ((vx2.Z-vx1.Z) * (WallLength/orig_length));
-       vx2.Z := vx1.Z + StrToFloat(RTrim(Format('%-5.2f', [deltaz])));
+       vx2.Z := vx1.Z + StrToFloat(PosTrim(deltaz));
 
        //Handle Adjoin Mirrors (opposite of right is left)
         if TheWall.Adjoin <> -1 then
@@ -2426,12 +2426,12 @@ begin
  ObjectEditor.Caption := Format('OB %d', [OB_HILITE]);
  ObjectEditor.OBEd.Cells[1,  0] := TheObject.ClassName;
  ObjectEditor.OBEd.Cells[1,  1] := TheObject.DataName;
- ObjectEditor.OBEd.Cells[1,  2] := RTrim(Format('%-5.2f', [TheObject.X]));
- ObjectEditor.OBEd.Cells[1,  3] := RTrim(Format('%-5.2f', [TheObject.Y]));
- ObjectEditor.OBEd.Cells[1,  4] := RTrim(Format('%-5.2f', [TheObject.Z]));
- ObjectEditor.OBEd.Cells[1,  5] := RTrim(Format('%-5.2f', [TheObject.Yaw]));
- ObjectEditor.OBEd.Cells[1,  6] := RTrim(Format('%-5.2f', [TheObject.Pch]));
- ObjectEditor.OBEd.Cells[1,  7] := RTrim(Format('%-5.2f', [TheObject.Rol]));
+ ObjectEditor.OBEd.Cells[1,  2] := PosTrim(TheObject.X);
+ ObjectEditor.OBEd.Cells[1,  3] := PosTrim(TheObject.Y);
+ ObjectEditor.OBEd.Cells[1,  4] := PosTrim(TheObject.Z);
+ ObjectEditor.OBEd.Cells[1,  5] := PosTrim(TheObject.Yaw);
+ ObjectEditor.OBEd.Cells[1,  6] := PosTrim(TheObject.Pch);
+ ObjectEditor.OBEd.Cells[1,  7] := PosTrim(TheObject.Rol);
  ObjectEditor.OBEd.Cells[1,  8] := IntToStr(TheObject.Diff);
  ObjectEditor.OBEd.Cells[1,  9] := IntToStr(TheObject.Sec);
 
@@ -2686,14 +2686,24 @@ begin
 end;
 
 function CompareTwoObjects(ObjectA: TOB; ObjectB: TOB) : Boolean;
+var
+i : integer;
 begin
 
 Result := False;
 if (ObjectA.ClassName = ObjectB.ClassName) and
    (ObjectA.DataName = ObjectB.DataName) and
-   (ObjectA.x = ObjectB.x) and
-   (ObjectA.y = ObjectB.y) and
-   (ObjectA.z = ObjectB.z) and
+
+    // Because the Map stores the X,Y,Z positions with multiple
+    // decimal precision - we have to trim before comparing =(
+    (AnsiCompareStr(PosTrim(ObjectA.x),
+                    PosTrim(ObjectB.x)) = 0) and
+    (AnsiCompareStr(PosTrim(ObjectA.y),
+                    PosTrim(ObjectB.y)) = 0) and
+    (AnsiCompareStr(PosTrim(ObjectA.z),
+                    PosTrim(ObjectB.z)) = 0) and
+
+
    (ObjectA.Yaw = ObjectB.Yaw) and
    (ObjectA.Pch = ObjectB.Pch) and
    (ObjectA.Rol = ObjectB.Rol) and
@@ -2701,8 +2711,21 @@ if (ObjectA.ClassName = ObjectB.ClassName) and
    (ObjectA.Sec = ObjectB.Sec) and
    (ObjectA.Col = ObjectB.Col) and
    (ObjectA.OType = ObjectB.OType) and
-   (ObjectA.Special = ObjectB.Special) and
-   (ObjectA.Seq = ObjectB.Seq) then Result := True;
+   (ObjectA.Special = ObjectB.Special) then
+
+    begin
+      // Need to compare the logic lists as well
+      if ObjectA.Seq.Count = ObjectB.Seq.Count  then
+        begin
+          for i:= 0 to ObjectA.Seq.Count -1 do
+            if ObjectA.Seq[i] <> ObjectB.Seq[i] then
+              begin
+                Result := False;
+                exit;
+              end;
+        end;
+      Result := True;
+    end;
 end;
 
 procedure DO_Commit_ObjectEditorField(field : Integer);

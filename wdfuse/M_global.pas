@@ -4,7 +4,7 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, IniFiles, Graphics,
   Generics.Collections, Vcl.Dialogs, StrUtils, LoggerPro, LoggerPro.FileAppender,
-  LoggerPro.OutputDebugStringAppender, VCL.forms;
+  LoggerPro.OutputDebugStringAppender, VCL.forms,_Strings;
 
 TYPE Integ16 =
 {$IFNDEF WDF32}
@@ -662,6 +662,7 @@ function M2SX(x : Real) : Integer;
 function M2SZ(z : Real) : Integer;
 
 function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
+function PosTrim(x : Real) : String;
 
 
 
@@ -828,6 +829,13 @@ begin
               Result := -1
         end;
     end;
+end;
+
+// Trims a String Real to two decimal places. This
+// happens often in the code especialy with coordinates
+function PosTrim(x : Real) : String;
+begin
+   Result := RTrim(Format('%-5.2f', [x]));
 end;
 
 begin

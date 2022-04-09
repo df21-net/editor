@@ -291,6 +291,7 @@ else {wall}
   str := str + Format('%-6.6d',[WL]);
  end;
 
+
  if CBINFNavigator.Items.Count > INF_NAVIG_MAX then
    CBINFNavigator.Items.Delete(CBINFNavigator.Items.Count - 1);
 
@@ -538,8 +539,11 @@ procedure TINFWindow2.CBINFNavigatorClick(Sender: TObject);
 var strin : string;
     sc    : Integer;
     wl    : Integer;
+    i     : Integer;
+    found : Integer;
     closeok : Boolean;
     TheSector : TSector;
+    TempCBItems : TStringList;
 begin
  closeok := TRUE;
  if MemoINF.Modified then
@@ -553,6 +557,20 @@ begin
    END;
   end
  else ;
+
+ TempCBItems := TStringList.Create;
+ TempCBItems.Assign(CBINFNavigator.items);
+
+ for i:=0 to CBINFNavigator.Items.count-1 do
+   begin
+    found := INFSectors.IndexOf(RTrim(CBINFNavigator.Items[i]));
+    if found = -1 then
+     begin
+      TempCBItems.Delete(TempCBItems.IndexOf(CBINFNavigator.Items[i]));
+     end;
+   end;
+
+ CBINFNavigator.Items.Assign(TempCBItems);
 
  if closeok then
   begin
@@ -600,7 +618,7 @@ begin
   end
  else
   begin
-   Application.MessageBox('Item was not found. Removed!', 'INF Editor', mb_Ok or mb_IconExclamation);
+   //Application.MessageBox('Item was not found. Removed!', 'INF Editor', mb_Ok or mb_IconExclamation);
    CBINFNavigator.Items.Delete(CBINFNavigator.ItemIndex);
    if CBINFNavigator.Items.Count > 0 then
     begin
@@ -685,30 +703,7 @@ begin
    MemoToINFItems(INFSector, INFWall, MemoINF);
    ComputeINFClasses(INFSector, INFWall);
 
-   // You can't have empty sectors with INFs
-   TheSector :=  TSector(MAP_SEC.Objects[INFSector]);
-
-
-   // IF you Remove INFs from sector and walls - wipe the name if it is generic.
-   if (MemoINF.Text = '') then
-     begin
-        hasInf:= False;
-        if TheSector.InfItems.Count > 0 then
-          hasInf := True;
-        for j := 0 to TheSector.Wl.Count - 1 do
-          begin
-            TheWall := TWall(TheSector.Wl.Objects[j]);
-            if TheWall.InfItems.Count > 0 then
-                hasInf := True
-            end;
-        // Only wipe if it is the default name. Preserve for other sectors.
-        if (not hasInf) and (String(TheSector.Name).startswith('CHANGEME_')) then
-          TheSector.Name := '';
-     end
-   else
-       // Otherwise add the CHANGEME_ name if you have INF items and it is blank.
-       if (TheSector.Name = '') then
-          TheSector.Name := 'CHANGEME_' + IntToStr(INFSector);
+   UpdateSectorName(INFSector);
 
 
    CASE MAP_MODE OF

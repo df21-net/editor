@@ -59,6 +59,8 @@ procedure DO_MakeGenerator;
 procedure DO_FillOBColor;
 procedure DO_SelectObject;
 
+procedure UpdateSectorName(INFSector : Integer);
+
 procedure SetDOOMEditors;
 
 implementation
@@ -862,6 +864,7 @@ begin
 
 
  DO_StoreUndo;
+
  {Get original values, to see which values have changed}
 
  ORISector := TSector.Create;
@@ -885,6 +888,8 @@ begin
 
  for i := 0 to 16 do
   DO_Commit_SectorEditorField(i);
+
+ UpdateSectorName(SC_HILITE);
 
  TMPSector.Free;
  ORISector.Free;
@@ -913,7 +918,12 @@ begin
          TheSector.Name := TMPSector.Name;
 
          // Add it to INF Sector for caching and force a rebuild
-         INFSectors.Add(TheSector.Name);
+         // and remove old name from the list for caching.
+         if RTrim(TheSector.Name) <> '' then
+           INFSectors.Add(TheSector.Name)
+         else if (RTrim(ORISector.Name) <> '') and (INFSectors.IndexOf(ORISector.Name) <> -1) then
+             INFSectors.Delete(INFSectors.IndexOf(ORISector.Name));
+
 
          {multiselection}
          if SC_MULTIS.Count <> 0 then
@@ -2259,6 +2269,8 @@ begin
    if CompareTwoWalls(TMPWall, TheWall) then exit
    else DO_StoreUndo;
 
+ UpdateSectorName(SC_HILITE);
+
  ORIWall   := TWall.Create;
  ORIWall.Adjoin       := TheWall.Adjoin;
  ORIWall.Mirror       := TheWall.Mirror;
@@ -3187,6 +3199,46 @@ begin
    DO_FillOBColor;
    DO_FillLogic;
   end;
+end;
+
+// Ensure we do not have empty sector names.
+procedure UpdateSectorName(INFSector : Integer);
+var
+  TheSector : TSector;
+  Thewall : TWall;
+  hasInf : Boolean;
+  j : Integer;
+begin
+
+   // You can't have empty sectors with INFs
+   TheSector :=  TSector(MAP_SEC.Objects[INFSector]);
+
+   hasInf:= False;
+
+   // Find INFs inside sector
+   if (TheSector.InfItems.Count > 0)
+     then hasInf := True
+   else
+     begin
+        // Find INFs inside Wall
+        for j := 0 to TheSector.Wl.Count - 1 do
+          begin
+            TheWall := TWall(TheSector.Wl.Objects[j]);
+            if TheWall.InfItems.Count > 0 then
+              begin
+                hasInf := True;
+                break;
+              end;
+          end;
+     end;
+
+    if hasInf and (TheSector.Name = '')then
+       TheSector.Name := 'CHANGEME_' + IntToStr(INFSector);
+
+    // If we already have CHANGEME - delete it if there are no INFs
+    if (not hasInf) and (String(TheSector.Name).startswith('CHANGEME_')) then
+       TheSector.Name := '';
+
 end;
 
 

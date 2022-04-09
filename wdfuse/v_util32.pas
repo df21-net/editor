@@ -27,6 +27,7 @@ function  LoadPLTTPalette(PalFile : String) : Boolean;
 procedure ReleasePLTTPalette;
 Procedure SetBitmapPalette(ThePalette : HPalette; Image : TImage);
 
+function  GetNormalHeader(TextureName : String): TBM_HEADER;
 function  DisplayBMP     (GraphFile : String; Image : TImage; Info : TMemo) : Boolean;
 function  DisplayBMHuge  (GraphFile : String; Image : TImage; Info : TMemo) : Boolean;
 function  DisplayFMEHuge (GraphFile : String; Image : TImage; Info : TMemo) : Boolean;
@@ -225,6 +226,51 @@ begin
 end;
 
 { BM ********************************************************************* }
+
+{ This is a stripped version of DisplayBMHuge to get the Header }
+function GetNormalHeader(TextureName : String): TBM_HEADER;
+var
+  BMH : TBM_HEADER;
+  gf : Integer;
+  GlobalH   : THandle;
+  GlobalP   : Pointer;
+  GOBName,
+  RESName,
+  TheFile   : String;
+  IX, LEN   : LongInt;
+  OldCursor : HCursor;
+begin
+ GlobalH := GlobalAlloc( GMEM_MOVEABLE or GMEM_ZEROINIT , 10485760);
+ if GlobalH <> 0 then
+   begin
+     GlobalP := GlobalLock(GlobalH);
+     GOBName := TEXTURESgob;
+     TheFile := GOBName;
+
+     // Check if it exists in the Textures GOB
+     if not IsResourceInGOB(GOBname, TextureName, IX, LEN) then
+       begin
+         IX := 0;
+         TheFile := LEVELPath + '\' + TextureName;
+       end;
+
+     OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
+     gf := FileOpen(TheFile, fmOpenRead);
+     FileSeek(gf, IX, 0);
+     FileRead(gf, BMH, 32);
+     FileClose(gf);
+     SetCursor(OldCursor);
+     GetNormalHeader := BMH;
+   end
+  else
+   begin
+     Application.MessageBox('Cannot Allocate Buffer', 'Graphic Viewer Error', mb_Ok);
+   end;
+  GlobalUnlock(GlobalH);
+  GlobalFree(GlobalH);
+end;
+
+
 { This function also accept files in the form [x:\path\filename.gob]resource.ext             }
 function DisplayBMHuge(GraphFile : String; Image : TImage; Info : TMemo) : Boolean;
 var gf        : Integer;

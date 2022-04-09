@@ -46,6 +46,8 @@ type
     procedure StayOnTopClick(Sender: TObject);
     procedure VXStayOnTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure FormMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
   public
@@ -89,6 +91,15 @@ end;
 
 procedure TVertexEditor.FormDeactivate(Sender: TObject);
 begin
+  // This is a hack to prevent refocus on own object
+  // Do not autocommit multiple items as it is dangerous
+  if AUTOCOMMIT and (VX_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      SBCommitClick(NIL);
+      AUTOCOMMIT_FLAG := False;
+    end;
+
   Ini.WriteInteger('WINDOWS', 'Vertex Editor  X', VertexEditor.Left);
   Ini.WriteInteger('WINDOWS', 'Vertex Editor  Y', VertexEditor.Top);
   Ini.WriteInteger('WINDOWS', 'Vertex Editor  W', VertexEditor.Width);
@@ -99,6 +110,19 @@ begin
    Ini.WriteInteger('WINDOWS', 'Vertex Editor  T', 0);
   Ini.WriteInteger('WINDOWS', 'Vertex Editor  G', VxEd.ColWidths[0]);
   VertexEditor.VXEd.Font.Style := [];
+end;
+
+procedure TVertexEditor.FormMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  // This is a hack to prevent refocus on own object
+  // Do not autocommit multiple items as it is dangerous
+  if AUTOCOMMIT and (VX_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      SBCommitClick(NIL);
+      AUTOCOMMIT_FLAG := False;
+    end;
 end;
 
 procedure TVertexEditor.SBRollbackClick(Sender: TObject);
@@ -119,7 +143,8 @@ begin
   if Shift = [] then
     Case Key of
       VK_F1     : MapWindow.HelpTutorialClick(NIL);
-      VK_F2     : SBCommitClick(NIL);
+      VK_F3,
+      VK_RETURN : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
     end;

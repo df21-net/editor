@@ -17,7 +17,7 @@ uses
 ZRender,ComCtrls,
 {$ENDIF}
   Stitch,  Tabnotbk, system.notification, ui.notifications, Math.vectors,
-  system.win.winrt;
+  system.win.winrt, StrUtils;
 type
   TMapWindow = class(TForm)
     ToolbarMain: TPanel;
@@ -240,7 +240,6 @@ type
     SectorFill: TMenuItem;
     MMSectorFill: TMenuItem;
     PopUpPaste: TMenuItem;
-    PopupS3: TMenuItem;
     ClearMultiSelection1: TMenuItem;
     PopUpUndo: TMenuItem;
     PopUpRedo: TMenuItem;
@@ -286,6 +285,40 @@ type
     SpeedButtonDF21: TSpeedButton;
     NotificationCenter: TNotificationCenter;
     FreeUndoList: TMenuItem;
+    ModeShowLengths: TMenuItem;
+    ToolsFindSector: TMenuItem;
+    PopUpStitchLeft: TMenuItem;
+    PopUpStitchRight: TMenuItem;
+    EditStitchLeft: TMenuItem;
+    EditStitchRight: TMenuItem;
+    SpeedButtonWAX: TSpeedButton;
+    SpeedButton3DOS: TSpeedButton;
+    SpeedButtonFME: TSpeedButton;
+    SpeedButtonVOC: TSpeedButton;
+    N27: TMenuItem;
+    ToolsTextures: TMenuItem;
+    ToolsSprites: TMenuItem;
+    ToolsFrames: TMenuItem;
+    ToolsSounds: TMenuItem;
+    Tools3DOs: TMenuItem;
+    N28: TMenuItem;
+    PopUpSubsector: TMenuItem;
+    PopUpSubsectorDelete: TMenuItem;
+    PopUpSubsectorDelete3 :  TMenuItem;
+    PopUpSubsectorDelete4 :  TMenuItem;
+    PopUpSubsectorDelete5 :  TMenuItem;
+    PopUpSubsectorDelete6 :  TMenuItem;
+    PopUpSubsectorDelete7 :  TMenuItem;
+    PopUpSubsectorDelete8 :  TMenuItem;
+    PopUpSubsectorDeleteCustom :  TMenuItem;
+    PopUpSubsector3: TMenuItem;
+    PopUpSubsector4: TMenuItem;
+    PopUpSubsector5: TMenuItem;
+    PopUpSubsector6: TMenuItem;
+    PopUpSubsector7: TMenuItem;
+    PopUpSubsector8: TMenuItem;
+    PopUpSubsectorCustom: TMenuItem;
+
 
     procedure FormActivate(Sender: TObject);
     procedure MapPaint(Sender: TObject);
@@ -324,6 +357,11 @@ type
     procedure SpeedButtonSaveClick(Sender: TObject);
     procedure SBSaveAsMapPClick(Sender: TObject);
     procedure SpeedButtonToolsClick(Sender: TObject);
+    procedure SpeedButtonBMClick(Sender: TObject);
+    procedure SpeedButtonWAXClick(Sender: TObject);
+    procedure SpeedButtonFMEClick(Sender: TObject);
+    procedure SpeedButtonVOCClick(Sender: TObject);
+    procedure SpeedButton3DOSClick(Sender: TObject);
     procedure MapPopupPopup(Sender: TObject);
     procedure PopupNewClick(Sender: TObject);
     procedure DIFFAllClick(Sender: TObject);
@@ -402,6 +440,12 @@ type
     procedure ToolsLogFilePathClick(Sender: TObject);
     procedure ToolsLogFolderClick(Sender: TObject);
     procedure FreeUndoListClick(Sender: TObject);
+    procedure ModeShowLengthsClick(Sender: TObject);
+    procedure ToolsFindSectorClick(Sender: TObject);
+    procedure PopUpStitchLeftClick(Sender: TObject);
+    procedure PopUpStitchRightClick(Sender: TObject);
+    procedure PopUpSubsectorClick(Sender: TObject) ;
+    procedure PopUpSubsectorDeleteClick(Sender: TObject);
 
 
 
@@ -545,7 +589,9 @@ var
   TheSector            : TSector;
   TheWall              : TWall;
   LVertex, RVertex     : TVertex;
-  x, z, x2, z2, dx, dz : Real;
+  x, z, x2, z2, dx, dz,
+  x3, z3, wlength      : Real;
+  test                 : String;
 begin
  with Map.Canvas do
   begin
@@ -561,8 +607,35 @@ begin
     dz := LVertex.Z - RVertex.Z;
     x2 := x - perp_ratio * dz;
     z2 := z + perp_ratio * dx;
-    MoveTo(M2SX(x),  M2SZ(z));
-    LineTo(M2SX(x2), M2SZ(z2));
+    x3 := x - perp_ratio * dz * -1;
+    z3 := z + perp_ratio * dx * -1;
+
+    if SHOW_LENGTHS and INFFILELoaded then
+     begin
+       if (MAP_MODE <> MM_OB) then
+         begin
+          // Draw only the current sector if in wall length mode
+          if (MAP_MODE = MM_SC) and (SC_HILITE <> s) then exit;
+
+          // Draw Wall Lengthhs
+          if not IsDRAG then
+            begin
+            MoveTo(M2SX(x3),  M2SZ(z3));
+            Font.Color := color;
+            Font.Height := 16;
+            brush.color := clBlack;
+            wlength := sqrt(sqr(LVertex.X - RVertex.X)+sqr(LVertex.Z - RVertex.Z));
+            TextOut(M2SX(x3), M2SZ(z3), Format('%.2f',[wlength]));
+            end;
+         end;
+     end;
+
+    // Only draw these in MM_WL mode
+    if MAP_MODE = MM_WL then
+      begin
+        MoveTo(M2SX(x),  M2SZ(z));
+        LineTo(M2SX(x2), M2SZ(z2));
+      end;
   end;
 end;
 
@@ -705,9 +778,9 @@ begin
          ' error raised, with message : '+E.Message);
         end;
      end;
-      
+
     end;
-   
+
    SelectObject(Handle, OldPen);
    DeleteObject(NPen);
    DeleteObject(APen);
@@ -753,7 +826,7 @@ var i,j         : Integer;
     TheWall     : TWall;
     TheMsg      : TMsg;
 begin
- if (MAP_MODE = MM_VX) and not SpecialsVX then Exit;
+ //if (MAP_MODE = MM_VX) and not SpecialsVX then Exit;
  if (MAP_MODE = MM_OB) and not SpecialsOB then Exit;
 
  with Map.Canvas do
@@ -765,24 +838,33 @@ begin
       for j := 0 to TheSector.Wl.Count - 1 do
         begin
           TheWall := TWall(TheSector.Wl.Objects[j]);
+          Pen.Color := col_wall_a;
           if (TheSector.Elevator or
               TheSector.Trigger  or
               TheSector.Secret   or
               TheWall.Elevator   or
               TheWall.Trigger    ) then
-           begin
-            if TheSector.Elevator  then Pen.Color := col_elev;
-            if TheSector.Trigger   then Pen.Color := col_trig;
-            if TheSector.Secret    then Pen.Color := col_secr;
-            if TheWall.Elevator    then Pen.Color := col_elev;
-            if TheWall.Trigger     then Pen.Color := col_trig;
+             begin
+              if TheSector.Elevator  then Pen.Color := col_elev;
+              if TheSector.Trigger   then Pen.Color := col_trig;
+              if TheSector.Secret    then Pen.Color := col_secr;
+              if TheWall.Elevator    then Pen.Color := col_elev;
+              if TheWall.Trigger     then Pen.Color := col_trig;
 
-            LVertex := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
-            RVertex := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
-            MoveTo(M2SX(LVertex.X), M2SZ(LVertex.Z));
-            LineTo(M2SX(RVertex.X), M2SZ(RVertex.Z));
-            if TheWall.Trigger then DO_Draw_WLperp(i, j, col_trig);
-           end;
+             end
+          else if TheSector.InfItems.Count > 0 then
+             begin
+               Pen.Color := col_elev;
+             end;
+
+          if not (MAP_MODE = MM_VX) then
+            begin
+              LVertex := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
+              RVertex := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
+              MoveTo(M2SX(LVertex.X), M2SZ(LVertex.Z));
+              LineTo(M2SX(RVertex.X), M2SZ(RVertex.Z));
+            end;
+          DO_Draw_WLperp(i, j, Pen.Color);
         end;
     end;
   end;
@@ -1381,6 +1463,7 @@ begin
 
 end;
 
+// An attempt was made - will try again later.
 {procedure TMapWindow.DO_DrawSectorFill;
 var i,j,w,w2    : Integer;
     dam         : Integer;
@@ -1595,14 +1678,15 @@ if LEVELloaded then
                 begin
                  {draw the grid}
                  if GridON then DO_DrawGrid;
-                 
+
                  {draw the shadow layers}
                  if SHADOW then DO_DrawShadow;
-                 
+
                  {draw the objects even if not in object mode }
                  if OBSHADOW then DO_DrawOBjectShadow;
-                 
+
                  {draw the current layer}
+
                  DO_DrawCurrentLayer;
                 end
                else
@@ -1757,17 +1841,17 @@ if LEVELloaded then
              end;
      END; {CASE MAP_MODE OF}
      {draw the specials}
-     DO_DrawSpecials; 
-     
+     DO_DrawSpecials;
+
      {draw the multiselection}
      DO_DrawMultiSel(FALSE);
-     
+
      {draw the selection}
      DO_DrawSelection(FALSE);
-     
+
      {draw the SuperHilite, ie the slave / client of the selection }
      DO_DrawSuperHilite;
-     
+
     end; {with Map.Canvas}
 
 {just to be sure}
@@ -1854,6 +1938,8 @@ begin
   LAUNCHER_TYPE := Ini.ReadString('DARK FORCES', 'LAUNCHER_TYPE', '');
   LOADPREVPRJ   := Ini.ReadBool('DARK FORCES', 'LOADPREVPRJ', TRUE);
   UNDO_LIMIT    := Ini.ReadInteger('DARK FORCES', 'UNDO_LIMIT', 32);
+  AUTOSAVE      := Ini.ReadBool('DARK FORCES', 'PROMPT_SAVE', FALSE);
+  SKIPCUT       := Ini.ReadBool('DARK FORCES', 'SKIP CUTSCENE', False);
 
   PROJECTFile   := Ini.ReadString(Section,  'PROJECTFile', '');
   Log.Info('WDFUSE Version  = ' + WDFUSE_VERSION, LogName);
@@ -1861,6 +1947,7 @@ begin
   Log.Info('DOSBOX_CONF  = ' + DOSBOX_CONF, LogName);
   Log.Info('LAUNCHER_TYPE  = ' + LAUNCHER_TYPE, LogName);
   Log.Info('LOADPREVPRJ  = ' + BoolToStr(LOADPREVPRJ), LogName);
+  Log.Info('AUTOSAVE  = ' + BoolToStr(AUTOSAVE), LogName);
   Log.Info('PROJECTFile  = ' + PROJECTFile, LogName);
 
   Section := 'TOOLS';
@@ -1873,6 +1960,7 @@ begin
 
 
   Section := 'CONFIRM';
+  AUTOCOMMIT          := Ini.ReadBool(Section, 'AutoCommit', FALSE);
   CONFIRMMultiDelete  := Ini.ReadBool(Section, 'MultiDelete', TRUE);
   CONFIRMMultiUpdate  := Ini.ReadBool(Section, 'MultiUpdate', TRUE);
   CONFIRMMultiInsert  := Ini.ReadBool(Section, 'MultiInsert', TRUE);
@@ -1913,6 +2001,7 @@ begin
   FastDRAG         := TRUE;
 
   SHADOW           := Ini.ReadBool(Section,     'LAYER_SHADOW', TRUE);
+  SHOW_LENGTHS     := Ini.ReadBool(Section,     'SHOW_LENGTHS', TRUE);
 
   UsePlusVX        := Ini.ReadBool(Section,     'UsePlusVX',     CUsePlusVX);
   UsePlusOBShad    := Ini.ReadBool(Section,     'UsePlusOBShad', CUsePlusOBShad);
@@ -2201,6 +2290,8 @@ begin
   MapWindow.OnShortCut := ShortCutProc;
   EditAdjoin.ShortCut := TextToShortCut('A');
   EditExtrude.ShortCut := TextToShortCut('E');
+  EditStitchLeft.ShortCut := TextToShortCut('Shift+F5');
+  EditStitchRight.ShortCut := TextToShortCut('Shift+F6');
   EditCopy.ShortCut := TextToShortCut('Ctrl+C');
   EditPaste.ShortCut := TextToShortCut('Ctrl+V');
   EditUndo.ShortCut := TextToShortCut('Ctrl+Z');
@@ -2215,14 +2306,17 @@ begin
   ModeWalls.ShortCut := TextToShortCut('W');
   ModeVertices.ShortCut := TextToShortCut('V');
   ModeObjects.ShortCut := TextToShortCut('O');
+  ModeShowLengths.ShortCut := TextToShortCut('L');
   MapZoomIn.ShortCut := TextToShortCut('Num+');
   MapZoomOut.ShortCut := TextToShortCut('Num-');
   MapZoomNone.ShortCut := TextToShortCut('Num*');
   Tools3DOConverter.ShortCut := TextToShortCut('Shift+D');
+  ToolsFindSector.ShortCut := TextToShortCut('F');
   ToolsVUEEditor.ShortCut := TextToShortCut('Shift+V');
   ToolsExternalTools.ShortCut := TextToShortCut('Shift+E');
   ViewEditorGOL.ShortCut := TextToShortcut('Shift+I');
   MapGrid8.ShortCut := TextToShortcut('Shift+G');
+  ToolsGOBFileManager.ShortCut := TextToShortCut('F3');
 end;
 
 procedure TMapWindow.FormDeactivate(Sender: TObject);
@@ -2231,6 +2325,8 @@ begin
   MapWindow.OnShortCut := Nil;
   EditAdjoin.ShortCut := TextToShortCut('');
   EditExtrude.ShortCut := TextToShortCut('');
+  EditStitchLeft.ShortCut := TextToShortCut('');
+  EditStitchRight.ShortCut := TextToShortCut('');
   EditCopy.ShortCut := TextToShortCut('');
   EditPaste.ShortCut := TextToShortCut('');
   EditUndo.ShortCut := TextToShortCut('');
@@ -2245,14 +2341,17 @@ begin
   ModeWalls.ShortCut := TextToShortCut('');
   ModeVertices.ShortCut := TextToShortCut('');
   ModeObjects.ShortCut := TextToShortCut('');
+  ModeShowLengths.ShortCut := TextToShortCut('');
   MapZoomIn.ShortCut := TextToShortCut('');
   MapZoomOut.ShortCut := TextToShortCut('');
   MapZoomNone.ShortCut := TextToShortCut('');
   Tools3DOConverter.ShortCut := TextToShortCut('');
   ToolsVUEEditor.ShortCut := TextToShortCut('');
   ToolsExternalTools.ShortCut := TextToShortCut('');
+  ToolsFindSector.ShortCut := TextToShortCut('');
   ViewEditorGOL.ShortCut := TextToShortcut('');
   MapGrid8.ShortCut := TextToShortcut('');
+  ToolsGOBFileManager.ShortCut := TextToShortCut('');
 end;
 
 
@@ -2436,7 +2535,7 @@ begin
       $49 {VK_I} : SpeedButtonINFClick(NIL);
       $4B {VK_K} : DO_Polygon;
                    {DEU compatibility}
-      $4C {VK_L} : SpeedButtonLVLClick(NIL);
+      $4C {VK_L} : ModeShowLengthsClick(NIL);
       $4D {VK_M} : SpeedButtonMSGClick(NIL);
       $4E {VK_N} : EditNextClick(Nil);
       $4F {VK_O} : DO_Switch_To_OB_Mode;
@@ -2551,7 +2650,7 @@ begin
 
       // These are now also globally defined regardless of level load  (Scroll Down)
       VK_F1      : HelpTutorialClick(NIL);
-      VK_F2      : ;
+      VK_F2      : SpeedButtonINFClick(NIL);
       VK_F3      : ToolsGOBFileManagerClick(NIL);
                   {if SC_MULTIS.Count > 1 then
                     DO_Distribute(TRUE, 2, FALSE)
@@ -2674,14 +2773,8 @@ begin
                     DO_Zoom_In;
                     DO_Zoom_In;
                    end;
-      VK_F5      : if WL_MULTIS.Count > 1 then
-                    DO_StitchHorizontal(TRUE, TRUE, TRUE)
-                   else
-                    ShowMessage('You must have a Wall multiselection !');
-      VK_F6      : if WL_MULTIS.Count > 1 then
-                    DO_StitchHorizontalInvert(TRUE, TRUE, TRUE)
-                   else
-                    ShowMessage('You must have a Wall multiselection !');
+      VK_F5      : PopUpStitchLeftClick(NIL);
+      VK_F6      : PopUpStitchRightClick(NIL);
       VK_F7      : if WL_MULTIS.Count > 1 then
                     DO_StitchVertical(TRUE, TRUE, TRUE)
                    else
@@ -2791,6 +2884,7 @@ begin
                     SpeedButtonToolsClick(NIL);
                    end;
       $4B {VK_K} : ;
+      $4C {VK_L} : SpeedButtonLVLClick(NIL);
       $4D {VK_M} : ;
       $4E {VK_N} : ;
       $4F {VK_O} : DO_OBShadow_OnOff;
@@ -3454,6 +3548,31 @@ begin
  ToolsWindow.Show;
 end;
 
+procedure TMapWindow.SpeedButtonBMClick(Sender: TObject);
+begin
+  ResEdit('', RST_BM);
+end;
+
+procedure TMapWindow.SpeedButtonWAXClick(Sender: TObject);
+begin
+  ResEdit('', RST_WAX);
+end;
+
+procedure TMapWindow.SpeedButtonFMEClick(Sender: TObject);
+begin
+  ResEdit('', RST_FME);
+end;
+
+procedure TMapWindow.SpeedButtonVOCClick(Sender: TObject);
+begin
+  ResEdit('', RST_SND);
+end;
+
+procedure TMapWindow.SpeedButton3DOSClick(Sender: TObject);
+begin
+  ResEdit('', RST_3DO);
+end;
+
 procedure TMapWindow.MapPopupPopup(Sender: TObject);
 begin
  if LEVELLoaded then
@@ -3468,12 +3587,34 @@ begin
    PopUpRedo.Visible    := TRUE;
    PopupCopy.Visible    := TRUE;
    PopupPaste.Visible   := TRUE;
+   PopUpSubsectorDelete.Visible := FALSE;
+   PopUpSubsector.Visible := FALSE;
+
+   if MAP_MODE = MM_SC then
+     begin
+       PopUpSubsectorDelete.Visible := TRUE;
+       PopUpSubsector.Visible := TRUE;
+     end;
    if MAP_MODE = MM_WL then
     begin
 
      PopupDuplicate.Visible := False;
      PopupCopy.Visible     := FALSE;
      PopupSplit.Visible    := TRUE;
+     PopupFind.Visible     := FALSE;
+
+
+     if WL_MULTIS.Count > 1 then
+      begin
+       PopUpStitchLeft.Visible := True;
+       PopUpStitchRight.Visible := True;
+      end
+     else
+      begin
+       PopUpStitchLeft.Visible := False;
+       PopUpStitchRight.Visible := False;
+      end;
+
      if WallEditor.WLEd.Cells[1,0] = '-1' then
       begin
        PopupExtrude.Visible  := TRUE;
@@ -3536,20 +3677,41 @@ begin
  SpeedButtonToolsClick(NIL);
 end;
 
+procedure TMapWindow.ModeShowLengthsClick(Sender: TObject);
+begin
+  ModeShowLengths.Checked := not ModeShowLengths.Checked;
+  SHOW_LENGTHS := ModeShowLengths.Checked;
+  Map.Invalidate;
+end;
+
 procedure TMapWindow.PopupNewClick(Sender: TObject);
+var
+  cursx, cursy : real;
+  tempPt : TPoint;
 begin
   if Sender = PopupDuplicate then
   begin
+
+   Do_StoreUndo;
+   GetCursorPos(tempPt);
+
+   { if you are right cliking - use the mouse pointer, otherwise center }
+
+   cursx :=  S2MX(tempPt.x - MoveXOffset);
+   cursy :=  S2MZ(tempPt.y - (MoveYOffset + MenuYOffset));
+
+
    CASE MAP_MODE of
-    MM_SC : ShellInsertSC(-100000.0,-100000.0);
+    MM_SC : ShellInsertSC(cursx,cursy);
     MM_WL : ;
     MM_VX : ShellSplitVX(SC_HILITE, VX_HILITE);
-    MM_OB : ShellInsertOB(-100000.0,-100000.0);
+    MM_OB : ShellInsertOB(cursx,cursy);
    END;
   end;
 
  if Sender = PopupSplit then
   begin
+   Do_StoreUndo;
    ShellSplitWL(SC_HILITE, WL_HILITE);
   end;
 
@@ -3560,16 +3722,12 @@ begin
 
  if Sender = PopupAdjoin then
   begin
-   MakeAdjoin(SC_HILITE, WL_HILITE);
-   MultiMakeAdjoin;
-   DO_Fill_WallEditor;
+   EditAdjoinClick(Nil);
   end;
 
  if Sender = PopupUnAdjoin then
   begin
-   UnAdjoin(SC_HILITE, WL_HILITE);
-   MultiUnAdjoin;
-   DO_Fill_WallEditor;
+   EditUnAdjoinClick(Nil);
   end;
 
  if Sender = PopupDelete then
@@ -3596,6 +3754,91 @@ end;
 procedure TMapWindow.PopUpRedoClick(Sender: TObject);
 begin
   Do_ApplyUndo(True);
+end;
+
+procedure TMapWindow.PopUpStitchLeftClick(Sender: TObject);
+begin
+  if WL_MULTIS.Count > 1 then
+    DO_StitchHorizontal(TRUE, TRUE, TRUE)
+  else
+    ShowMessage('You must have a Wall multiselection !');
+end;
+
+procedure TMapWindow.PopUpStitchRightClick(Sender: TObject);
+begin
+ if WL_MULTIS.Count > 1 then
+    DO_StitchHorizontalInvert(TRUE, TRUE, TRUE)
+  else
+    ShowMessage('You must have a Wall multiselection !');
+end;
+
+// This probalby should go to mapfun eventually...
+procedure TMapWindow.PopUpSubsectorClick(Sender: TObject);
+var num_sides : Integer;
+    radius : Integer;
+    menu_name : string;
+    polydone : boolean;
+    polytype : integer;
+begin
+ menu_name := TMenuItem(Sender).Name;
+
+ ORIGIN.X := trunc(s2mx(ORIGIN.X));
+ ORIGIN.Y := trunc(s2mz(ORIGIN.Y));
+
+ if ContainsText(menu_name,'Delete') then
+   polytype := 0
+ else
+   polytype := 1;
+
+ // Get original radius
+ radius := GetSectorMaxradius(SC_HILITE);
+ polydone := False;
+
+ try
+    num_sides := strtoint(RightStr(menu_name,1));
+ except on E: Exception do
+   begin
+    ToolsWindow.ToolsNotebook.PageIndex := 3;
+    SpeedButtonToolsClick(NIL);
+    exit;
+   end;
+ end;
+
+ // Keep halving the radius until the darn thing fits
+ while not polydone do
+  begin
+   radius := trunc(radius / 2);
+   if radius = 0 then
+    begin
+      showmessage('Could not fix polygon inside this sector - try clicking in the center!');
+      exit
+    end;
+
+   polydone := VerifyPolygonFits(num_sides, radius, ORIGIN.X, ORIGIN.Y, SC_HILITE)
+  end;
+
+ DO_StoreUndo;
+
+ {create a polygon function in m_mapfun}
+ IGNORE_UNDO := True;
+ CreatePolygon(num_sides, radius, ORIGIN.X, ORIGIN.Y, polytype, SC_HILITE);
+ IGNORE_UNDO := False;
+end;
+
+procedure TMapWindow.PopUpSubsectorDeleteClick(Sender: TObject);
+var num_sides : Integer;
+    radius : Integer;
+begin
+ DO_StoreUndo;
+
+ ORIGIN.X := Trunc(M2SX(ORIGIN.X));
+ ORIGIN.Y := Trunc(M2SZ(ORIGIN.X));
+ num_sides := 3;
+
+ {create a polygon function in m_mapfun}
+ IGNORE_UNDO := True;
+ CreatePolygon(num_sides, radius, ORIGIN.X, ORIGIN.Y, 0, SC_HILITE);
+ IGNORE_UNDO := False;
 end;
 
 procedure TMapWindow.PopUpUndoClick(Sender: TObject);
@@ -3952,6 +4195,11 @@ begin
 end;
 
 
+procedure TMapWindow.ToolsFindSectorClick(Sender: TObject);
+begin
+  DO_Find_SC_By_Name;
+end;
+
 procedure TMapWindow.ToolsGOBFileManagerClick(Sender: TObject);
 begin
  Application.CreateForm(TGOBWindow, GOBWindow);
@@ -4060,15 +4308,15 @@ begin
 
     if XOff > MapWindow.HScrollBar.Max then
      MapWindow.HScrollBar.Max := XOff;
-   
+
 
     MapWindow.HScrollBar.Position := XOff;
   except on E: Exception do
-       begin         
+       begin
           log.Error('Failed to apply horizontal scroll position at ' + inttostr(xoff), logname );
        end;
-  end;  
-  
+  end;
+
   XOffset := XOff;
   Result  := TRUE;
 end;
@@ -4083,21 +4331,21 @@ begin
    end;
 
   try
-   
+
     if -ZOffset < MapWindow.VScrollBar.Min then
      MapWindow.VScrollBar.Min := -ZOff;
 
     if -ZOffset > MapWindow.VScrollBar.Max then
      MapWindow.VScrollBar.Max := -ZOff;
 
-  
+
       MapWindow.VScrollBar.Position := -ZOff;
   except on E: Exception do
-       begin         
+       begin
           log.Error('Failed to apply vertical scroll position at ' + inttostr(zoff), logname );
        end;
   end;
-  
+
   ZOffset := ZOff;
   Result  := TRUE;
 end;
@@ -4155,14 +4403,10 @@ end;
 
 
 procedure TMapWindow.MapDblClick(Sender: TObject);
-var TheSector : TSector;
-    tmp       : array[0..255] of char;
 begin
  IF LEVELLoaded THEN
   BEGIN
-  TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
-  if TheSector.Name = '' then
-    TheSector.Name := 'SECTOR_' + IntToStr(SC_HILITE);
+
   case MAP_MODE of
    MM_SC : begin
             SectorEditor.Show;
@@ -4539,7 +4783,7 @@ begin
               INFRemote := TRUE;
              end;
     end;
-    
+
   if UpperCase(INFEditor) <> '' then
    begin
     StrPCopy(tmp, INFEditor + ' ' + LEVELPath + '\' + LEVELName + '.INF');

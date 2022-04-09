@@ -47,6 +47,10 @@ function  GetCycleFirstVx(sc, cy : Integer) : Integer;
 
 function  VxToPoint(vx : TVertex) : TPoint;
 
+// normalization
+function  NormalizeWall(AWall : TWall) : TWall;
+function  NormalizeOffsets(WallTexture : TTEXTURE) : TTEXTURE;
+
 {
 function GetCycleNextVx(sc, cy, vx : Integer) : Integer;
 function GetCycleNextWl(sc, cy, wl : Integer) : Integer;
@@ -56,6 +60,8 @@ procedure DO_Polygon;
 procedure CreatePolygon(Sides : Integer; Radius, CX, CZ : Real; PolyType, sc : Integer);
 procedure CreatePolygonGap(Sides : Integer; Radius, CX, CZ : Real; sc : Integer);
 procedure CreatePolygonSector(Sides : Integer; Radius, CX, CZ : Real; sc : Integer);
+function  GetSectorMaxradius(sc : Integer) : integer;
+function  VerifyPolygonFits(Sides : Integer; Radius, CX, CZ : Real; sc : Integer) : Boolean;
 
 procedure DO_Distribute(Altitudes : Boolean; FlCe : Integer; Ambient : Boolean);
 
@@ -78,7 +84,7 @@ procedure DO_OffsetAmbient(a : Integer);
 procedure DO_SplitSector(s, d, n, sc, wl1, wl2 : Integer);
 
 implementation
-uses Mapper, M_Tools;
+uses Mapper, M_Tools, v_util32;
 
 {ADJOINS ********************************************************************}
 {ADJOINS ********************************************************************}
@@ -1165,6 +1171,42 @@ begin
   Result := Point(M2SX(vx.X), M2SZ(vx.z));
 end;
 
+
+function  NormalizeWall(AWall : TWall) : TWall;
+begin
+ // Normalize offsets
+ AWall.Mid := NormalizeOffsets(AWall.Mid);
+ AWall.Top := NormalizeOffsets(AWall.Top);
+ AWall.Bot := NormalizeOffsets(AWall.Bot);
+ AWall.Sign := NormalizeOffsets(AWall.Sign);
+ Result := AWall;
+end;
+
+// Given a texture component - normalize the offsets (no more x offset of +1000)
+function  NormalizeOffsets(WallTexture : TTEXTURE) : TTEXTURE;
+var
+  wl_header : TBM_HEADER;
+begin
+  try
+    wl_header := GetNormalHeader(WallTexture.name);
+    if (wl_header.Compressed = 0) and (wl_header.SizeX <> 1) or ((wl_header.SizeX = 1) and (wl_header.SizeY = 1)) then
+      begin
+        // Delphi doesn't have a built-in real modulo impl ??? I can't even...
+        WallTexture.f1 :=  WallTexture.f1 -  Trunc(WallTexture.f1/Trunc(wl_header.SizeX/8)) * Trunc(wl_header.SizeX/8);
+        WallTexture.f2 :=  WallTexture.f2 -  Trunc(WallTexture.f2/Trunc(wl_header.SizeY/8)) * Trunc(wl_header.SizeY/8);
+      end;
+    NormalizeOffsets := WallTexture;
+  except on E: Exception do
+    begin
+       Log.error('Failed to Load texture in SC ' + IntToStr(SC_HILITE) +
+                 ' WL ' + IntToStr(WL_HILITE)+ ' named ' +  WallTexture.name +
+                 ' due to ' + E.Message, LogName);
+       showmessage('Failed to Load texture in SC ' + IntToStr(SC_HILITE) +
+                 ' WL ' + IntToStr(WL_HILITE)+ ' named ' +  WallTexture.name +
+                 ' due to ' + E.Message);
+     end;
+  end;
+end;
 {-----------------------------------------------------------------------------}
 
 procedure ShellSplitWL(sc, wl : Integer);
@@ -1182,7 +1224,7 @@ begin
                             mb_YesNo or mb_IconQuestion) = idNo
     then exit;
   end;
-
+ DO_StoreUndo;
  TheSector := TSector(MAP_SEC.Objects[sc]);
  TheWall   := TWall(TheSector.Wl.Objects[wl]);
 
@@ -1582,15 +1624,26 @@ begin
 
 {we'll use this one to store the calculated vertices}
 TMPSector := TSector.Create;
+
 alpha := 0.0;
 delta := 2 * Pi / Sides;
 for i := 0 to Sides - 1 do
  begin
   TheVertex      := TVertex.Create;
-  TheVertex.X    := CX + Radius * cos(alpha);
-  TheVertex.Z    := CZ + Radius * sin(alpha);
+
+  // Special case to make neat squares (not diamonds).
+  if sides = 4 then
+     begin
+      TheVertex.X    := CX + Radius * SEC_SQUARE[i].x;
+      TheVertex.Z    := CZ + Radius * SEC_SQUARE[i].y;
+     end
+  else
+     begin
+      TheVertex.X    := CX + Radius * cos(alpha);
+      TheVertex.Z    := CZ + Radius * sin(alpha);
+      alpha          := alpha + delta;
+     end;
   TheVertex.Mark := 0;
-  alpha          := alpha + delta;
   TMPSector.Vx.AddObject('VX', TheVertex);
  end;
 
@@ -1694,15 +1747,31 @@ begin
 
 {we'll use this one to store the calculated vertices}
 TMPSector := TSector.Create;
+
+// Special case to make neat squares (not diamonds).
 alpha := 0.0;
+if sides = 4 then
+  alpha := Pi/2;
+
 delta := 2 * Pi / Sides;
 for i := 0 to Sides - 1 do
  begin
   TheVertex      := TVertex.Create;
-  TheVertex.X    := CX + Radius * cos(alpha);
-  TheVertex.Z    := CZ + Radius * sin(alpha);
+
+  // Special case to make neat squares (not diamonds).
+  if sides = 4 then
+     begin
+      TheVertex.X    := CX + Radius * SEC_SQUARE[i].x;
+      TheVertex.Z    := CZ + Radius * SEC_SQUARE[i].y;
+     end
+  else
+     begin
+      TheVertex.X    := CX + Radius * cos(alpha);
+      TheVertex.Z    := CZ + Radius * sin(alpha);
+      alpha          := alpha + delta;
+     end;
+
   TheVertex.Mark := 0;
-  alpha          := alpha + delta;
   TMPSector.Vx.AddObject('VX', TheVertex);
  end;
 
@@ -1765,6 +1834,91 @@ for i := 0 to Sides - 1 do
  TMPSector.Free;
 
  MODIFIED := TRUE;
+end;
+
+// Get an approximate horizontal length of the sector
+function GetSectorMaxradius(sc : Integer) : integer;
+var    i : integer;
+       minx, maxx : Real;
+       TheVertex  : TVertex;
+       TheSector  : TSector;
+begin
+
+    TheSector := TSector(MAP_SEC.Objects[sc]);
+
+    for i:= 0 to TheSector.Vx.Count - 1 do
+     begin
+       TheVertex := TVertex(TheSector.Vx.objects[i]);
+       if i = 0 then
+         begin
+           minx := TheVertex.X;
+           maxx := TheVertex.X;
+         end
+       else
+         begin
+           if TheVertex.X > maxx then maxx := TheVertex.X;
+           if TheVertex.X < minx then minx := TheVertex.X;
+         end;
+     end;
+
+    Result := trunc(maxx-minx);
+
+end;
+
+// Given a point - figure out if it fits inside the sector
+function VerifyPolygonFits(Sides : Integer; Radius, CX, CZ : Real; sc : Integer) : Boolean;
+var    i          : Integer;
+       TheVertex  : TVertex;
+       TheSector  : TSector;
+       TMPSector  : TSector;
+       alpha,
+       delta     : Real;
+       secPolygon  : array of TPoint;
+       rgn : HRGN;
+begin
+
+  Result := True;
+  TheSector := TSector(MAP_SEC.Objects[sc]);
+
+  // Create region of sector verteces.
+  SetLength(secPolygon, TheSector.Vx.Count);
+  for i:= 0 to TheSector.Vx.Count - 1 do
+    secPolygon[i] := VxToPoint(TVertex(TheSector.Vx.objects[i]));
+
+  rgn := CreatePolygonRgn(secPolygon[0], Length(secPolygon), WINDING);
+
+  { check if the tmp sector vertices are in region }
+  TMPSector := TSector.Create;
+
+
+  alpha := 0.0;
+  delta := 2 * Pi / Sides;
+  for i := 0 to Sides - 1 do
+   begin
+    TheVertex      := TVertex.Create;
+
+    // Special case to make neat squares (not diamonds).
+    if sides = 4 then
+     begin
+      TheVertex.X    := CX + Radius * SEC_SQUARE[i].x;
+      TheVertex.Z    := CZ + Radius * SEC_SQUARE[i].y;
+     end
+    else begin
+      TheVertex.X    := CX + Radius * cos(alpha);
+      TheVertex.Z    := CZ + Radius * sin(alpha);
+      alpha          := alpha + delta;
+    end;
+
+
+    // We don't want the subsector to be sticking outside the walls
+    if not PtInRegion(rgn, trunc(m2sx(TheVertex.X)), trunc(m2sz(TheVertex.Z))) then
+      begin
+        Result := False;
+        break;
+      end;
+   end;
+  TMPSector.Free;
+
 end;
 
 { DISTRIBUTE ******************************************************* }
@@ -1831,6 +1985,7 @@ begin
  TheSector  := TSector(MAP_SEC.Objects[StrToInt(Copy(WL_MULTIS[0],1,4))]);
  TheWall    := TWall(TheSector.Wl.Objects[StrToInt(Copy(WL_MULTIS[0],5,4))]);
 
+ TheWall := NormalizeWall(TheWall);
  Len        := GetWLLen(StrToInt(Copy(WL_MULTIS[0],1,4)), StrToInt(Copy(WL_MULTIS[0],5,4)));
  Mofs       := TheWall.Mid.f1 + Len;
  Tofs       := TheWall.Top.f1 + Len;
@@ -1877,6 +2032,7 @@ begin
     Mofs       := Mofs + Len;
     Tofs       := Tofs + Len;
     Bofs       := Bofs + Len;
+    TheWall := NormalizeWall(TheWall);
   end;
 
 end;
@@ -1895,7 +2051,7 @@ begin
  Do_StoreUndo;
  TheSector  := TSector(MAP_SEC.Objects[StrToInt(Copy(WL_MULTIS[WL_MULTIS.Count-1],1,4))]);
  TheWall    := TWall(TheSector.Wl.Objects[StrToInt(Copy(WL_MULTIS[WL_MULTIS.Count-1],5,4))]);
-
+ TheWall    := NormalizeWall(TheWall);
  Mofs       := TheWall.Mid.f1;
  Tofs       := TheWall.Top.f1;
  Bofs       := TheWall.Bot.f1;
@@ -1940,6 +2096,7 @@ begin
     if Mid then TheWall.Mid.f1 := MOfs;
     if Top then TheWall.Top.f1 := TOfs;
     if Bot then TheWall.Bot.f1 := BOfs;
+    TheWall := NormalizeWall(TheWall);
   end;
 
 end;

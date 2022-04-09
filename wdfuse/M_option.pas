@@ -145,6 +145,11 @@ type
     Label3: TLabel;
     OptionsViewLogFile: TButton;
     OptionsViewLogFolder: TButton;
+    OptionsAutoSave: TCheckBox;
+    OptionsSkipCutscene: TCheckBox;
+    Label15: TLabel;
+    CBAutoCommit: TCheckBox;
+    Label16: TLabel;
     procedure FormShow(Sender: TObject);
     procedure OkButtonClick(Sender: TObject);
     procedure LBColorsClick(Sender: TObject);
@@ -198,6 +203,13 @@ begin
   RenderPath.Caption           := RenderInst;
 
   ToolsOptionsInfEditor.Text   := INFEditor;
+
+  if not FileExists(Voc2Wav) and FileExists(WDFUSEDir + '\WDFSOUND\SOX.EXE') then
+    Voc2Wav := WDFUSEDir + '\WDFSOUND\SOX.EXE';
+  if not FileExists(Wav2Voc) and FileExists(WDFUSEDir + '\WDFSOUND\SOX.EXE') then
+    Wav2Voc := WDFUSEDir + '\WDFSOUND\SOX.EXE';
+
+
   ToolsOptionsVoc2Wav.Text     := Voc2Wav;
   ToolsOptionsWav2Voc.Text     := Wav2Voc;
 
@@ -212,6 +224,8 @@ begin
 
   OptionsTestLaunchDF.Checked        := TestLaunch;
   OptionsLaunchPrevPRJChkBox.Checked := LOADPREVPRJ;
+  OptionsAutoSave.Checked            := AUTOSAVE;
+  OptionsSkipCutscene.Checked        := SKIPCUT;
 
   RG_Backup.ItemIndex          := Backup_Method;
 
@@ -220,6 +234,7 @@ begin
   ShapeColorFore.Brush.Color   := col_back;
   ShapeColorFore.Pen.Color     := col_select;
 
+  CBAutoCommit.Checked         := AUTOCOMMIT;
   CBMultiDel.Checked           := CONFIRMMultiDelete;
   CBMultiUpd.Checked           := CONFIRMMultiUpdate;
   CBMultiIns.Checked           := CONFIRMMultiInsert;
@@ -232,6 +247,7 @@ begin
 
   CBFastSCROLL.Checked         := FastSCROLL;
   CBFastDRAG.Checked           := FastDRAG;
+
 
   CBUsePlusVX.Checked          := UsePlusVX;
   CBUsePlusOBShad.Checked      := UsePlusOBShad;
@@ -304,6 +320,8 @@ begin
   Wav2Voc       := ToolsOptionsWav2Voc.Text;
   TestLaunch    := OptionsTestLaunchDF.Checked;
   LOADPREVPRJ   := OptionsLaunchPrevPRJChkBox.Checked;
+  AUTOSAVE      := OptionsAutoSave.Checked;
+  SKIPCUT       := OptionsSkipCutscene.Checked;
   UseLog        := OptionsEnableLogging.Checked;
   Backup_Method := RG_Backup.ItemIndex;
 
@@ -326,6 +344,8 @@ begin
   Log.Info('Options Launcher Type = ' + LAUNCHER_TYPE, LogName);
   Log.Info('Options DOSBOX_CONF  = ' + DOSBOX_CONF, LogName);
   Ini.WriteBool('DARK FORCES', 'LOADPREVPRJ', LOADPREVPRJ);
+  Ini.WriteBool('DARK FORCES', 'PROMPT_SAVE', AUTOSAVE);
+  Ini.WriteBool('DARK FORCES', 'SKIP CUTSCENE', SKIPCUT);
 
   MemoLabels.Lines.SaveToFile(WDFUSEdir + '\WDFDATA\external.wdl');
   MemoCmdLines.Lines.SaveToFile(WDFUSEdir + '\WDFDATA\external.wdn');
@@ -368,7 +388,9 @@ begin
 
   CONFIRMWallSplit    := CBWallSplit.Checked;
   CONFIRMWallExtrude  := CBWallExtrude.Checked;
+  AUTOCOMMIT          := CBAutoCommit.Checked;
 
+  Ini.WriteBool('CONFIRM', 'AutoCommit',   AUTOCOMMIT);
   Ini.WriteBool('CONFIRM', 'MultiDelete',  CONFIRMMultiDelete);
   Ini.WriteBool('CONFIRM', 'MultiUpdate',  CONFIRMMultiUpdate);
   Ini.WriteBool('CONFIRM', 'MultiInsert',  CONFIRMMultiInsert);
@@ -388,6 +410,7 @@ begin
   Ini.WriteBool('FINE TUNING',  'FastScroll',  FastSCROLL);
   Ini.WriteBool('FINE TUNING',  'FastDrag',    FastDRAG);
   Ini.WriteBool('FINE TUNING',  'LAYER_SHADOW', SHADOW);
+  Ini.WriteBool('FINE TUNING',  'SHOW_LENGTHS', SHOW_LENGTHS);
 
   UsePlusVX     := CBUsePlusVX.Checked;
   UsePlusOBShad := CBUsePlusOBShad.Checked;
@@ -588,6 +611,7 @@ begin
   end;
 end;
 
+
 procedure TOptionsDialog.CancelBtnClick(Sender: TObject);
 begin
   col_back   := Ini.ReadInteger('MAP-COLORS',  'back',   Ccol_back);
@@ -663,6 +687,7 @@ begin
   ELSE ShapeColorFore.Pen.Color := col_back;
  END;
 end;
+
 
 procedure TOptionsDialog.LBColors2Click(Sender: TObject);
 begin

@@ -80,6 +80,8 @@ begin
       MapWindow.ModeWalls.Checked    := FALSE;
       MapWindow.ModeSectors.Checked  := TRUE;
       MapWindow.EditAdjoin.Enabled := FALSE;
+      MapWindow.EditStitchLeft.Enabled := FALSE;
+      MapWindow.EditStitchRight.Enabled := FALSE;
       MapWindow.EditUnAdjoin.Enabled := FALSE;
       MapWindow.EditExtrude.Enabled := FALSE;
       MapWindow.PanelEditMode.Caption := 'SECTOR';
@@ -122,6 +124,16 @@ begin
       MapWindow.EditUnAdjoin.Enabled := TRUE;
       MapWindow.EditExtrude.Enabled := TRUE;
       MapWindow.PanelEditMode.Caption := 'WALL';
+      if WL_MULTIS.Count > 1 then
+       begin
+        MapWindow.EditStitchLeft.Enabled := FALSE;
+        MapWindow.EditStitchRight.Enabled := FALSE;
+       end
+      else
+       begin
+        MapWindow.EditStitchLeft.Enabled := TRUE;
+        MapWindow.EditStitchRight.Enabled := TRUE;
+       end;
 
       ObjectEditor.Hide;
       VertexEditor.Hide;
@@ -336,9 +348,6 @@ end;
 
 procedure DO_Zoom_Out;
 begin
-  log.Info('Zooming Out . Zoom Scale = ' + FloatToStr(Scale) + ' and zoomlock is ' + BoolToStr(ZoomInLock) +
-           ' grid = ' + floattostr(grid) + ' grid offset = ' + inttostr(GRID_OFFSET) +
-            ' colgrid = ' + inttostr(col_grid), LogName);
 
   if Scale > 0.05 then
     begin

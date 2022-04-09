@@ -55,6 +55,8 @@ type
     procedure SBHelpClick(Sender: TObject);
     procedure OBStayOnTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure FormMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
   public
@@ -109,6 +111,15 @@ end;
 
 procedure TObjectEditor.FormDeactivate(Sender: TObject);
 begin
+  // This is a hack to prevent refocus on own object
+  // Do not autocommit multiple items as it is dangerous
+  if AUTOCOMMIT and (OB_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      SBCommitClick(NIL);
+      AUTOCOMMIT_FLAG := False;
+    end;
+
   Ini.WriteInteger('WINDOWS', 'Object Editor  X', ObjectEditor.Left);
   Ini.WriteInteger('WINDOWS', 'Object Editor  Y', ObjectEditor.Top);
   Ini.WriteInteger('WINDOWS', 'Object Editor  W', ObjectEditor.Width);
@@ -119,6 +130,20 @@ begin
    Ini.WriteInteger('WINDOWS', 'Object Editor  T', 0);
   Ini.WriteInteger('WINDOWS', 'Object Editor  G', ObEd.ColWidths[0]);
 end;
+
+procedure TObjectEditor.FormMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  // This is a hack to prevent refocus on own object
+  // Do not autocommit multiple items as it is dangerous
+  if AUTOCOMMIT and (OB_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      SBCommitClick(NIL);
+      AUTOCOMMIT_FLAG := False;
+    end;
+end;
+
 
 procedure TObjectEditor.SBRollbackClick(Sender: TObject);
 begin
@@ -139,7 +164,8 @@ begin
   if Shift = [] then
     Case Key of
       VK_F1     : MapWindow.HelpTutorialClick(NIL);
-      VK_F2     : SBCommitClick(NIL);
+      VK_F3,
+      VK_RETURN : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
       VK_HOME,

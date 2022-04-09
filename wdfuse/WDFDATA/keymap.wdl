@@ -35,7 +35,7 @@ Shift State	Key/Mouse	Applies in	Function
 [none]		H		Map		Header Editor
 [none]		I		Map		INF Editor
 [none]		K		Map		Polygon
-[none]		L		Map		Level Editor
+[none]		L		Map		Show Wall Lengths
 [none]		M		Map		MSG Editor
 [none]		LEFT		Map		Scroll Left
 [none]		Mouse Left Clck	Map		Simple Select
@@ -55,6 +55,7 @@ Shift State	Key/Mouse	Applies in	Function
 [none]		X		Map	        Center On Current Selection
 Alt		C		Map	        Statistics
 Alt		D		Map	        Flip
+Alt		L		Map	        Level Editor
 Alt		F5		Map	        Stitch Horizontal TOP
 Alt		F6		Map	        Stitch Horizontal Invert TOP
 Alt		F7		Map	        Stitch Vertical TOP
@@ -68,7 +69,7 @@ Ctrl		3		Map	        Set Map Marker 3
 Ctrl		4		Map	        Set Map Marker 4
 Ctrl		5		Map	        Set Map Marker 5
 Ctrl		DOWN		Map	        Scroll Down, Large
-Ctrl		F		Map	        Toggle Fast DRAG On/Off
+Ctrl		F		Map	        Find Sector by Name or ID
 Ctrl		F5		Map	        Stitch Horizontal BOT
 Ctrl		F6		Map	        Stitch Horizontal Invert BOT
 Ctrl		F7		Map	        Stitch Vertical BOT

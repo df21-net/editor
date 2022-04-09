@@ -3,7 +3,8 @@ unit I_util;
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes,
      StdCtrls, FileCtrl, Forms,
-     _Strings, _Files, M_Global, Generics.Collections;
+     _Strings, _Files, M_Global, Generics.Collections, System.Diagnostics,
+     System.TimeSpan, vcl.dialogs;
 
 procedure FillINFSectorNames;
 function  INFItemsToMemo(SC, WL : Integer; VAR Memo : TMemo) : Boolean;
@@ -21,13 +22,36 @@ uses InfEdit2, M_Editor;
 procedure FillINFSectorNames;
 var s         : Integer;
     TheSector : TSector;
+    noinfupdates  : boolean;
+
 begin
+
+
+ // This is for CACHING - don't reload all the components if nothing has changed
+ // it literally saves 1-2 seconds when you click on other INF windows.
+ noinfupdates := True;
+
+ if (INFSectors.Count > 0) and (INFSectors.Count = INFWindow2.CBSectors.Items.Count)  then
+  begin
+    for s := 0 to INFSectors.count - 1do
+      if INFSectors[s] <> INFWindow2.CBSectors.Items[s] then
+        begin
+          noinfupdates := False;
+          break
+        end;
+    if noinfupdates then exit;
+  end;
+
+ INFSectors.clear;
  INFWindow2.CBSectors.Clear;
+
+ // We must rebuild the INF sector list - we have the technology
  for s := 0 to MAP_SEC.Count - 1 do
   begin
    TheSector := TSector(MAP_SEC.Objects[s]);
-   if TheSector.Name <> '' then INFWindow2.CBSectors.Items.Add(TheSector.Name);
+   if TheSector.Name <> '' then INFSectors.Add(TheSector.Name);
   end;
+ INFWindow2.CBSectors.Items.Assign(INFSectors);
  if INFWindow2.CBSectors.Items.Count <> 0 then
   INFWindow2.CBSectors.ItemIndex := 0;
 
@@ -159,7 +183,10 @@ var TmpComments  : TStringList;
     addon        : Integer;
     elevok       : Boolean;
     elevskip     : Integer;
+    startnum,
+    startline    : Integer;
     msgok        : Boolean;
+    checkStart   : Boolean;
     tmpstopnum   : LongInt;
     tmpscwl      : String;
     tmpMsgType,
@@ -181,6 +208,7 @@ TmpComments := TStringList.Create;
 SeqBegun    := FALSE;
 ClassBegun  := FALSE;
 addon       := -1;
+checkStart  := FALSE;
 
 for i := 0 to TheINFItems.Count - 1 do
   begin
@@ -222,6 +250,17 @@ for i := 0 to TheINFItems.Count - 1 do
             {ERROR }
             errmsg := 'addon: 1 not found';
            end;
+
+
+          // Check if the starting stop is out of bounds for total # of stops
+          if checkStart and (TheINFCls.Stops.count <= startnum) then
+            begin
+             errmsg := 'Stop ' + inttostr(startnum) + ' is out of bounds. There are only '
+                      + inttostr(TheINFCls.Stops.count ) + ' stops';
+            end
+          else checkStart := False;
+
+
           addon := -1;
           TheINFSeq.Classes.AddObject('CL', TheINFCls);
          end;
@@ -854,7 +893,7 @@ for i := 0 to TheINFItems.Count - 1 do
         if CurClsTyp = 0 then
          begin
           pars := TStringParserWithColon.Create(strin);
-          if pars.Count = 4 then
+          if (pars.Count = 4) or (pars.Count = 3) then
            begin
             TheINFStop := TINFStop.Create;
             if pars[2][1] = '@' then
@@ -869,23 +908,28 @@ for i := 0 to TheINFItems.Count - 1 do
              end;
             {test Value : forget that now, because it could be a sector name too}
             {in case the test is made and false, don't forget to free TheINFStop}
-            Val(pars[3], TheReal, code);
-            if (pars[3] = 'hold') or
-               (pars[3] = 'terminate') or
-               (pars[3] = 'complete') or
-               (code = 0) then
+            if pars.Count = 4 then
              begin
-              {add the stop if ok}
-              TheINFStop.DHT := pars[3];
-              TheINFCls.Stops.AddObject('S', TheINFStop);
+                Val(pars[3], TheReal, code);
+                if (pars[3] = 'hold') or
+                   (pars[3] = 'terminate') or
+                   (pars[3] = 'complete') or
+                   (code = 0) then
+                 begin
+                  {add the stop if ok}
+                  TheINFStop.DHT := pars[3];
+                  TheINFCls.Stops.AddObject('S', TheINFStop);
+                 end
+                else
+                 begin
+                  {ERROR }
+                  errmsg := 'Invalid stop: delay';
+                  {but must delete it if an error occured!}
+                  TheINFStop.Free;
+                 end;
              end
             else
-             begin
-              {ERROR }
-              errmsg := 'Invalid stop: delay';
-              {but must delete it if an error occured!}
-              TheINFStop.Free;
-             end;
+              TheINFCls.Stops.AddObject('S', TheINFStop);
            end
           else
            begin
@@ -1353,8 +1397,14 @@ for i := 0 to TheINFItems.Count - 1 do
             Val(pars[2], TheLong, code);
             if code = 0 then
              begin
-              if (TheLong >= 0) and (TheLong < TheINFCls.Stops.Count) then
-               TheINFCls.start := pars[2]
+              if (TheLong >= 0) then
+                begin
+                  // Record for later
+                  checkStart := True;
+                  startnum := TheLong;
+                  startline := i;
+                  TheINFCls.start := pars[2]
+                end
               else
                begin
                 {ERROR }
@@ -1387,6 +1437,14 @@ for i := 0 to TheINFItems.Count - 1 do
          begin
           TheINFSeq.Classes.AddObject('CL', TheINFCls);
           ClassBegun := FALSE;
+
+          // Check if the starting stop is out of bounds for total # of stops
+          if checkStart and (TheINFCls.Stops.count <= startnum) then
+            begin
+             errmsg := 'Stop ' + inttostr(startnum) + ' is out of bounds. There are only '
+                      + inttostr(TheINFCls.Stops.count ) + ' stops';
+            end
+          else checkStart := False;
          end
         else
          begin
@@ -1435,8 +1493,19 @@ for i := 0 to TheINFItems.Count - 1 do
     begin
      {no cleanup of allocated things like seqs and classes etc.
       the calling function allocated it so IT frees it }
-     Result := i;
-     TmpComments.Free;
+
+      // Special case for start failure
+     if errmsg.Contains('out of bounds') then
+       begin
+         Result := startline;
+         strin := TheINFItems[startline];
+       end
+     else
+      begin
+        Result := i;
+        TmpComments.Free;
+      end;
+
      TheInfItems[i] := strin + '       <------ ERROR  (' + errmsg + ')' ;
      log.warn('PARSE ISSUE [' + errmsg + '] on line [' + strin +']',LogName);
      if INF_READ then
@@ -1456,7 +1525,6 @@ for i := 0 to TheINFItems.Count - 1 do
    raise Exception.Create(errmsg);
    TmpComments.Free;
   end;
-
 
 end;
 
@@ -1579,12 +1647,14 @@ begin
            if key1      <> '' then Memo.Lines.Add(id+id+id + 'key: ' + key1);
            if speed1    <> '' then Memo.Lines.Add(id+id+id + 'speed: ' + speed1);
            {added event_mask for door_mid DL NOv/96}
-            if event_mask  <> '' then Memo.Lines.Add(id+id+id + 'event_mask: ' + event_mask); 
+            if event_mask  <> '' then Memo.Lines.Add(id+id+id + 'event_mask: ' + event_mask);
           end;
         end;
 
        if ClsType = 0 then
         begin
+         // This really should be in front of the stops - not at the end.
+         if Start <> '' then Memo.Lines.Add(id+id+id + 'start: ' + Start);
          for k := 0 to TheINFCls.Stops.Count - 1 do
           begin
            TheINFStop := TINFStop(TheINFCls.Stops.Objects[k]);
@@ -1630,7 +1700,6 @@ begin
               end;
             end;
           end;
-         if Start <> '' then Memo.Lines.Add(id+id + 'start: ' + Start);
         end;
 
        if ClsType = 1 then
@@ -1681,10 +1750,9 @@ var
 begin
  Result := TRUE;
 
-{First, clear the classes and compute the secrets and flag doors}
+ {First, clear the classes and compute the secrets and flag doors}
  if WL = -1 then
   begin
-   log.Info('SC = ' + inttostr(SC) + ' WL = ' + inttostr(WL), logname);
    {sector}
    if sc = 190 then
     sc := 190;
@@ -1768,7 +1836,7 @@ begin
       raise Exception.Create(errmsg);
     end;
  end;
- log.info('done parsing',logname);
+
  if Ret = -1 then
   begin
    {parsing is ok, just split the classes now}

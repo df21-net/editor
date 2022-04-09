@@ -5,7 +5,7 @@ uses SysUtils, WinTypes, WinProcs, Messages, Classes, Forms, IniFiles, Dialogs,
      StdCtrls, IOUtils,  ShellApi,
      _Strings, _Files, M_Global, M_Progrs, G_Util, FileCtrl, V_Util,
      M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util, StrUtils,
-     M_Option, Generics.Collections, System.Types;
+     M_Option, Generics.Collections, System.Types, TlHelp32;
 
 procedure FreeLevel;
 procedure GOB_Test_Level;
@@ -20,6 +20,7 @@ procedure IO_ReadINF2(infname : TFileName);
 procedure IO_WriteINF2(infname : TFileName);
 procedure IO_ReadGOL(golname : TFileName);
 procedure IO_WriteGOL(golname : TFileName);
+function ProcessRunning (sExeName: String = 'dosbox.exe') : Boolean;
 
 
 implementation
@@ -118,6 +119,38 @@ begin
     Result := '';
 end;
 
+
+{ We don't want to run the game if it is already running }
+function ProcessRunning (sExeName: String = 'dosbox.exe') : Boolean;
+var
+    hSnapShot : THandle;
+    ProcessEntry32 : TProcessEntry32;
+
+begin
+    Result := false;
+
+    hSnapShot := CreateToolhelp32Snapshot (TH32CS_SNAPPROCESS, 0);
+    Win32Check (hSnapShot <> INVALID_HANDLE_VALUE);
+
+    sExeName := LowerCase (sExeName);
+
+    FillChar (ProcessEntry32, SizeOf (TProcessEntry32), #0);
+    ProcessEntry32.dwSize := SizeOf (TProcessEntry32);
+
+    if (Process32First (hSnapShot, ProcessEntry32)) then
+        repeat
+            if (Pos (sExeName,
+                     LowerCase (ProcessEntry32.szExeFile)) = 1) then
+            begin
+                Result := true;
+                Break;
+            end;
+        until (Process32Next (hSnapShot, ProcessEntry32) = false);
+
+    CloseHandle (hSnapShot);
+
+end;
+
 procedure GOB_Test_Level;
 var TheGob : TFileName;
     i      : Integer;
@@ -127,17 +160,33 @@ var TheGob : TFileName;
 begin
  if not LEVELLoaded then exit;
  Log.Info('GOB Start', LogName);
+
  if LEVELLoaded and MODIFIED then
-  CASE Application.MessageBox('Level has been modified. Do you want to SAVE ?',
-                               'WDFUSE Mapper - Create GOB file',
-                               mb_YesNoCancel or mb_IconQuestion) OF
-   idYes    : begin
-               {this is to pass by the registration check}
-               MapWindow.SpeedButtonSaveClick(NIL);
-              end;
-   idNo     : ;
-   idCancel : exit;
-  END;
+  begin
+    if AUTOSAVE then
+       MapWindow.SpeedButtonSaveClick(NIL)
+    else
+      CASE Application.MessageBox('Level has been modified. Do you want to SAVE ?',
+                                   'WDFUSE Mapper - Create GOB file',
+                                   mb_YesNoCancel or mb_IconQuestion) OF
+       idYes    : begin
+                   MapWindow.SpeedButtonSaveClick(NIL);
+                  end;
+       idNo     : ;
+       idCancel : exit;
+      END;
+    end;
+
+ // Don't continue if Dark Forces is already Running
+ if ProcessRunning() then
+   CASE Application.MessageBox('Dosbox is aleady running. If is is Dark Forces, the Level may not compile due to file lock. Continue anyway?',
+                                   'Continue ',
+                                   mb_YesNoCancel or mb_IconQuestion) OF
+       idYes    : ;
+       idNo     : exit;
+       idCancel : exit;
+      END;
+
  Log.Info('GOB Making Empty GOG = ' +
           DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB'), LogName);
  TheGob := DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB');
@@ -219,16 +268,31 @@ begin
  log.info('3D Loading Start', LogName);
 
  if LEVELLoaded and MODIFIED then
-  CASE Application.MessageBox('Level has been modified. Do you want to SAVE ?',
-                               'WDFUSE Mapper - Create GOB file',
-                               mb_YesNoCancel or mb_IconQuestion) OF
-   idYes    : begin
-               {this is to pass by the registration check}
-               MapWindow.SpeedButtonSaveClick(NIL);
-              end;
-   idNo     : ;
-   idCancel : exit;
-  END;
+  begin
+    if AUTOSAVE then
+       MapWindow.SpeedButtonSaveClick(NIL)
+    else
+      CASE Application.MessageBox('Level has been modified. Do you want to SAVE ?',
+                                   'WDFUSE Mapper - Create GOB file',
+                                   mb_YesNoCancel or mb_IconQuestion) OF
+       idYes    : begin
+                   {this is to pass by the registration check}
+                   MapWindow.SpeedButtonSaveClick(NIL);
+                  end;
+       idNo     : ;
+       idCancel : exit;
+      END;
+    end;
+
+  // Don't continue if Dark Forces is already Running
+ if ProcessRunning() then
+   CASE Application.MessageBox('Dark Forces is aleady running. Level may not compile due to file lock. Continue anyway?',
+                                   'Continue ',
+                                   mb_YesNoCancel or mb_IconQuestion) OF
+       idYes    : ;
+       idNo     : exit;
+       idCancel : exit;
+      END;
 
  if not StrUtils.ContainsStr(LowerCase(renderInst), 'showcase.exe') then
    begin
@@ -305,7 +369,11 @@ begin
      begin
        ReadLn(fileTmp, textTmp);
        if StrUtils.ContainsText(LowerCase(textTmp), 'dark') then
+        begin
          textTmp := 'dark -u' + TPath.GetFileNameWithoutExtension(levname) + '.GOB';
+         if SKIPCUT then
+          textTMP := textTmp + ' -c0 -l' + LEVELName;
+        end;
        if StrUtils.ContainsText(LowerCase(textTmp), 'mount') then
          textTmp := 'mount c "' + DarkInst + '"';
        confTxt := confTxt + textTmp + EOL;
@@ -380,7 +448,6 @@ begin
           Readln(lev, strin);
           try
 
-            //log.Info(strin,logname);
             if True then
 
             if Pos('#', strin) = 1 then
@@ -482,13 +549,6 @@ begin
                         end;
                       with TheWall.Sign do
                         begin
-                          if (pars[22] = '22') then
-                            begin
-                              log.error('Sector ' + inttostr(sccounter+1) +  ' has a wall ' +
-                              inttostr(wlcounter) + ' with a SIGN texture of -1. Resetting to 0 ', logname);
-                              loaderror := True;
-                              pars[22] := '0';
-                            end;
                           if StrToInt(pars[22]) <> -1 then
                             begin
                               Name := TX_LIST[StrToInt(pars[22])];
@@ -765,6 +825,14 @@ begin
                 pars := TStringParser.Create(strin);
                 try
                   if pars.Count > 2 then numsectors := StrToInt(pars[2]);
+                  if numsectors = 0 then
+                    begin
+                      log.error('The level ' + levname + ' has zero sectors! It is corrupt. Exiting...', LogName);
+                      showmessage('The level ' + levname + ' has zero sectors! It is corrupt. Exiting...') ;
+                      ProgressWindow.Hide;
+                      exit;
+                    end;
+
                   ProgressWindow.Gauge.MaxValue     := numsectors;
                   ProgressWindow.Gauge.Progress     := 0;
                   ProgressWindow.Progress2.Caption  := 'Parsing GEOMETRY...';
@@ -796,15 +864,17 @@ begin
         LAYER := LAYER_MIN;
 
       ProgressWindow.Hide;
+
+      if loaderror then
+        showmessage('There are LEV Loading errors for this level.' + EOL +
+         'Please look at the log for details [F5]');
+
       { compare the textures and sectors found with those announced
         and report errors }
       LEVELLoaded := TRUE;
       SetCursor(OldCursor);
       IO_ReadLEV := TRUE;
 
-      if loaderror then
-        showmessage('There are LEV Loading errors for this level.' + EOL +
-         'Please look at the log for details [F5]');
 
     end;
 end;
@@ -1733,7 +1803,7 @@ begin
         INFKeyAr := INFKeyPair.key.Split([':']);
         j := StrToInt(INFKeyAr[1]);
         k := StrToInt(INFKeyAr[2]);
-        log.Info('Compiling ' + inttostr(i) + ':' + inttostr(j), logname);
+        //log.Info('Compiling ' + inttostr(i) + ':' + inttostr(j), logname);
         ComputeINFClasses(j,k);
       end;
      except
@@ -1751,17 +1821,17 @@ begin
                   'Please look in the logs for details by pressing  F5 ' + EOL +
                   'Or look at the consistency check by pressing F10');
     end;
-   log.Info('1', logname);
+
    System.CloseFile(inf);
    {because a new StrList is created after the last seqend}
-   log.Info('2', logname);
+
    StrList.Free;
-   log.Info('3', logname);
+
    INFFILELoaded := TRUE;
    ProgressWindow.Hide;
-   log.Info('4', logname);
+
    SetCursor(OldCursor);
-   log.Info('5', logname);
+
    INF_READ := False;
    log.Info('Done Loading INFs from ' + infname + ' ...', LogName);
 end;

@@ -5,7 +5,7 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, ExtCtrls, Buttons, StdCtrls, MPlayer, FileCtrl, IniFiles,
-  M_Global, V_Util, Menus, _Files, G_Util, Spin;
+  M_Global, V_Util, V_Util32, Menus, _Files, G_Util, Spin, StrUtils;
 
 type
   TResourcePicker = class(TForm)
@@ -43,8 +43,8 @@ type
     SBHelp: TSpeedButton;
     SEcontrast: TSpinEdit;
     Panel3: TPanel;
-    StaticText1: TStaticText;
-    StaticText2: TStaticText;
+    ZoomBrightness: TStaticText;
+    ZoomText: TStaticText;
     ZoomIn: TSpeedButton;
     N7501: TMenuItem;
     N10001: TMenuItem;
@@ -54,6 +54,9 @@ type
     Label2: TLabel;
     OpenPAL: TOpenDialog;
     Label1: TLabel;
+    ResourceSearch: TEdit;
+    SortByHeightCheckBox: TCheckBox;
+    MapTextureHeightCheckBox: TCheckBox;
     procedure SpeedButtonCommitClick(Sender: TObject);
     procedure RGSourceClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
@@ -70,8 +73,24 @@ type
     procedure SEcontrastChange(Sender: TObject);
     procedure ZoomInClick(Sender: TObject);
     procedure PALSelectChange(Sender: TObject);
-    procedure BitBtn1Click(Sender: TObject);
-  //  procedure TResourcePicker.ViewerPaletteSelectClick(Sender: TObject);
+    procedure PALClick(Sender: TObject);
+    procedure FilterButtonClick(Sender: TObject);
+    procedure LBResourcesKeyPress(Sender: TObject; var Key: Char);
+    procedure RPPlayerNotify(Sender: TObject);
+    procedure ResourceSearchClick(Sender: TObject);
+    procedure BuildHeaderMap;
+    procedure SortByHeightCheckBoxClick(Sender: TObject);
+    procedure ResourceSearchKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure LoadFileAndFilter(FileName : String = '');
+    procedure ResourceSearchMouseLeave(Sender: TObject);
+    procedure PickTextureOffset;
+    procedure MapTextureHeightCheckBoxClick(Sender: TObject);
+    procedure TextureSort;
+    procedure RPPlayerClick(Sender: TObject; Button: TMPBtnType;
+      var DoDefault: Boolean);
+
+
   private
     { Private declarations }
     procedure ResizeImage;
@@ -90,6 +109,10 @@ var
   TheEXT        : String;
   TheBMP        : TBitmap;
   TheRPRes      : String;
+  HiddenFiles   : TStringList;
+  SortByHeight  : Boolean;
+  FormInit      : Boolean;
+  MapHeights    : Boolean;
 
 implementation
 
@@ -107,19 +130,26 @@ procedure TResourcePicker.RGSourceClick(Sender: TObject);
 begin
  LBResources.Clear;
  if RGSource.ItemIndex = 0 then
-  begin
-   HiddenFileListBox.Update;
-   LBResources.Items.AddStrings(HiddenFileListBox.Items);
-  end
+    LoadFileAndFilter
  else
-  begin
-   LBResources.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[CBPickLists.ItemIndex]);
-  end;
-  LBResources.Sorted := True
+    LoadFileAndFilter(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[CBPickLists.ItemIndex]);
+ if SortByHeight then TextureSort;
+end;
+
+
+procedure TResourcePicker.RPPlayerClick(Sender: TObject; Button: TMPBtnType;
+  var DoDefault: Boolean);
+begin
+   RPPlayer.EnabledButtons := [btPlay,btPrev, btStop, btPause];
+end;
+
+procedure TResourcePicker.RPPlayerNotify(Sender: TObject);
+begin
+   RPPlayer.EnabledButtons := [btPlay,btPrev];
 end;
 
 procedure TResourcePicker.FormActivate(Sender: TObject);
-var f : Integer;
+var f, i, initidx : Integer;
 begin
 
   ResourcePicker.Left   := Ini.ReadInteger('WINDOWS', 'Resource Pickr X', 0);
@@ -132,6 +162,12 @@ begin
   }
  GraphZoom := Ini.ReadInteger('RESOURCES', 'Default Zoom', 30);
  _VGA_MULTIPLIER := Ini.ReadInteger('RESOURCES', 'Brightness', 5);
+ SortByHeight := Ini.ReadBool('RESOURCES', 'SortByHeight', False);
+ MapHeights := Ini.ReadBool('RESOURCES', 'MapHeights', False);
+
+ FormInit := True;
+ ResourceSearch.Text := 'Filter...';
+ HiddenFiles := TStringList.Create;
 
  CASE RES_PICKER_MODE OF
   RST_3DO,
@@ -150,19 +186,26 @@ begin
              PanelPercent.Caption  := inttostr(GraphZoom) + '0%';
              PanelSelected.Caption := '';
              TheRPRes := '';
+             ZoomText.Visible := True;
+             ZoomBrightness.Visible := True;
+             ZoomIn.Visible := True;
             end;
   RST_SND : begin
+             ZoomText.Visible := False;
+             ZoomBrightness.Visible := False;
+             ZoomIn.Visible := False;
+             SeContrast.Visible := False;
              Image.Visible := FALSE;
              RPPlayer.Visible := TRUE;
              BNSaveWAV.Visible := TRUE;
              BNSaveWAV.Enabled := FALSE;
              PanelPercent.Caption  := 'N/A';
              PanelPercent.Visible  := FALSE;
-             SEcontrast.Visible := FALSE;
              if not DirectoryExists(WDFUSEdir + '\WDFSOUND') then
               ForceDirectories(WDFUSEdir + '\WDFSOUND');
              PanelSelected.Caption := '';
              TheRPRes := '';
+             RPPlayer.EnabledButtons := [btPlay,btPrev];
             end;
  END;
 
@@ -197,11 +240,38 @@ begin
  END;
 
  CBPickLists.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + TheGOB + '.WDL');
- CBPickLists.ItemIndex := 0;
+ CBPickLists.ItemIndex := RES_PICKER_TYPE;
+
  HiddenListBox.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + TheGOB + '.WDN');
  HiddenListBox.ItemIndex := 0;
  HiddenFileListBox.Mask := '*.' + TheEXT;
  HiddenFileListBox.Directory := LEVELPath;
+
+ // For Textures only
+ if (RES_PICKER_MODE = RST_BM) then
+    begin
+       if (HEADERS_MAP.Count = 0) then BuildHeaderMap;
+       SortByHeightCheckBox.Checked := SortByHeight;
+       SortByHeightCheckBox.Visible := True;
+
+       // Walls Only
+       if (RES_PICKER_LEN <> 0) then
+         begin
+           MapTextureHeightCheckBox.Visible := True;
+           MapTextureHeightCheckBox.Checked := MapHeights;
+         end
+       else
+         begin
+           MapTextureHeightCheckBox.Visible := False;
+         end;
+       LBResources.Sorted := not SortByHeight;
+    end
+  else
+   begin
+     SortByHeightCheckBox.Visible := False;
+     MapTextureHeightCheckBox.Visible := False;
+     LBResources.Sorted := True;
+   end;
 
  {Try to find the passed value first in the level dir}
  if RES_PICKER_VALUE <> '' then
@@ -213,18 +283,18 @@ begin
      LBResources.Clear;
      LBResources.Items.AddStrings(HiddenFileListBox.Items);
      LBResources.ItemIndex := f;
-     LBResourcesClick(TObject(NIL));
+     if SortByHeight then TextureSort;
+
     end
    else
    {then in the gob file}
     begin
-     LBResources.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[0]);
+     LoadFileAndFilter(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[RES_PICKER_TYPE]);
      f := LBResources.Items.IndexOf(RES_PICKER_VALUE);
      if f <> -1 then
       begin
        RGSource.ItemIndex := 1;
        LBResources.ItemIndex := f;
-       LBResourcesClick(TObject(NIL));
       end;
     end;
   end
@@ -232,21 +302,141 @@ begin
   begin
    {if null value in entry, present the gob}
    RGSource.ItemIndex := 1;
-   LBResources.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[0]);
+   LoadFileAndFilter(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[RES_PICKER_TYPE]);
   end;
-  LBResources.Sorted := True;
   PALCaption.Text := LEVELPath + '\' + LEVELName + '.PAL';
+  if RES_PICKER_LEN <> 0 then PickTextureOffset;
+  LBResources.itemindex := f;
+  LBResourcesClick(NIL);
+  FormInit := False;
+end;
+
+function GetHeaderHeight(AHeader : TBM_Header): Integer;
+begin
+  Result := 0;
+  if (AHeader.Compressed = 0) and (AHeader.SizeX <> 1) or
+     ((AHeader.SizeX = 1) and (AHeader.SizeY = 1)) then
+     Result := AHeader.sizey
+end;
+
+function TextureCompare(AList: TStringList; left, right: Integer) : integer;
+var
+    left_h, right_h, txt_result : integer;
+    left_tx, right_tx : string;
+begin
+   // Get Textures
+   left_tx := AList[left];
+   right_tx := AList[right];
+
+   left_h := HEADERS_MAP[left_tx];
+   right_h := HEADERS_MAP[right_tx];
+
+   Result := left_h - right_h;
+
+   // If Heights match then compare texture strings
+   if Result = 0 then
+      Result := AnsiCompareStr(left_tx, right_tx);
+
+end;
+
+procedure TResourcePicker.TextureSort;
+var i : Integer;
+    txt_name : String;
+    TextHeaders : TStringList;
+    txt_header : TBM_HEADER;
+    txt_height : Integer;
+begin
+
+  // Dummy List to store values used to sort
+  TextHeaders := TStringList.Create;
+
+  for i := 0 to LBResources.Items.Count -1 do
+    begin
+      txt_name := LBResources.Items[i];
+
+      // Populate just in case it's not in the HEADERS_MAP dict.
+      if not HEADERS_MAP.ContainsKey(txt_name) then
+         begin
+            txt_header := GetNormalHeader(txt_name);
+            txt_height := GetHeaderHeight(txt_header);
+            HEADERS_MAP.Add(txt_name, txt_height);
+         end;
+
+      TextHeaders.Add(txt_name);
+    end;
+  // Custom Sort it in a separate list so you don't flicker LBResources
+  TextHeaders.CustomSort(TextureCompare);
+
+  // Apply the sorted headers back to the LBResources
+  LBResources.Clear;
+  LBResources.Items.Assign(TextHeaders);
+
+  TextHeaders.Clear
+end;
+
+// Load height cache instead of rebuilding it.
+procedure TResourcePicker.BuildHeaderMap;
+var i, head_height : integer;
+    wl_header : TBM_HEADER;
+    texturename : String;
+    heightfile : string;
+    textheights : TStringList;
+    rebuild : boolean;
+begin
+
+    // Populate the Texture Map for All Textures (WDF).
+    HiddenFiles.clear;
+    HiddenFiles.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[0]);
+
+    heightfile :=  WDFUSEdir + '\WDFDATA\TEXTURES.HGT';
+    textheights := TstringList.Create;
+    rebuild := False;
+
+    // First check if it exists
+    if FileExists(heightfile) then
+       begin
+          textheights.LoadFromFile(heightfile);
+
+          // In case your cache doesn't match the GOB
+          if textheights.count <> HiddenFiles.count then
+            begin
+              rebuild := True;
+              textheights.clear;
+            end
+       end;
+
+    // If it does not recalcualte heights
+    if not FileExists(heightfile) or rebuild then
+      begin
+       for i := 0 to HiddenFiles.Count - 1  do
+          begin
+             // Default to zero if compressed/animated.
+             texturename := HiddenFiles[i];
+             wl_header := GetNormalHeader(texturename);
+             head_height := GetHeaderHeight(wl_header);
+
+             // Store the value for the future
+             textheights.Add(inttostr(head_height))
+          end;
+
+        // Save the heights to the HGT file for reuse (caching).
+        textheights.SaveToFile(heightfile);
+      end;
+
+    for i := 0 to HiddenFiles.Count - 1  do
+       HEADERS_MAP.Add(HiddenFiles[i], strtoint(textheights[i]));
+
 end;
 
 procedure TResourcePicker.CBPickListsChange(Sender: TObject);
 begin
  if RGSource.ItemIndex = 1 then
   begin
-   LBResources.Clear;
-   LBResources.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[CBPickLists.ItemIndex]);
-   LBResources.Sorted := True
-  end
 
+   // NOOP if blank selection
+   if HiddenListBox.Items[CBPickLists.ItemIndex] = 'SEP.WDF' then exit;
+   LoadFileAndFilter(WDFUSEdir + '\WDFDATA\' + HiddenListBox.Items[CBPickLists.ItemIndex]);
+  end
 end;
 
 procedure TResourcePicker.PALSelectChange(Sender: TObject);
@@ -280,19 +470,30 @@ end;
 procedure TResourcePicker.LBResourcesClick(Sender: TObject);
 var tmp  : array[0..255] of Char;
     t : PAnsiChar;
-    wait : LongInt;
+    attempts : LongInt;
     TheMsg : TMsg;
+    WAVFile, VOCFile : TFileName;
+    exists : Boolean;
+    i : Integer;
+    tempAsset : String;
 begin
+
  if PeekMessage(TheMsg, 0, WM_KEYDOWN, WM_KEYDOWN, PM_NOYIELD or PM_NOREMOVE)
  then Exit;
 
+ // nothing to display
+ if LBResources.Count = 0 then exit;
+
+ if LBResources.ItemIndex = -1 then LBResources.ItemIndex := 0;
+
  TheRPRes := UpperCase(LBResources.Items[LBResources.ItemIndex]);
  RES_PICKER_VALUE := TheRPRes;
+
+
  if RGSource.ItemIndex = 0 then
   PanelSelected.Caption := Uppercase(LEVELPath) + '\' + TheRPRes
  else
   PanelSelected.Caption := '[' + Uppercase(RealGob) + ']' + TheRPRes;
-
  {draw/play PanelSelected.Caption}
  CASE RES_PICKER_MODE OF
   RST_3DO,
@@ -331,65 +532,148 @@ begin
              ResizeImage;
             end;
   RST_SND : begin
+             WAVFile := WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV';
+             VOCFile := WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.VOC';
              if not FileExists(WDFUSEdir + '\WDFSOUND\' + ChangeFileExt(TheRPRes, '.WAV')) then
               begin
-               RPPlayer.Close;
+                try
+                  RPPlayer.Close;
+                except on E: Exception do
+                 begin
+                   Log.error('Failed to Close RPPlayer! ' + E.ClassName +
+                   ' error raised, with message : '+E.Message, LogName);
+                  end;
+                 end;
                MemoRP.Clear;
                MemoRP.Lines.Add(PanelSelected.Caption);
                MemoRP.Lines.Add('');
                {Extract from gob, or copy file}
-               SysUtils.DeleteFile(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.VOC');
-               if PanelSelected.Caption[1] = '[' then
-                begin
-                 GOB_ExtractResource(WDFUSEdir + '\WDFSOUND\', SOUNDSgob, TheRPRes);
-                 RenameFile(WDFUSEdir + '\WDFSOUND\' + TheRPRes, WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.VOC');
-                end
-               else
-                begin
-                 CopyFile(PanelSelected.Caption, WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.VOC');
-                end;
 
-               MemoRP.Lines.Add(Format('VOC length : %d', [GetFileSize(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.VOC')]));
+               SysUtils.DeleteFile(VOCFile);
+               try
+                 if PanelSelected.Caption[1] = '[' then
+                  begin
+                    GOB_ExtractResource(WDFUSEdir + '\WDFSOUND\', SOUNDSgob, TheRPRes);
+                    RenameFile(WDFUSEdir + '\WDFSOUND\' + TheRPRes, VOCFile);
+                  end
+                 else
+                  begin
+                   CopyFile(PanelSelected.Caption, VOCFile);
+                  end;
+                except on E: Exception do
+                 begin
+                   Log.error('Failed to Extract Sound! ' + E.ClassName +
+                   ' error raised, with message : '+E.Message, LogName);
+                  end;
+                 end;
+
+               MemoRP.Lines.Add(Format('WAV length : %d', [GetFileSize(WAVFile)]));
                {Call VOC2WAV}
                IF FileExists(Voc2Wav) then
                 BEGIN
-                 StrPCopy(tmp, Voc2Wav + ' '
-                             + WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.VOC '
-                             + WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV');
-                 SysUtils.DeleteFile(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV');
 
-                 WinExec(PAnsiChar(AnsiString(tmp)), SW_HIDE);
-                 {On a un timing problem!!! L'autre demarre en parallel !!!}
-                 Wait := 0;
-                 while not FileExists(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV')
-                 do
+                 // First attempt  (timing issue)
+                 if not FileExists(VOCFIle) then
                   begin
-                   Yield;
-                   Inc(Wait);
-                   if Wait > 100000 then
-                    begin
-                     ShowMessage('Problem in VOC => WAV conversion. Aborting.');
-                     exit;
-                    end;
+                    sleep(500);
+                    if PanelSelected.Caption[1] = '[' then
+                      begin
+                        GOB_ExtractResource(WDFUSEdir + '\WDFSOUND\', SOUNDSgob, TheRPRes);
+                        RenameFile(WDFUSEdir + '\WDFSOUND\' + TheRPRes, VOCFile);
+                      end
+                     else
+                      begin
+                       CopyFile(PanelSelected.Caption, VOCFile);
+                      end;
+                    // Last attempt
+                    sleep(500);
+                    if not FileExists(VOCFIle) then
+                      begin
+                       showmessage('Failed to Extract the audio. You may need to reload the Resource Editor');
+                       exit;
+                      end;
+
                   end;
 
-                 RPPlayer.FileName := WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV';
-                 RPPlayer.Open;
+
+                 // Remember kids always wrap your paths in quotes
+                 StrPCopy(tmp, '"' + Voc2Wav + '" "' + VOCFIle +  '" "' + WAVFILE + '"');
+                 SysUtils.DeleteFile(WAVFile);
+                 WinExec(PAnsiChar(AnsiString(tmp)), SW_HIDE);
+
+                 {On a un timing problem!!! L'autre demarre en parallel !!!}
+                 attempts := 0;
+                 while not FileExists(WAVFile)
+                  do
+                    begin
+                     sleep(200);
+                     Inc(attempts);
+                     if attempts > 10 then
+                      begin
+                       log.Info('Failed after 10 attempts to execute ' + PAnsiChar(AnsiString(tmp)), LogName);
+                       ShowMessage('Problem in VOC => WAV conversion. Aborting.');
+                       exit;
+                      end;
+                  end;
+
+;
+                 RPPlayer.FileName := WAVFILE;
+                try
+                  RPPlayer.Open;
+                except on E: Exception do
+                 begin
+                   Log.error('Failed to Open RPPlayer! ' + E.ClassName +
+                   ' error raised, with message : '+E.Message, LogName);
+                    sleep(100);
+                    try
+                     RPPlayer.Open;
+                    except on E: Exception do
+                        begin
+                         showmessage('Failed to open RPPlayer!');
+                        end;
+                    end;
+                  end;
+                 end;
                  BNSaveWAV.Enabled := TRUE;
+
+                 { Cache this File }
+                 CopyFile(WAVFile, WDFUSEdir + '\WDFSOUND\' + ChangeFileExt(TheRPRes, '.WAV'));
                END;
               end
              else
              {the WAV exists in WDFSOUND, so use it for faster hearing}
               begin
+               WAVFile := WDFUSEdir + '\WDFSOUND\' + ChangeFileExt(TheRPRes, '.WAV');
                BNSaveWAV.Enabled := FALSE;
                MemoRP.Clear;
                MemoRP.Lines.Add('[Played from WAV file in WDFSOUND]');
+               MemoRP.Lines.Add(PanelSelected.Caption);
+               MemoRP.Lines.Add('');
+               MemoRP.Lines.Add(Format('WAV length : %d', [GetFileSize(WAVFile)]));
                RPPlayer.FileName := WDFUSEdir + '\WDFSOUND\' + ChangeFileExt(TheRPRes, '.WAV');
                RPPlayer.Open;
               end;
             end;
- END;
 
+ END;
+ if ResourceSearch.Text = '' then
+   begin
+     i := LBResources.ItemIndex;
+     ResourceSearch.Text := 'Filter...';
+     LBResources.ItemIndex := i;
+   end;
+
+end;
+
+// Play the audio when you press Enter instead of constantly playing the Play button.
+procedure TResourcePicker.LBResourcesKeyPress(Sender: TObject; var Key: Char);
+begin
+
+if (RES_PICKER_MODE = RST_SND) and (Word(Key) = VK_RETURN) then
+  begin
+     RPPlayer.EnabledButtons := [btPlay,btPrev, btStop, btPause];
+     RPPlayer.play();
+  end;
 end;
 
 procedure TResourcePicker.FormDeactivate(Sender: TObject);
@@ -410,7 +694,11 @@ begin
  Ini.WriteInteger('WINDOWS', 'Resource Pickr H', ResourcePicker.Height);
  Ini.WriteInteger('RESOURCES', 'Default Zoom', GraphZoom);
  Ini.WriteInteger('RESOURCES', 'Brightness', _VGA_MULTIPLIER);
+ Ini.WriteBool('RESOURCES', 'SortByHeight', SortByHeight);
+ Ini.WriteBool('RESOURCES', 'MapHeights', MapHeights);
 
+ // Reset texture type to all textures
+ RES_PICKER_TYPE := 0;
 end;
 
 procedure TResourcePicker.ResizeImage;
@@ -421,6 +709,27 @@ begin
   Image.Height := He;
   Image.Width  := Wi;
   PanelPercent.Caption := IntToStr(GraphZoom*10) + '%';
+end;
+
+
+procedure TResourcePicker.ResourceSearchClick(Sender: TObject);
+begin
+     if ResourceSearch.Text = 'Filter...' then
+        ResourceSearch.Text := ''
+
+end;
+
+procedure TResourcePicker.ResourceSearchKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  FilterButtonClick(NIL);
+end;
+
+// If you do not put anything and move your mouse away reset to Filter...
+procedure TResourcePicker.ResourceSearchMouseLeave(Sender: TObject);
+begin
+  if ResourceSearch.Text = '' then ResourceSearch.Text := 'Filter...';
+  LBResources.SetFocus;
 end;
 
 procedure TResourcePicker.N3001Click(Sender: TObject);
@@ -468,7 +777,7 @@ begin
   PopUpMenu1.Popup(Mouse.CursorPos.X, Mouse.CursorPos.Y);
 end;
 
-procedure TResourcePicker.BitBtn1Click(Sender: TObject);
+procedure TResourcePicker.PALClick(Sender: TObject);
 begin
  with OpenPAL do
    BEGIN
@@ -483,9 +792,31 @@ begin
    END;
 end;
 
+//Filters the file list from HiddenFiles and updates LBResources.
+procedure TResourcePicker.FilterButtonClick(Sender: TObject);
+Var s : string;
+    i : Integer;
+begin
+     if (Length(ResourceSearch.Text) > 0) and  (ResourceSearch.Text <> 'Filter...') then
+      begin
+        LBResources.Clear;
+
+        s := ResourceSearch.Text;
+        for i := 0 to HiddenFiles.Count - 1 do begin
+          if ContainsText(UpperCase(HiddenFiles[i]), UpperCase(s)) then
+            LBResources.Items.Add(HiddenFiles[i]);
+        end;
+      end
+     else if LBResources.items.count <> HiddenFiles.count then
+           LBResources.items.Assign(HiddenFiles);
+     if SortByHeight then TextureSort
+
+end;
+
 procedure TResourcePicker.BNSaveWAVClick(Sender: TObject);
 begin
  CopyFile(WDFUSEdir + '\WDFSOUND\' + 'WDF$$$$$.WAV', WDFUSEdir + '\WDFSOUND\' + ChangeFileExt(TheRPRes, '.WAV'));
+ MemoRP.Lines.Add('Saved Sound file to ' + WDFUSEdir + '\WDFSOUND\' + ChangeFileExt(TheRPRes, '.WAV'));
 end;
 
 procedure TResourcePicker.FormKeyUp(Sender: TObject; var Key: Word;
@@ -507,8 +838,89 @@ end;
 procedure TResourcePicker.SEcontrastChange(Sender: TObject);
 begin
  _VGA_MULTIPLIER := SEcontrast.Value;
- if LBResources.Count <> 0 then
+ if not FormInit and (LBResources.Count <> 0) then
    LBResourcesClick(Sender); { hangs up, because list is not yet created}
+end;
+
+procedure TResourcePicker.SortByHeightCheckBoxClick(Sender: TObject);
+begin
+
+   // Don't bother to do this on init - only when user clicks it themselves.
+   if FormInit then exit;
+
+   SortByHeight := SortByHeightCheckBox.Checked;
+   LBResources.Sorted := not SortByHeight;
+
+   // Can't pick height texture if not sorted by height.
+   if not SortByHeight then
+     MapTextureHeightCheckBox.Checked := False;
+
+
+   CBPickListsChange(NIL);
+end;
+
+// If you want to automatically map the texture height to a texture
+procedure TResourcePicker.MapTextureHeightCheckBoxClick(Sender: TObject);
+begin
+   if FormInit then exit;
+
+   MapHeights := MapTextureHeightCheckBox.Checked;
+   if MapHeights and not SortByHeightCheckBox.Checked then
+     begin
+       SortByHeightCheckBox.Checked := True;
+       SortByHeightCheckBoxClick(NIL);
+     end;
+   PickTextureOffset;
+end;
+
+// This is just a load wrapper to prevent flickering of the list as you
+// load it and then apply a filter. If no file - just load the hidden items.
+procedure TResourcePicker.LoadFileAndFilter(FileName : String = '');
+begin
+   HiddenFiles.clear;
+
+   // Load from GOB
+   if FileName <> '' then
+     HiddenFiles.LoadFromFile(FileName)
+   else
+    begin
+      // Load local assets from curdir (LEVELPATH).
+      HiddenFileListBox.Update;
+      HiddenFiles.AddStrings(HiddenFileListBox.Items);
+    end;
+
+    // This filters and updates the LBresources
+   FilterButtonClick(NIL);
+
+   if LBResources.Items.Count > 0 then
+     begin
+      if RES_PICKER_LEN <> 0 then PickTextureOffset;
+      if not FormInit then LBResourcesClick(TObject(NIL));
+     end;
+end;
+
+procedure TResourcePicker.PickTextureOffset;
+var i, textlen : integer;
+begin
+  if MapHeights and SortByHeight then
+   begin
+    if LBResources.Count > 0 then
+     begin
+      if (RES_PICKER_LEN <> 0)  then
+        begin
+           for i := 0 to LBResources.Count - 1 do
+             begin
+               textlen := trunc(HEADERS_MAP[LBResources.Items[i]]/8);
+               if textlen >= RES_PICKER_LEN then break
+             end;
+           if LBResources.Count = i then
+              LBResources.ItemIndex := i-1
+           else
+              LBResources.ItemIndex := i;
+        end
+     end;
+    LBResourcesClick(TObject(NIL));
+   end;
 end;
 
 end.

@@ -71,9 +71,10 @@ uses
   M_key in 'M_key.pas' {AllKeys},
   toolkit in 'toolkit.pas' {TktWindow},
   G_Util in 'G_Util.pas',
+  Vuecreat in 'Vuecreat.pas' {VUECreator},
+  _conv3do in '_conv3do.pas' {CONV3do},
   Jsons in 'json\Jsons.pas',
   JsonsUtilsEx in 'json\JsonsUtilsEx.pas',
-  Vuecreat in 'Vuecreat.pas' {VUECreator},
   LoggerPro.ConsoleAppender in 'logger\LoggerPro.ConsoleAppender.pas',
   LoggerPro.ElasticSearchAppender in 'logger\LoggerPro.ElasticSearchAppender.pas',
   LoggerPro.EMailAppender in 'logger\LoggerPro.EMailAppender.pas',
@@ -89,8 +90,7 @@ uses
   LoggerPro.Utils in 'logger\LoggerPro.Utils.pas',
   LoggerPro.VCLListViewAppender in 'logger\LoggerPro.VCLListViewAppender.pas',
   LoggerPro.VCLMemoAppender in 'logger\LoggerPro.VCLMemoAppender.pas',
-  ThreadSafeQueueU in 'logger\ThreadSafeQueueU.pas',
-  _conv3do in '_conv3do.pas' {CONV3do};
+  ThreadSafeQueueU in 'logger\ThreadSafeQueueU.pas';
 
 {$R *.RES}
 

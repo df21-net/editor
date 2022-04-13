@@ -825,6 +825,7 @@ var i,j         : Integer;
     RVertex     : TVertex;
     TheWall     : TWall;
     TheMsg      : TMsg;
+    DrawSp      : Boolean;
 begin
  //if (MAP_MODE = MM_VX) and not SpecialsVX then Exit;
  if (MAP_MODE = MM_OB) and not SpecialsOB then Exit;
@@ -839,6 +840,8 @@ begin
         begin
           TheWall := TWall(TheSector.Wl.Objects[j]);
           Pen.Color := col_wall_a;
+          DrawSp := False;
+
           if (TheSector.Elevator or
               TheSector.Trigger  or
               TheSector.Secret   or
@@ -850,14 +853,16 @@ begin
               if TheSector.Secret    then Pen.Color := col_secr;
               if TheWall.Elevator    then Pen.Color := col_elev;
               if TheWall.Trigger     then Pen.Color := col_trig;
+              DrawSp := True;
 
              end
           else if TheSector.InfItems.Count > 0 then
              begin
                Pen.Color := col_elev;
+               DrawSp := True;
              end;
 
-          if not (MAP_MODE = MM_VX) then
+          if not (MAP_MODE = MM_VX) and DrawSp then
             begin
               LVertex := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
               RVertex := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);

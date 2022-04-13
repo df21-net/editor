@@ -318,6 +318,7 @@ type
     PopUpSubsector7: TMenuItem;
     PopUpSubsector8: TMenuItem;
     PopUpSubsectorCustom: TMenuItem;
+    ModeShowNormals: TMenuItem;
 
 
     procedure FormActivate(Sender: TObject);
@@ -446,6 +447,7 @@ type
     procedure PopUpStitchRightClick(Sender: TObject);
     procedure PopUpSubsectorClick(Sender: TObject) ;
     procedure PopUpSubsectorDeleteClick(Sender: TObject);
+    procedure ModeShowNormalsClick(Sender: TObject);
 
 
 
@@ -869,7 +871,7 @@ begin
               MoveTo(M2SX(LVertex.X), M2SZ(LVertex.Z));
               LineTo(M2SX(RVertex.X), M2SZ(RVertex.Z));
             end;
-          DO_Draw_WLperp(i, j, Pen.Color);
+          if SHOW_NORMALS  OR ((i = SC_HILITE) and (j = WL_HILITE)) then DO_Draw_WLperp(i, j, Pen.Color);
         end;
     end;
   end;
@@ -2007,6 +2009,7 @@ begin
 
   SHADOW           := Ini.ReadBool(Section,     'LAYER_SHADOW', TRUE);
   SHOW_LENGTHS     := Ini.ReadBool(Section,     'SHOW_LENGTHS', TRUE);
+  SHOW_NORMALS     := Ini.ReadBool(Section,     'SHOW_NORMALS', TRUE);
 
   UsePlusVX        := Ini.ReadBool(Section,     'UsePlusVX',     CUsePlusVX);
   UsePlusOBShad    := Ini.ReadBool(Section,     'UsePlusOBShad', CUsePlusOBShad);
@@ -2177,6 +2180,9 @@ begin
 
   Ini.WriteBool('TEXTBOX',  'GOB', GOBText);
   Ini.WriteBool('TEXTBOX',  'LFD', LFDText);
+
+  Ini.WriteBool('FINE TUNING',  'SHOW_LENGTHS', SHOW_LENGTHS);
+  Ini.WriteBool('FINE TUNING',  'SHOW_NORMALS', SHOW_NORMALS);
 
   Ini.Free;
 
@@ -2889,11 +2895,12 @@ begin
                     SpeedButtonToolsClick(NIL);
                    end;
       $4B {VK_K} : ;
-      $4C {VK_L} : SpeedButtonLVLClick(NIL);
+      $4C {VK_L} : ModeShowNormalsClick(NIL);
       $4D {VK_M} : ;
       $4E {VK_N} : ;
       $4F {VK_O} : DO_OBShadow_OnOff;
       $53 {VK_S} : DO_Layer_OnOff;
+      $56 {VK_V} : SpeedButtonLVLClick(NIL);
       $5A {VK_x} : DO_ApplyUndo(True);
       VK_F5      : if WL_MULTIS.Count > 1 then
                     DO_StitchHorizontal(FALSE, TRUE, FALSE)
@@ -3687,6 +3694,14 @@ begin
   ModeShowLengths.Checked := not ModeShowLengths.Checked;
   SHOW_LENGTHS := ModeShowLengths.Checked;
   Map.Invalidate;
+end;
+
+// Per Jereth Kok's request
+procedure TMapWindow.ModeShowNormalsClick(Sender: TObject);
+begin
+    ModeShowNormals.Checked := not ModeShowNormals.Checked;
+    SHOW_NORMALS := ModeShowNormals.Checked;
+    Map.Invalidate;
 end;
 
 procedure TMapWindow.PopupNewClick(Sender: TObject);

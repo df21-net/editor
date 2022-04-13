@@ -410,7 +410,6 @@ begin
   Ini.WriteBool('FINE TUNING',  'FastScroll',  FastSCROLL);
   Ini.WriteBool('FINE TUNING',  'FastDrag',    FastDRAG);
   Ini.WriteBool('FINE TUNING',  'LAYER_SHADOW', SHADOW);
-  Ini.WriteBool('FINE TUNING',  'SHOW_LENGTHS', SHOW_LENGTHS);
 
   UsePlusVX     := CBUsePlusVX.Checked;
   UsePlusOBShad := CBUsePlusOBShad.Checked;

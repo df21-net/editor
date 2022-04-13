@@ -536,6 +536,7 @@ Zoffset       : Integer;
 SHADOW        : Boolean;
 OBSHADOW      : Boolean;
 SHOW_LENGTHS     : Boolean;
+SHOW_NORMALS     : Boolean;
 OBDIFF        : Integer;
 OBLAYERMODE   : Integer; {0 : no layering, 1 floor, 2 ceiling}
 LAYER         : Integer;

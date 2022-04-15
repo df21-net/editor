@@ -513,7 +513,7 @@ begin
   for s := 0 to MAP_SEC.Count - 1 do
    begin
     TheSector := TSector(MAP_SEC.Objects[s]);
-    if TheSector.Name = Name then
+    if AnsiLowerCase(TheSector.Name) = AnsiLowerCase(Name) then
      begin
       sec := s;
       break;

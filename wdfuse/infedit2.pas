@@ -544,6 +544,7 @@ var strin : string;
     closeok : Boolean;
     TheSector : TSector;
     TempCBItems : TStringList;
+    OrigName : String;
 begin
  closeok := TRUE;
  if MemoINF.Modified then
@@ -558,6 +559,8 @@ begin
   end
  else ;
 
+ OrigName :=  CBINFNavigator.items[CBINFNavigator.ItemIndex];
+
  TempCBItems := TStringList.Create;
  TempCBItems.Assign(CBINFNavigator.items);
 
@@ -571,6 +574,10 @@ begin
    end;
 
  CBINFNavigator.Items.Assign(TempCBItems);
+
+ // Reset index after deleting
+ CBINFNavigator.ItemIndex := CBINFNavigator.Items.IndexOf(OrigName);
+
 
  if closeok then
   begin

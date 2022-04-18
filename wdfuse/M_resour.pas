@@ -57,6 +57,7 @@ type
     ResourceSearch: TEdit;
     SortByHeightCheckBox: TCheckBox;
     MapTextureHeightCheckBox: TCheckBox;
+    AutoPickListCheckBox: TCheckBox;
     procedure SpeedButtonCommitClick(Sender: TObject);
     procedure RGSourceClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
@@ -89,6 +90,7 @@ type
     procedure TextureSort;
     procedure RPPlayerClick(Sender: TObject; Button: TMPBtnType;
       var DoDefault: Boolean);
+    procedure AutoPickListCheckBoxClick(Sender: TObject);
 
 
   private
@@ -113,6 +115,8 @@ var
   SortByHeight  : Boolean;
   FormInit      : Boolean;
   MapHeights    : Boolean;
+  AutoPickList  : Boolean;
+  OrigResType   : Integer;
 
 implementation
 
@@ -164,10 +168,16 @@ begin
  _VGA_MULTIPLIER := Ini.ReadInteger('RESOURCES', 'Brightness', 5);
  SortByHeight := Ini.ReadBool('RESOURCES', 'SortByHeight', False);
  MapHeights := Ini.ReadBool('RESOURCES', 'MapHeights', False);
+ AutoPickList :=  Ini.ReadBool('RESOURCES', 'AutoPickList', True);
 
  FormInit := True;
  ResourceSearch.Text := 'Filter...';
  HiddenFiles := TStringList.Create;
+
+ // Disable automatically mapping lists
+ OrigResType := RES_PICKER_TYPE;
+ if not AutoPickList then RES_PICKER_TYPE := 0;
+
 
  CASE RES_PICKER_MODE OF
   RST_3DO,
@@ -254,6 +264,10 @@ begin
        SortByHeightCheckBox.Checked := SortByHeight;
        SortByHeightCheckBox.Visible := True;
 
+       AutoPickListCheckBox.Visible := True;
+       AutoPickListCheckBox.Checked := AutoPickList;
+
+
        // Walls Only
        if (RES_PICKER_LEN <> 0) then
          begin
@@ -270,6 +284,7 @@ begin
    begin
      SortByHeightCheckBox.Visible := False;
      MapTextureHeightCheckBox.Visible := False;
+     AutoPickListCheckBox.Visible := False;
      LBResources.Sorted := True;
    end;
 
@@ -696,6 +711,7 @@ begin
  Ini.WriteInteger('RESOURCES', 'Brightness', _VGA_MULTIPLIER);
  Ini.WriteBool('RESOURCES', 'SortByHeight', SortByHeight);
  Ini.WriteBool('RESOURCES', 'MapHeights', MapHeights);
+ Ini.WriteBool('RESOURCES', 'AutoPickList', AutoPickList);
 
  // Reset texture type to all textures
  RES_PICKER_TYPE := 0;
@@ -811,6 +827,16 @@ begin
            LBResources.items.Assign(HiddenFiles);
      if SortByHeight then TextureSort
 
+end;
+
+procedure TResourcePicker.AutoPickListCheckBoxClick(Sender: TObject);
+begin
+   AutoPickList := AutoPickListCheckBox.Checked;
+   if AutoPickList then
+     CBPickLists.ItemIndex := OrigResType
+   else
+     CBPickLists.ItemIndex := 0;
+   CBPickListsChange(NIL);
 end;
 
 procedure TResourcePicker.BNSaveWAVClick(Sender: TObject);

@@ -154,6 +154,7 @@ end;
 
 procedure TResourcePicker.FormActivate(Sender: TObject);
 var f, i, initidx : Integer;
+    err_msg : String;
 begin
 
   ResourcePicker.Left   := Ini.ReadInteger('WINDOWS', 'Resource Pickr X', 0);
@@ -248,6 +249,14 @@ begin
              TheEXT  := '3DO';
             end;
  END;
+
+  if isFileLocked(RealGOB) then
+   begin
+    err_msg := RealGOB + ' is Locked. Is Dark Forces running?';
+    log.Info(err_msg, LogName);
+    showmessage(err_msg);
+    exit;
+   end;
 
  CBPickLists.Items.LoadFromFile(WDFUSEdir + '\WDFDATA\' + TheGOB + '.WDL');
  CBPickLists.ItemIndex := RES_PICKER_TYPE;

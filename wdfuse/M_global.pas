@@ -664,7 +664,7 @@ function M2SZ(z : Real) : Integer;
 
 function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
 function PosTrim(x : Real) : String;
-
+function isFileLocked(FileName: String): Boolean; stdcall;
 
 
 {*****************************************************************************}
@@ -838,6 +838,23 @@ function PosTrim(x : Real) : String;
 begin
    Result := RTrim(Format('%-5.2f', [x]));
 end;
+
+// Check for file locks (Ex:  TEXTURES.GOB)
+function isFileLocked(FileName: String): Boolean; stdcall;
+var
+  FileHandle : Integer;
+begin
+  Result := False;
+  FileHandle := FileOpen(FileName, (fmOpenRead or fmShareExclusive));
+  if FileHandle > 0 then begin
+    {valid file handle}
+    FileClose(FileHandle);
+  end else begin
+    {Open error: }
+    Result := True;
+  end;
+end;
+
 
 begin
 

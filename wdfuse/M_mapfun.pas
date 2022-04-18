@@ -1173,8 +1173,19 @@ end;
 
 
 function  NormalizeWall(AWall : TWall) : TWall;
+var
+err_msg : String;
 begin
  // Normalize offsets
+
+ if isFileLocked(TEXTURESGOB) then
+   begin
+    err_msg := 'TEXTURES.GOB is Locked. Is Dark Forces running?';
+    log.Info(err_msg, LogName);
+    showmessage(err_msg);
+    Result := AWall;
+   end;
+
  AWall.Mid := NormalizeOffsets(AWall.Mid);
  AWall.Top := NormalizeOffsets(AWall.Top);
  AWall.Bot := NormalizeOffsets(AWall.Bot);
@@ -1186,6 +1197,7 @@ end;
 function  NormalizeOffsets(WallTexture : TTEXTURE) : TTEXTURE;
 var
   wl_header : TBM_HEADER;
+  err_msg : string;
 begin
   try
     wl_header := GetNormalHeader(WallTexture.name);
@@ -1198,12 +1210,12 @@ begin
     NormalizeOffsets := WallTexture;
   except on E: Exception do
     begin
-       Log.error('Failed to Load texture in SC ' + IntToStr(SC_HILITE) +
+       err_msg := 'Failed to Load texture in SC ' + IntToStr(SC_HILITE) +
                  ' WL ' + IntToStr(WL_HILITE)+ ' named ' +  WallTexture.name +
-                 ' due to ' + E.Message, LogName);
-       showmessage('Failed to Load texture in SC ' + IntToStr(SC_HILITE) +
-                 ' WL ' + IntToStr(WL_HILITE)+ ' named ' +  WallTexture.name +
-                 ' due to ' + E.Message);
+                 ' due to ' + E.Message;
+       Log.error(err_msg, LogName);
+       showmessage(err_msg);
+       NormalizeOffsets := WallTexture;
      end;
   end;
 end;

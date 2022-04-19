@@ -633,7 +633,7 @@ begin
      end;
 
     // Only draw these in MM_WL mode
-    if MAP_MODE = MM_WL then
+    if SHOW_NORMALS and (MAP_MODE = MM_WL) then
       begin
         MoveTo(M2SX(x),  M2SZ(z));
         LineTo(M2SX(x2), M2SZ(z2));
@@ -871,7 +871,7 @@ begin
               MoveTo(M2SX(LVertex.X), M2SZ(LVertex.Z));
               LineTo(M2SX(RVertex.X), M2SZ(RVertex.Z));
             end;
-          if SHOW_NORMALS  OR ((i = SC_HILITE) and (j = WL_HILITE)) then DO_Draw_WLperp(i, j, Pen.Color);
+          if SHOW_NORMALS  OR SHOW_LENGTHS then DO_Draw_WLperp(i, j, Pen.Color);
         end;
     end;
   end;
@@ -2029,6 +2029,9 @@ begin
 
   // Haha... no (Karjala 2021).
   StrPCopy(NOT_REG, 'Too many sectors or objects for the **UNREGISTERED** WDFUSE. Project NOT saved!!');
+
+  ModeShowLengths.Checked := SHOW_LENGTHS;
+  ModeShowNormals.Checked := SHOW_NORMALS;
 
   Section := 'REGISTRATION';
   USERname         := Ini.ReadString(Section, 'Name',  '');

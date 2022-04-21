@@ -513,7 +513,7 @@ begin
   for s := 0 to MAP_SEC.Count - 1 do
    begin
     TheSector := TSector(MAP_SEC.Objects[s]);
-    if TheSector.Name = Name then
+    if AnsiLowerCase(TheSector.Name) = AnsiLowerCase(Name) then
      begin
       sec := s;
       break;
@@ -1402,27 +1402,11 @@ var s         : Integer;
 begin
  FINDSC_VALUE := '';
 
- Application.CreateForm(TFindWindow, FindWindow);
+ // Put the logic in FIND
+ Application.CreateForm(TToolsFind, FindWindow);
  FindWindow.ShowModal;
  FindWindow.Destroy;
 
- if FINDSC_VALUE <> '' then
-  for s := 0 to MAP_SEC.Count - 1 do
-   begin
-    TheSector := TSector(MAP_SEC.Objects[s]);
-    if TheSector.Name = FINDSC_VALUE then
-     begin
-      TheVertex  := TVertex(TheSector.Vx.Objects[0]);
-      MapWindow.SetXOffset(Round(TheVertex.X));
-      MapWindow.SetZOffset(Round(TheVertex.Z));
-      SC_HILITE := s;
-      WL_HILITE := 0;
-      VX_HILITE := 0;
-      DO_Fill_SectorEditor;
-      MapWindow.Map.Invalidate;
-      break;
-     end;
-   end;
 end;
 
 procedure DO_Find_WL_Adjoin;
@@ -2601,8 +2585,8 @@ begin
   refreshed correctly, as well as repaint the map.}
  DO_Clear_MultiSel;
  Elapsed := Stopwatch.Elapsed;
-
-log.info('Finished an Undo operation', LogName);
+ MODIFIED := True;
+ log.info('Finished an Undo operation', LogName);
 end;
 
 {Free functions - deprecated Karjala 2021 }

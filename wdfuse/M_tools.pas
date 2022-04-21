@@ -165,7 +165,7 @@ end;
 procedure TToolsWindow.BNStitchClick(Sender: TObject);
 var title   : array[0..60] of char;
 begin
- Do_StoreUndo;
+
  StrCopy(title, 'WDFUSE Tools - Stitching');
  if MAP_MODE <> MM_WL then
   begin
@@ -199,6 +199,7 @@ begin
    exit;
   end;
 
+ Do_StoreUndo;
  IGNORE_UNDO := True;
  if CBStitchHoriz.Checked then
   if RGStitchHoriz.ItemIndex = 0 then
@@ -207,6 +208,7 @@ begin
    DO_StitchHorizontalInvert(CBHMid.Checked, CBHTop.Checked, CBHBot.Checked);
 
  if CBStitchVert.Checked  then DO_StitchVertical(CBVMid.Checked, CBVTop.Checked, CBVBot.Checked);
+ Mapper.MapWindow.PanelText.Caption := 'Stitched Textures!';
  MODIFIED := TRUE;
  DO_Fill_WallEditor;
 

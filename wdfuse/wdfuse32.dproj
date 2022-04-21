@@ -242,7 +242,7 @@
             <Form>AboutBox</Form>
         </DCCReference>
         <DCCReference Include="L_UTIL.PAS"/>
-        <DCCReference Include="Lfddir.pas">
+        <DCCReference Include="LFDDIR.PAS">
             <Form>LFDDIRWindow</Form>
         </DCCReference>
         <DCCReference Include="LFDS.PAS">
@@ -268,7 +268,7 @@
         <DCCReference Include="M_QUERY.PAS">
             <Form>QueryWindow</Form>
         </DCCReference>
-        <DCCReference Include="m_regist.pas">
+        <DCCReference Include="M_REGIST.PAS">
             <Form>RegisterWindow</Form>
         </DCCReference>
         <DCCReference Include="C_UTIL32.PAS"/>
@@ -1199,6 +1199,7 @@
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android64" Name="$(PROJECTNAME)"/>
             </Deployment>
+            <ModelSupport>False</ModelSupport>
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>
     </ProjectExtensions>

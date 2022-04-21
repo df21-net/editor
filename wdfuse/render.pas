@@ -182,10 +182,10 @@ begin
    Camera.Theta   := t;
    Camera.Sector  := tmpsc;
    Camera.Layer   := TheSector.Layer;
-   PanelX.Caption      := Format('%-5.2f', [Camera.X]);
-   PanelZ.Caption      := Format('%-5.2f', [Camera.Z]);
-   PanelY.Caption      := Format('%-5.2f', [Camera.Y]);
-   PanelFacing.Caption := Format('%-5.2f', [Camera.Theta]);
+   PanelX.Caption      := PosTrim(Camera.X);
+   PanelZ.Caption      := PosTrim(Camera.Z);
+   PanelY.Caption      := PosTrim(Camera.Y);
+   PanelFacing.Caption := PosTrim(Camera.Theta);
    PanelLayer.caption  := 'SC ' + IntToStr(Camera.Sector) +
                           ' on layer ' + IntToStr(Camera.Layer);
    Result       := TRUE;

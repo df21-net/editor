@@ -6,11 +6,12 @@ uses
   _Math, _Strings,
   M_Global,
   M_SCedit, M_WLedit, M_VXedit, M_OBedit, M_FlagEd, M_Diff,
-  M_Resour, M_OBClas, M_ObSeq, M_ObSel, RichEdit, Grids;
+  M_Resour, M_OBClas, M_ObSeq, M_ObSel, RichEdit, Grids, v_util32, Math;
 
 function  IsBitSet(value : LongInt; bit : Integer) : Boolean;
 function  FlagEdit(cellvalue, flagfile, title : String) : String;
-function  ResEdit(cellvalue : String; restype : Integer) : String;
+function  ResEdit(cellvalue : String; resmode : Integer;
+                  restype : integer = 0; textlen : String = '0') : String;
 function  ClassEdit(cellvalue : String) : String;
 function  DiffEdit(cellvalue : String) : String;
 function  DiffEditNoCheck(cellvalue : String) : String;
@@ -18,6 +19,7 @@ function  DiffEditNoCheck(cellvalue : String) : String;
 procedure DO_Fill_VertexEditor;
 function  Check_AllVertexEditor : Boolean;
 function  Check_VertexEditorField(field : Integer) : Boolean;
+function  CompareTwoVertices(VertexA: TVertex; VertexB: TVertex) : Boolean;
 procedure DO_Commit_VertexEditor;
 procedure DO_Commit_VertexEditorField(field : Integer);
 procedure DO_ForceCommit_VertexEditorField(field : Integer);
@@ -27,6 +29,7 @@ procedure DO_SectorEditor_Specials_Init;
 procedure DO_SectorEditor_Specials(c : Integer);
 function  Check_AllSectorEditor : Boolean;
 function  Check_SectorEditorField(field : Integer) : Boolean;
+function  CompareTwoSectors(SectorA: TSector; SectorB : TSector) : Boolean;
 procedure DO_Commit_SectorEditor;
 procedure DO_Commit_SectorEditorField(field : Integer);
 procedure DO_ForceCommit_SectorEditorField(field : Integer);
@@ -36,6 +39,8 @@ procedure DO_WallEditor_Specials_Init;
 procedure DO_WallEditor_Specials(c : Integer);
 function  Check_AllWallEditor : Boolean;
 function  Check_WallEditorField(field : Integer) : Boolean;
+function  CompareTwoWalls(WallA: TWall; WallB: TWall) : Boolean;
+function UpdateWallLengthVX(WallLength : Real) : Boolean;
 procedure DO_Commit_WallEditor;
 procedure DO_Commit_WallEditorField(field : Integer);
 procedure DO_ForceCommit_WallEditorField(field : Integer);
@@ -43,6 +48,7 @@ procedure DO_ForceCommit_WallEditorField(field : Integer);
 procedure DO_Fill_ObjectEditor;
 function  Check_AllObjectEditor : Boolean;
 function  Check_ObjectEditorField(field : Integer) : Boolean;
+function  CompareTwoObjects(ObjectA: TOB; ObjectB: TOB) : Boolean;
 procedure DO_Commit_ObjectEditor;
 procedure DO_Commit_ObjectEditorField(field : Integer);
 procedure DO_ForceCommit_ObjectEditorField(field : Integer);
@@ -53,10 +59,12 @@ procedure DO_MakeGenerator;
 procedure DO_FillOBColor;
 procedure DO_SelectObject;
 
+procedure UpdateSectorName(INFSector : Integer);
+
 procedure SetDOOMEditors;
 
 implementation
-uses Mapper, M_Util;
+uses Mapper, M_Util, M_mapfun, InfEdit2;
 
 
 function  IsBitSet(value : LongInt; bit : Integer) : Boolean;
@@ -111,10 +119,16 @@ begin
   FlagEdit := CellValue;
 end;
 
-function  ResEdit(cellvalue : String; restype : Integer) : String;
+function  ResEdit(cellvalue : String; resmode : Integer;
+                  restype : integer = 0; textlen : String = '0') : String;
 begin
  RES_PICKER_VALUE := cellvalue;
- RES_PICKER_MODE  := restype;
+ RES_PICKER_MODE  := resmode;
+ RES_PICKER_TYPE  := restype;
+
+ // We only cares about ints to strip the floatiness
+ RES_PICKER_LEN   := trunc(strtofloat(textlen));
+
  ResourcePicker.ShowModal;
  if ResourcePicker.ModalResult = mrOk then
   begin
@@ -192,8 +206,8 @@ begin
  TheVertex := TVertex(TheSector.Vx.Objects[VX_HILITE]);
  VertexEditor.Caption := Format('VX %d of %d, SC %d', [VX_HILITE, numvx, SC_HILITE]);
 
- VertexEditor.VXEd.Cells[1,  0] := RTrim(Format('%-5.2f', [TheVertex.X]));
- VertexEditor.VXEd.Cells[1,  1] := RTrim(Format('%-5.2f', [TheVertex.Z]));
+ VertexEditor.VXEd.Cells[1,  0] := PosTrim(TheVertex.X);
+ VertexEditor.VXEd.Cells[1,  1] := PosTrim(TheVertex.Z);
  VertexEditor.PanelSCName.Caption := TheSector.Name;
  VertexEditor.PanelFloorAlt.Caption := Format('%-5.2f && %-5.2f', [TheSector.Floor_Alt, TheSector.Ceili_Alt]);
  if GetWLfromLeftVX(SC_HILITE, VX_HILITE, awall) then
@@ -217,12 +231,13 @@ begin
   end;
 
  // Reset Focus
- if not INF_READ and VertexEditor.visible then
+ if not AUTOCOMMIT_FLAG and not INF_READ and VertexEditor.visible then
    begin
      VertexEditor.FormCreate(NIL);
      VertexEditor.SetFocus;
      MapWindow.SetFocus;
    end;
+ MapWindow.Invalidate;
 end;
 
 function  Check_AllVertexEditor : Boolean;
@@ -268,6 +283,12 @@ begin
          end;
        end;
  END;
+end;
+
+function  CompareTwoVertices(VertexA: TVertex; VertexB: TVertex) : Boolean;
+begin
+ Result := False;
+ if (VertexA.X = VertexB.X) and (VertexA.Z = VertexB.Z) then Result := True;
 end;
 
 procedure DO_Commit_VertexEditorField(field : Integer);
@@ -327,6 +348,12 @@ begin
    exit;
   end;
 
+ TheSector     := TSector(MAP_SEC.Objects[SC_HILITE]);
+ TheVertex     := TVertex(TheSector.Vx.Objects[VX_HILITE]);
+
+ if CompareTwoVertices(TheVertex, TMPVertex) then exit;
+
+
  if CONFIRMMultiUpdate and (VX_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
@@ -335,10 +362,10 @@ begin
     then exit;
   end;
 
- {Get original values, to see which values have changed}
- TheSector     := TSector(MAP_SEC.Objects[SC_HILITE]);
- TheVertex     := TVertex(TheSector.Vx.Objects[VX_HILITE]);
+ DO_StoreUndo;
 
+ {Get original values, to see which values have changed}
+ 
  ORIVertex     := TVertex.Create;
  ORIVertex.X   := TheVertex.X;
  ORIVertex.Z   := TheVertex.Z;
@@ -365,7 +392,7 @@ begin
    exit;
   end;
 
- if CONFIRMMultiUpdate and (VX_MULTIS.Count <> 0) then
+ if not IGNORE_UNDO and CONFIRMMultiUpdate and (VX_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
                             'WDFUSE Vertex Editor - Force Update Vertices',
@@ -403,29 +430,30 @@ begin
  SectorEditor.SCEd.Cells[1,  2] := IntToStr(TheSector.Flag1);
  SectorEditor.SCEd.Cells[1,  3] := IntToStr(TheSector.Flag2);
  SectorEditor.SCEd.Cells[1,  4] := IntToStr(TheSector.Flag3);
- SectorEditor.SCEd.Cells[1,  5] := RTrim(Format('%-5.2f', [TheSector.Floor_Alt]));
+ SectorEditor.SCEd.Cells[1,  5] := PosTrim(TheSector.Floor_Alt);
  SectorEditor.SCEd.Cells[1,  6] := TheSector.Floor.Name;
- SectorEditor.SCEd.Cells[1,  7] := RTrim(Format('%-5.2f', [TheSector.Floor.f1]));
- SectorEditor.SCEd.Cells[1,  8] := RTrim(Format('%-5.2f', [TheSector.Floor.f2]));
+ SectorEditor.SCEd.Cells[1,  7] := PosTrim(TheSector.Floor.f1);
+ SectorEditor.SCEd.Cells[1,  8] := PosTrim(TheSector.Floor.f2);
  SectorEditor.SCEd.Cells[1,  9] := IntToStr(TheSector.Floor.i);
- SectorEditor.SCEd.Cells[1, 10] := RTrim(Format('%-5.2f', [TheSector.Ceili_Alt]));
+ SectorEditor.SCEd.Cells[1, 10] := PosTrim(TheSector.Ceili_Alt);
  SectorEditor.SCEd.Cells[1, 11] := TheSector.Ceili.Name;
- SectorEditor.SCEd.Cells[1, 12] := RTrim(Format('%-5.2f', [TheSector.Ceili.f1]));
- SectorEditor.SCEd.Cells[1, 13] := RTrim(Format('%-5.2f', [TheSector.Ceili.f2]));
+ SectorEditor.SCEd.Cells[1, 12] := PosTrim(TheSector.Ceili.f1);
+ SectorEditor.SCEd.Cells[1, 13] := PosTrim(TheSector.Ceili.f2);
  SectorEditor.SCEd.Cells[1, 14] := IntToStr(TheSector.Ceili.i);
- SectorEditor.SCEd.Cells[1, 15] := RTrim(Format('%-5.2f', [TheSector.Second_Alt]));
+ SectorEditor.SCEd.Cells[1, 15] := PosTrim(TheSector.Second_Alt);
  SectorEditor.SCEd.Cells[1, 16] := IntToStr(TheSector.Layer);
 
  SectorEditor.PanelVXNum.Caption := IntToStr(numvx);
  SectorEditor.PanelWLNum.Caption := IntToStr(numwl);
 
   // Reset Focus
- if not INF_READ and not APPLYING_UNDO and SectorEditor.visible then
+ if not AUTOCOMMIT_FLAG and not INF_READ and not APPLYING_UNDO and SectorEditor.visible then
    begin
      SectorEditor.FormCreate(NIL);
      SectorEditor.SetFocus;
      MapWindow.SetFocus;
    end;
+ //MapWindow.Invalidate;
 
  DO_SectorEditor_Specials_Init;
  DO_SectorEditor_Specials(0);
@@ -443,13 +471,21 @@ begin
 
  if TheSector.InfItems.Count = 0 then
   begin
-   SectorEditor.INFBUtton.Visible := False;
+   SectorEditor.INFButton.Visible := False;
+   SectorEditor.INFButtonOff.Visible := True;
   end
  else
   begin
-   SectorEditor.INFBUtton.Visible := True;
+   SectorEditor.INFButton.Visible := True;
+   SectorEditor.INFButtonOff.Visible := False;
   end;
 
+ // Show it even if no INFs if visible
+ if not APPLYING_UNDO and INFWindow2.Visible and INFWindow2.ontop then
+   begin
+     MapWindow.SpeedButtonINFClick(NIL);
+     MapWindow.SetFocus;
+   end;
 end;
 
 procedure DO_SectorEditor_Specials_Init;
@@ -762,9 +798,33 @@ begin
  END;
 end;
 
+function  CompareTwoSectors(SectorA: TSector; SectorB : TSector) : Boolean;
+var i : integer;
+begin
+ Result := False;
+ if (SectorA.Name        =  SectorB.Name)
+ and (SectorA.Ambient    = SectorB.Ambient)
+ and (SectorA.Flag1      = SectorB.Flag1)
+ and (SectorA.Flag2      = SectorB.Flag2)
+ and (SectorA.Flag3      = SectorB.Flag3)
+ and (SectorA.Floor_Alt  = SectorB.Floor_Alt)
+ and (SectorA.Floor.Name = SectorB.Floor.Name)
+ and (SectorA.Floor.f1   = SectorB.Floor.f1)
+ and (SectorA.Floor.f2   = SectorB.Floor.f2)
+ and (SectorA.floor.i    = SectorB.floor.i)
+ and (SectorA.Ceili_Alt  = SectorB.Ceili_Alt)
+ and (SectorA.Ceili.Name = SectorB.Ceili.Name)
+ and (SectorA.Ceili.f1   = SectorB.Ceili.f1)
+ and (SectorA.Ceili.f2   = SectorB.Ceili.f2)
+ and (SectorA.Ceili.i    = SectorB.Ceili.i)
+ and (SectorA.Second_Alt = SectorB.Second_Alt)
+ and (SectorA.Layer      = SectorB.Layer) then Result := True
+end;
+
 procedure DO_Commit_SectorEditor;
 var
   TheSector           : TSector;
+  TheWall             : TWall;
   i                   : Integer;
 begin
  TMPSector := TSector.Create;
@@ -774,6 +834,11 @@ begin
    exit;
   end;
 
+ // If the new values are identical then
+ // Is this trip really necessary?
+ TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
+ if CompareTwoSectors(TheSector, TMPSector) then exit;
+
  if CONFIRMMultiUpdate and (SC_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
@@ -782,8 +847,25 @@ begin
     then exit;
   end;
 
+ // Are you being naughty and trying to save a no-name sector with wall INF items?
+ if (TMPSector.Name = '') then
+  begin
+    for i := 0 to TheSector.Wl.Count - 1 do
+      begin
+        TheWall := TWall(TheSector.Wl.Objects[i]);
+        if (TheWall.InfItems.Count >0) then
+          begin
+            showmessage('Warning! Wall ' + inttostr(i) + ' has INF items but your ' +
+                        'Sector doesnt have a name! Give it one to prevent a crash!');
+            exit;
+          end;
+      end;
+  end;
+
+
+ DO_StoreUndo;
+
  {Get original values, to see which values have changed}
- TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
 
  ORISector := TSector.Create;
  ORISector.Name       := TheSector.Name;
@@ -807,8 +889,11 @@ begin
  for i := 0 to 16 do
   DO_Commit_SectorEditorField(i);
 
+ UpdateSectorName(SC_HILITE);
+
  TMPSector.Free;
  ORISector.Free;
+
  DO_Fill_SectorEditor; {for eventual updates of infclasses}
  MapWindow.Map.Invalidate;
 end;
@@ -831,6 +916,15 @@ begin
         begin
          {selection}
          TheSector.Name := TMPSector.Name;
+
+         // Add it to INF Sector for caching and force a rebuild
+         // and remove old name from the list for caching.
+         if RTrim(TheSector.Name) <> '' then
+           INFSectors.Add(TheSector.Name)
+         else if (RTrim(ORISector.Name) <> '') and (INFSectors.IndexOf(ORISector.Name) <> -1) then
+             INFSectors.Delete(INFSectors.IndexOf(ORISector.Name));
+
+
          {multiselection}
          if SC_MULTIS.Count <> 0 then
           for m := 0 to SC_MULTIS.Count - 1 do
@@ -1237,7 +1331,8 @@ begin
    exit;
   end;
 
- if CONFIRMMultiUpdate and (SC_MULTIS.Count <> 0) then
+
+ if not IGNORE_UNDO and CONFIRMMultiUpdate and (SC_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
                             'WDFUSE Sector Editor - Force Update Sectors',
@@ -1298,38 +1393,42 @@ begin
  WallEditor.WLEd.Cells[1,  5] := IntToStr(TheWall.Flag2);
  WallEditor.WLEd.Cells[1,  6] := IntToStr(TheWall.Flag3);
  WallEditor.WLEd.Cells[1,  7] := TheWall.Mid.Name;
- WallEditor.WLEd.Cells[1,  8] := RTrim(Format('%-5.2f', [TheWall.Mid.f1]));
- WallEditor.WLEd.Cells[1,  9] := RTrim(Format('%-5.2f', [TheWall.Mid.f2]));
+ WallEditor.WLEd.Cells[1,  8] := PosTrim(TheWall.Mid.f1);
+ WallEditor.WLEd.Cells[1,  9] := PosTrim(TheWall.Mid.f2);
  WallEditor.WLEd.Cells[1, 10] := IntToStr(TheWall.Mid.i);
  WallEditor.WLEd.Cells[1, 11] := TheWall.Top.Name;
- WallEditor.WLEd.Cells[1, 12] := RTrim(Format('%-5.2f', [TheWall.Top.f1]));
- WallEditor.WLEd.Cells[1, 13] := RTrim(Format('%-5.2f', [TheWall.Top.f2]));
+ WallEditor.WLEd.Cells[1, 12] := PosTrim(TheWall.Top.f1);
+ WallEditor.WLEd.Cells[1, 13] := PosTrim(TheWall.Top.f2);
  WallEditor.WLEd.Cells[1, 14] := IntToStr(TheWall.Top.i);
  WallEditor.WLEd.Cells[1, 15] := TheWall.Bot.Name;
- WallEditor.WLEd.Cells[1, 16] := RTrim(Format('%-5.2f', [TheWall.Bot.f1]));
- WallEditor.WLEd.Cells[1, 17] := RTrim(Format('%-5.2f', [TheWall.Bot.f2]));
+ WallEditor.WLEd.Cells[1, 16] := PosTrim(TheWall.Bot.f1);
+ WallEditor.WLEd.Cells[1, 17] := PosTrim(TheWall.Bot.f2);
  WallEditor.WLEd.Cells[1, 18] := IntToStr(TheWall.Bot.i);
  WallEditor.WLEd.Cells[1, 19] := TheWall.Sign.Name;
- WallEditor.WLEd.Cells[1, 20] := RTrim(Format('%-5.2f', [TheWall.Sign.f1]));
- WallEditor.WLEd.Cells[1, 21] := RTrim(Format('%-5.2f', [TheWall.Sign.f2]));
+ WallEditor.WLEd.Cells[1, 20] := PosTrim(TheWall.Sign.f1);
+ WallEditor.WLEd.Cells[1, 21] := PosTrim(TheWall.Sign.f2);
 
  WallEditor.PanelSCName.Caption := TheSector.Name;
  WallEditor.PanelFloorAlt.Caption := Format('%-5.2f && %-5.2f', [TheSector.Floor_Alt, TheSector.Ceili_Alt]);
  height := TheSector.Ceili_Alt - TheSector.Floor_Alt;
- WallEditor.PanelHeight.Caption := Format('%-5.2f', [height]);
+ WallEditor.PanelHeight.Caption := PosTrim(height);
  vx1 := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
  vx2 := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
  length := sqrt(sqr(vx1.X - vx2.X)+sqr(vx1.Z - vx2.Z));
- WallEditor.Panellength.Caption := Format('%-5.2f', [length]);
+ WallEditor.Panellength.Caption := PosTrim(length);
  WallEditor.PanelLRVX.Caption := Format('%d && %d', [TheWall.left_vx, TheWall.right_vx]);
 
+ // Add Wall Length Changing
+ WallEditor.WLEd.Cells[1, 22] := PosTrim(length);
+
   // Reset Focus
- if not INF_READ and not APPLYING_UNDO and  WallEditor.visible then
+ if not AUTOCOMMIT_FLAG and not INF_READ and not APPLYING_UNDO and  WallEditor.visible then
    begin
      WallEditor.FormCreate(NIL);
      WallEditor.SetFocus;
      MapWindow.SetFocus;
    end;
+ MapWindow.Invalidate;
 
  DO_WallEditor_Specials_Init;
  DO_WallEditor_Specials(0);
@@ -1347,13 +1446,22 @@ begin
 
  if TheWall.InfItems.Count = 0 then
   begin
-   WallEditor.INFBUtton.Visible := False;
+   WallEditor.INFButton.Visible := False;
+   WallEditor.INFButtonOff.Visible := True;
   end
  else
   begin
-   WallEditor.INFBUtton.Visible := True;
+   WallEditor.INFButton.Visible := True;
+   WallEditor.INFButtonOff.Visible := False;
+
   end;
 
+ //Force update - not during Undos
+ if not APPLYING_UNDO and INFWindow2.Visible and INFWindow2.ontop then
+    begin
+      MapWindow.SpeedButtonINFClick(NIL);
+      MapWindow.SetFocus;
+    end;
 
 end;
 
@@ -1733,6 +1841,33 @@ begin
  END;
 end;
 
+function  CompareTwoWalls(WallA: TWall; WallB: TWall) : Boolean;
+begin
+Result := False;
+if (WallA.Adjoin    = WallB.Adjoin) and
+   (WallA.Mirror    = WallB.Mirror) and
+   (WallA.Walk      = WallB.Walk) and
+   (WallA.Light     = WallB.Light) and
+   (WallA.Flag1     = WallB.Flag1) and
+   (WallA.Flag2     = WallB.Flag2) and
+   (WallA.Flag3     = WallB.Flag3) and
+   (WallA.Mid.Name  = WallB.Mid.Name) and
+   (WallA.Mid.f1    = WallB.Mid.f1) and
+   (WallA.Mid.f2    = WallB.Mid.f2) and
+   (WallA.Mid.i     = WallB.Mid.i ) and
+   (WallA.Top.Name  = WallB.Top.Name ) and
+   (WallA.Top.f1    = WallB.Top.f1 ) and
+   (WallA.Top.f2    = WallB.Top.f2 ) and
+   (WallA.Top.i     = WallB.Top.i ) and
+   (WallA.Bot.Name  = WallB.Bot.Name ) and
+   (WallA.Bot.f1    = WallB.Bot.f1  ) and
+   (WallA.Bot.f2    = WallB.Bot.f2  ) and
+   (WallA.Bot.i     = WallB.Bot.i ) and
+   (WallA.Sign.Name = WallB.Sign.Name ) and
+   (WallA.Sign.f1   = WallB.Sign.f1 ) and
+   (WallA.Sign.f2   = WallB.Sign.f2 ) then Result := True;
+end;
+
 procedure DO_Commit_WallEditorField(field : Integer);
 var
   TheSector           : TSector;
@@ -2093,7 +2228,10 @@ procedure DO_Commit_WallEditor;
 var
   TheSector    : TSector;
   TheWall      : TWall;
-  i            : Integer;
+  i, j         : Integer;
+  AReal        : Real;
+  LenUpdated   : Boolean;
+
 begin
  TMPWall   := TWall.Create;
  if not Check_AllWallEditor then
@@ -2102,7 +2240,7 @@ begin
    exit;
   end;
 
- if CONFIRMMultiUpdate and (WL_MULTIS.Count <> 0) then
+ if not AUTOCOMMIT_MULTI and CONFIRMMultiUpdate and (WL_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
                             'WDFUSE Wall Editor - Update Walls',
@@ -2112,6 +2250,26 @@ begin
 
  TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
  TheWall   := TWall(TheSector.Wl.Objects[WL_HILITE]);
+
+ //Special Wall Length Case
+ Val(WallEditor.WLEd.Cells[1, 22], AReal, j);
+ if j = 0 then
+   begin
+    LenUpdated := UpdateWallLengthVX(AReal);
+   end
+ else
+   begin
+    Application.MessageBox('Wrong value for Wall length', 'Wall Editor Error', mb_Ok or mb_IconExclamation);
+    exit;
+  end;
+
+ // If length is updated - no need to compare anything
+ // or attempt to store anything - we did it in WallLength function
+ if (not LenUpdated) then
+   if CompareTwoWalls(TMPWall, TheWall) then exit
+   else DO_StoreUndo;
+
+ UpdateSectorName(SC_HILITE);
 
  ORIWall   := TWall.Create;
  ORIWall.Adjoin       := TheWall.Adjoin;
@@ -2140,6 +2298,9 @@ begin
  for i := 0 to 21 do
   DO_Commit_WallEditorField(i);
 
+ // Normalize offsets
+ TheWall := NormalizeWall(TheWall);
+
  TMPWall.Free;
  ORIWall.Free;
  { DO_Fill_WallEditor; }
@@ -2155,7 +2316,7 @@ begin
    exit;
   end;
 
- if CONFIRMMultiUpdate and (WL_MULTIS.Count <> 0) then
+ if not IGNORE_UNDO and CONFIRMMultiUpdate and (WL_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
                             'WDFUSE Wall Editor - Force Update Walls',
@@ -2197,6 +2358,70 @@ begin
  MapWindow.Map.Invalidate;
 end;
 
+{ And you thought trig was a boring & useless school subject?
+  We alwyas mod the RIGHT vertex. So a line with vertices  (0,0) (3,4)
+  when length is doubled (5->10) becomes (0,0) (6,8). This also handles
+  adjoin wall mirror. }
+function  UpdateWallLengthVX(WallLength : Real) : boolean;
+var vx1, vx2 : TVertex;
+    orig_length,
+    deltax,
+    deltaz : Real;
+    TheSector,
+    TheSectorMirror : TSector;
+    TheWall,
+    TheWallMirror : Twall;
+    TheVertexMirror : TVertex;
+    tempreal : real;
+begin
+   Result := False;
+   TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
+   TheWall   := TWall(TheSector.Wl.Objects[WL_HILITE]);
+   vx1 := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
+   vx2 := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
+   orig_length := sqrt(sqr(vx1.X - vx2.X)+sqr(vx1.Z - vx2.Z));
+
+   tempreal := StrToFloat(PosTrim(orig_length));
+
+   if tempreal <> WallLength then
+     begin
+
+       // Save here - we won't do it outside
+       DO_StoreUndo;
+
+       //Update X delta
+       deltax := ((vx2.X-vx1.X) * (WallLength/orig_length));
+       vx2.X := vx1.X + StrToFloat(PosTrim(deltax));
+
+       //Update Z(Y) delta
+       deltaz := ((vx2.Z-vx1.Z) * (WallLength/orig_length));
+       vx2.Z := vx1.Z + StrToFloat(PosTrim(deltaz));
+
+       //Handle Adjoin Mirrors (opposite of right is left)
+        if TheWall.Adjoin <> -1 then
+          begin
+           TheSectorMirror  := TSector(MAP_SEC.Objects[TheWall.Adjoin]);
+           TheWallMirror    := TWall(TheSectorMirror.Wl.Objects[TheWall.Mirror]);
+
+           // What spectacular explosions you'll have if you simply stick vx2
+           // Instead of creating a new vertex object...
+           TheVertexMirror  := TVertex.Create;
+           TheVertexMirror.X   := vx2.X;
+           TheVertexMirror.Z   := vx2.Z;
+
+           TheSectorMirror.Vx.Objects[TheWallMirror.left_vx] := TheVertexMirror;
+           MAP_SEC.Objects[TheWall.Adjoin] := TheSectorMirror;
+          end;
+
+       // Update sector with updated vertex
+       TheSector.Vx.Objects[TheWall.Right_vx] := vx2;
+       MAP_SEC.Objects[SC_HILITE] := TheSector;
+       MapWindow.invalidate;
+
+       Result := True;
+     end;
+end;
+
 {OBJECT EDITOR **********************************************************}
 {OBJECT EDITOR **********************************************************}
 {OBJECT EDITOR **********************************************************}
@@ -2213,12 +2438,12 @@ begin
  ObjectEditor.Caption := Format('OB %d', [OB_HILITE]);
  ObjectEditor.OBEd.Cells[1,  0] := TheObject.ClassName;
  ObjectEditor.OBEd.Cells[1,  1] := TheObject.DataName;
- ObjectEditor.OBEd.Cells[1,  2] := RTrim(Format('%-5.2f', [TheObject.X]));
- ObjectEditor.OBEd.Cells[1,  3] := RTrim(Format('%-5.2f', [TheObject.Y]));
- ObjectEditor.OBEd.Cells[1,  4] := RTrim(Format('%-5.2f', [TheObject.Z]));
- ObjectEditor.OBEd.Cells[1,  5] := RTrim(Format('%-5.2f', [TheObject.Yaw]));
- ObjectEditor.OBEd.Cells[1,  6] := RTrim(Format('%-5.2f', [TheObject.Pch]));
- ObjectEditor.OBEd.Cells[1,  7] := RTrim(Format('%-5.2f', [TheObject.Rol]));
+ ObjectEditor.OBEd.Cells[1,  2] := PosTrim(TheObject.X);
+ ObjectEditor.OBEd.Cells[1,  3] := PosTrim(TheObject.Y);
+ ObjectEditor.OBEd.Cells[1,  4] := PosTrim(TheObject.Z);
+ ObjectEditor.OBEd.Cells[1,  5] := PosTrim(TheObject.Yaw);
+ ObjectEditor.OBEd.Cells[1,  6] := PosTrim(TheObject.Pch);
+ ObjectEditor.OBEd.Cells[1,  7] := PosTrim(TheObject.Rol);
  ObjectEditor.OBEd.Cells[1,  8] := IntToStr(TheObject.Diff);
  ObjectEditor.OBEd.Cells[1,  9] := IntToStr(TheObject.Sec);
 
@@ -2247,12 +2472,13 @@ begin
   end;
 
  // Reset Focus
- if not INF_READ and ObjectEditor.visible  then
+ if not AUTOCOMMIT_FLAG and not INF_READ and ObjectEditor.visible  then
    begin
      ObjectEditor.FormCreate(NIL);
      ObjectEditor.SetFocus;
      MapWindow.SetFocus;
    end;
+  MapWindow.Invalidate;
 end;
 
 function  Check_AllObjectEditor : Boolean;
@@ -2469,6 +2695,49 @@ begin
         TMPObject.Seq.AddStrings(ObjectEditor.OBSeq.Lines);
        end;
  END;
+end;
+
+function CompareTwoObjects(ObjectA: TOB; ObjectB: TOB) : Boolean;
+var
+i : integer;
+begin
+
+Result := False;
+if (ObjectA.ClassName = ObjectB.ClassName) and
+   (ObjectA.DataName = ObjectB.DataName) and
+
+    // Because the Map stores the X,Y,Z positions with multiple
+    // decimal precision - we have to trim before comparing =(
+    (AnsiCompareStr(PosTrim(ObjectA.x),
+                    PosTrim(ObjectB.x)) = 0) and
+    (AnsiCompareStr(PosTrim(ObjectA.y),
+                    PosTrim(ObjectB.y)) = 0) and
+    (AnsiCompareStr(PosTrim(ObjectA.z),
+                    PosTrim(ObjectB.z)) = 0) and
+
+
+   (ObjectA.Yaw = ObjectB.Yaw) and
+   (ObjectA.Pch = ObjectB.Pch) and
+   (ObjectA.Rol = ObjectB.Rol) and
+   (ObjectA.Diff = ObjectB.Diff) and
+   (ObjectA.Sec = ObjectB.Sec) and
+   (ObjectA.Col = ObjectB.Col) and
+   (ObjectA.OType = ObjectB.OType) and
+   (ObjectA.Special = ObjectB.Special) then
+
+    begin
+      // Need to compare the logic lists as well
+      if ObjectA.Seq.Count = ObjectB.Seq.Count  then
+        begin
+          for i:= 0 to ObjectA.Seq.Count -1 do
+            if ObjectA.Seq[i] <> ObjectB.Seq[i] then
+              begin
+                Result := False;
+                exit;
+              end;
+        end;
+      Result := True;
+    end;
 end;
 
 procedure DO_Commit_ObjectEditorField(field : Integer);
@@ -2697,7 +2966,11 @@ begin
    exit;
   end;
 
- if CONFIRMMultiUpdate and (OB_MULTIS.Count <> 0) then
+ TheObject := TOB(MAP_OBJ.Objects[OB_HILITE]);
+
+ if CompareTwoObjects(TheObject, TMPObject) then exit;
+
+ if not IGNORE_UNDO and CONFIRMMultiUpdate and (OB_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
                             'WDFUSE Object Editor - Update Objects',
@@ -2705,7 +2978,7 @@ begin
     then exit;
   end;
 
- TheObject := TOB(MAP_OBJ.Objects[OB_HILITE]);
+ DO_StoreUndo;
 
  ORIObject   := TOB.Create;
  ORIObject.ClassName := TheObject.ClassName;
@@ -2740,7 +3013,7 @@ begin
    exit;
   end;
 
- if CONFIRMMultiUpdate and (OB_MULTIS.Count <> 0) then
+ if not IGNORE_UNDO and CONFIRMMultiUpdate and (OB_MULTIS.Count <> 0) then
   begin
    if Application.MessageBox('Confirm Multiple Update ?',
                             'WDFUSE Object Editor - Force Update Objects',
@@ -2926,6 +3199,46 @@ begin
    DO_FillOBColor;
    DO_FillLogic;
   end;
+end;
+
+// Ensure we do not have empty sector names.
+procedure UpdateSectorName(INFSector : Integer);
+var
+  TheSector : TSector;
+  Thewall : TWall;
+  hasInf : Boolean;
+  j : Integer;
+begin
+
+   // You can't have empty sectors with INFs
+   TheSector :=  TSector(MAP_SEC.Objects[INFSector]);
+
+   hasInf:= False;
+
+   // Find INFs inside sector
+   if (TheSector.InfItems.Count > 0)
+     then hasInf := True
+   else
+     begin
+        // Find INFs inside Wall
+        for j := 0 to TheSector.Wl.Count - 1 do
+          begin
+            TheWall := TWall(TheSector.Wl.Objects[j]);
+            if TheWall.InfItems.Count > 0 then
+              begin
+                hasInf := True;
+                break;
+              end;
+          end;
+     end;
+
+    if hasInf and (TheSector.Name = '')then
+       TheSector.Name := 'CHANGEME_' + IntToStr(INFSector);
+
+    // If we already have CHANGEME - delete it if there are no INFs
+    if (not hasInf) and (String(TheSector.Name).startswith('CHANGEME_')) then
+       TheSector.Name := '';
+
 end;
 
 

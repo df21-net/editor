@@ -2,7 +2,7 @@ unit G_util;
 
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes,
-     StdCtrls, Gauges, FileCtrl, Forms, Dialogs;
+     StdCtrls, Gauges, FileCtrl, Forms, Dialogs, M_Global;
 
 CONST
  ERRGOB_NOERROR   =  0;
@@ -33,6 +33,7 @@ function GOB_GetDetailedDirList(GOBname : TFileName; VAR DirList : TMemo) : Inte
 function GOB_CreateEmpty(GOBname : TFileName) : Integer;
 function GOB_ExtractResource(OutputDir : String ; GOBname : TFileName; ResName : String) : Integer;
 function GOB_ExtractFiles(OutputDir : String ; GOBname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
+function Valid_GOB_Asset(FileName : String) : Boolean;
 function GOB_AddFiles(InputDir : String ; GOBname : TFileName; DirList : TFileListBox; ProgressBar : TGauge) : Integer;
 function GOB_RemoveFiles(GOBname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
 
@@ -350,11 +351,26 @@ begin
  GOB_ExtractFiles := ERRGOB_NOERROR;
 end;
 
+// Check if the asset is valid
+function Valid_GOB_Asset(FileName : String) : Boolean;
+var valid : Boolean;
+       i : Integer;
+ begin
+  valid := False;
+  for i:=0 to FILTER_LIST.count -1 do
+    begin
+      if UpperCase(ExtractFileExt(FileName)) = '.' + FILTER_LIST[i]
+        then valid := TRUE;
+    end;
+  Valid_GOB_Asset := valid;
+ end;
+
+
 function GOB_AddFiles(InputDir    : String;
                       GOBname     : TFileName;
                       DirList     : TFileListBox;
                       ProgressBar : TGauge) : Integer;
-var i           : LongInt;
+var i,j         : LongInt;
     NSel        : LongInt;
     index       : LongInt;
     MASTERN     : LongInt;
@@ -398,7 +414,10 @@ begin
  OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
  NSel := 0;
  for i := 0 to DirList.Items.Count - 1 do
-   if DirList.Selected[i] then Inc(NSel);
+   if DirList.Selected[i] and Valid_GOB_Asset(DirList.Items[i]) then
+     Inc(NSel)
+   else
+     DirList.Selected[i] := False;
 
  if NSel = 0 then
   begin

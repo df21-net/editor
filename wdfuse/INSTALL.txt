@@ -1,0 +1,223 @@
+                      WDfuse 2.61
+
+
+Please visit https://df-21.net for any questions. 
+
+
+To Install:
+
+1. Rename your wdfuse32.exe to wdfuse32.old (just incase)
+you can delete it later if everything is ok.
+ 
+2. If you have installed an earlier version rename your WDFUSE.ini
+to WDFUSE.old , or don`t extract it from this Zip. it`s not a big
+ problem you will just have to renter your author info and reset 
+window sizes if you forget.
+
+3. Using Winzip  extract all files to your Wdfuse directory . The files
+will automaticly go in the proper directories.
+
+4. In all cases check to make sure the 3 files keymap*.* go in the Wdfdata
+directory. Plus 1 file WDFUSE.GOB also goes in WDFDATA directory
+
+
+DOSBOX CUSTOM SETTINGS
+
+1. WDFATA folder contains mutliple support files. If the editor cannot find your dosbox conf files
+it will fall back on the dosbox_default.conf file in that folder.feel free to edit it with your own settings.
+
+WDFUSE 2.61
+********************
+
+NOTE: There are important keybind changes. 
+
+F2 now opens your INF editor while F3 now commits your code.
+
+Projects
+
+1. Added an option to automatically save your project when trying to GOB.
+2. You can now skip all cutscenes and briefings and load the level directly.
+3. WDFUSE will now warn you if you try to GOB a map when dosbox is already running.
+4. Added an option to automatically commit your changes without pressing the Commit button.
+5. Added Resource Asset links to the main menu for easy access. 
+
+Map Editor
+
+1. Added an option to display Wall Lengths in the editor (L).
+2. Added a Sound Editor to WDFUSE.
+3. You can now undo Adjoin/Extrude operations.
+4. Added an option to search by Sector IDs with (F).
+5. Fixed a bug where sectors duplicates were offset with the wrong coordinates.
+6. You can now play audio sounds by pressing the Enter key in the Sound Editor.
+7. Editor field commits can now be undone.
+8. Added texture stitching options to the editor PopUp menu.
+9. Fixed a bug where audio tracks never reset after playback.
+10. You can now directly edit a Wall's length from the Wall Editor (including the adjoin).
+11. Added an asset search component to the resource editors. 
+12. You can now create subsectors and pits straight from the pop-up menu.
+13. Four-walled subsectors are now squares instead of diamonds.
+
+Texturing
+
+1. Fixed a bug where some switch textures would reset to default.
+2. Wall offsets will now take a modulo of the texture's dimension.
+3. Added texture stitching to the pop-up menu.
+4. Switches will now automatically load from the Wall Menu.
+5. Ceilings and Floors will now automatically load from the Sector Menu.
+6. Skies will automaticaly be chosen based on your flag settings in the Sector Menu.
+7. Added automatic sorting of textures by heights.
+8. You can now make the wall editor attempt to automatically choose a best-fit texture. 
+
+INFs
+
+1. Errors will now highlight as red in the editor messagebox.
+2. Fixed a bug where some INF sectors didn't display as yellow.
+3. START will now be recognized as a valid command.
+4. Added STOP number validation to match the START keyword .
+5. Fixed a bug where stops without timers were marked as an error.
+6. Default Sector names will be removed if INF logic is also removed.
+7. You will now be warned if your sector is missing a name tag while having wall INF components.
+8. Added an option to traverse to INFs with an INF Highlight button.
+9. You can now automatically refresh the INF window by clicking a sector or wall with INFs.
+10. INF button will now be greyed out in the sector and wall editors if they are missing.
+11. Added find and replace components to the INF editor.
+12. Added better INF caching to improve loadtimes.
+
+
+WDFUSE 2.6
+********************
+Projects 
+
+1. Added an option to automatically save your project when GOBbing
+2. Added an option to skip cutscenes and briefing
+
+Editor
+
+1. Added Wall length previews 
+2. Ensured all sectors with valid INFs are colored  yellow
+3. Errors in the INF editor will show up as RED color at the bottom
+4. Added Sound Player to convert VOC to WAVs
+5. Added missing Textures to the Resource Preview
+6. Commiting changes to Sectors, Walls etc.. can now be undone with CTRL-Z
+7. Fixed Duplicate allignment - now when you duplicate they will always appear where your mouse is located.
+8. Splits, Adjoins and Extrudes can now be Undne
+9. Added an option to search by Sector ID 
+
+********************
+WDFUSE 2.6 BETA 2
+
+Projects
+
+1. Creating a New project will no longer automatically wipe your current working project.
+2. Opening an existing project will no longer automatically wipe your current working project.
+3. Added an option to automatically load your previously worked on project automatically when WDFUSE starts.
+4. Added an option to Save Project As another name. 
+5. Added an option to automatically test your Dark Forces project through DosBox 
+6. Fixed a crash when  loading Projects from drives not present on the current computer.
+7. Ensured that corrupted projects do not cause infinite load loops.
+8. Increased project path lengths to 255 bytes
+9. Wdfuse will no longer create dummy projets if you cancel out during creation screen.
+
+Editor
+
+1. Added an ability to pan the map with your Mouse
+2. Added an ability to zoom with your middle mouse button
+3. Added Steam Dark Forces support including installations across multiple drives
+4. Added GOG Dark Forces support. 
+5. WDFUSE will no longer crash when choosing high-precision grid rendering.
+6. Added an ability to dynamically generate Grid sizes as you zoom. 
+7. Added hotkey hints to most of the commands in the editor
+8. Added an ability to Copy and Paste content between instances of WDFUSE
+9. Added an ability to Undo and Redo commands.
+10. Expanded the Edit Menus to include common commands such as Adjoin Extrude and Clear MultiSelections
+11. Expanded the Right Click abilities to include more common commands
+12. Added a new Sector Fill mode to differentiate sectors from Null Space.
+13. Panning while in Sector Fill modes will no longer re-render the fill values until you are done panning to speed up processing.
+14. Added an X close window button to most of the windows in the Editor.
+15. Adjust window sizes to support modern width and heights. 
+16. Added MouseWheel controls to easily switch between Grid while holding the Ctrl key.
+17. Added MouseWheel controls to easily switch between Layers while holding the Shift key.
+18. If available, the default layer will now always be 0 insead of the minimum one.
+19. Added a throttle for Mouse Zooming to prevent multi-grid redrawing.
+20. Windows now preserve multi-monitor positioning.
+21. Added X close window to all windows. 
+22. Fixed level objects not drawing when moving very fast with a mouse.
+
+GOB/LFD Container Managers
+
+1. Show the full path of the GOB/LFD during construction
+2. Allow for full drag and drop of files regardless of chosen folder
+3. Added an option to exit menus using escape
+4. Fixed numerous issues with GOB/LFD asset parsing
+5. Updated filters to include correct assets for each container type (Ex: BMs PLTTs etc...)
+6. Reworked LFD display to correctly show the asset types and sorted them
+7. Added support for 4 character filetypes (Ex: DELT, FILM etc..) for the LFD editor.
+
+Sector/Wall/Vertex/Objects
+
+1. Double Clicking will now load the current selected level component.
+2. Added a checkbox to many pop-up windows to allow the windows to stay-on-top of the main map editor
+3. Added a checkbox to link to the INF editor directly from the sector editors
+4. Fixed the form not updating properly when highlighting a cell
+
+Assets
+
+1. Fixed 3DO profile parsing issues
+2. Added additional zoom settings for BMs and  FMEs  and saved the default to the INI file
+3. Store the Brightness levels in the INI  file
+4. Added Drop-In PAL selection with immediate update of texture assets in the resource picker
+5. All asset paths have size have been increased  to 255 bytes
+
+Misc
+
+1. Fixed and added back the link to the latest Dark Forces Specs File 
+2. Added link to WDFUSE Support Discord
+3. Added links to DF-21.net 
+4. Added an ability to wipe Editor UNDO cache.
+5. Added compatibility to Pre 2.5 WDFUSE INI files.
+6. Added X close window to all windows. 
+7. Added automatic UNDO cache cleanup and added a undo limits to the INI file.
+8. Added shortcut hints to main menu fields
+9. Updated memory statistics to handle 64 bit systems
+10. Changed font to FixedSys to ensure Keys are aligne on all systems
+11. Muted the Scroll Window Out of Range popups (But preserved the limit popups)
+12. INF Font choice will now be preserved between sessions 
+
+Logging
+
+1. Added WDFUSE Logging to the log folder
+2. Added INF parsing error logs 
+
+Known Issues
+
+1. If your map has many INFs it may take a second to UNDO / REDO commands as it recompiles the INF code
+2. Sector Fill drawing mode is not always accurate at certain scales and may flood the map with the color.
+
+
+********************
+ADDITIONS /CHANGES,BUGS 1996
+
+1. Fixed the menu ,modes buttons for sector,wall,object,vertex
+ seems we lost the connection for them somewhere.
+
+2. Main menu HELP /contents  fixed also
+
+3. shortened the buttons so it fits on a 14" monitor now
+   hehe  oops...
+
+4.Added the capability to open any of the 14 levels as a
+ Default new level, These have the same original 14 CMP,PAL files.
+Also if you want you should be able to modify what your 
+ New levels look like by editing the WDFUSE.GOb..in WDFDATA directory
+IT MUST HAVE the name WDFUSE.GOBwhen you are done.
+
+
+NEXT beta should have more tools added. were working on a Vue tool,
+ 3do<>ASC converters,pal/pltt tools ,CMP too i beleive, plus GMID,WAV,more wax 
+stuff is in the works. 
+
+
+
+MTFBWY 
+WDFUSE Team 1995-1997
+Karjala/AOE2 - 2022

@@ -47,6 +47,7 @@ type
     SBHelp: TSpeedButton;
     INFButton: TSpeedButton;
     WLStayonTopCheckBox: TCheckBox;
+    INFButtonOff: TSpeedButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure SBCommitClick(Sender: TObject);
@@ -62,6 +63,9 @@ type
     procedure SBOpenINFClick(Sender: TObject);
     procedure WLStayonTopCheckBoxMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure WLEdMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+
   private
     { Private declarations }
   public
@@ -122,11 +126,21 @@ begin
   WLEd.Cells[0, 19] := '+Sgn Tx Nam';
   WLEd.Cells[0, 20] := 'Sgn Tx X Off';
   WLEd.Cells[0, 21] := 'Sgn Tx Y Off';
+  WLEd.Cells[0, 22] := 'Length';
 end;
 
 procedure TWallEditor.FormDeactivate(Sender: TObject);
 begin
   SUPERHILITE := -1;
+
+  // This is a hack to prevent refocus on own object
+  // Do not autocommit multiple items as it is dangerous
+  if AUTOCOMMIT and (WL_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      DO_Commit_WallEditor;
+      AUTOCOMMIT_FLAG := False;
+    end;
 
   Ini.WriteInteger('WINDOWS', 'Wall Editor    X', WallEditor.Left);
   Ini.WriteInteger('WINDOWS', 'Wall Editor    Y', WallEditor.Top);
@@ -147,6 +161,7 @@ end;
 procedure TWallEditor.SBCommitClick(Sender: TObject);
 begin
   DO_Commit_WallEditor;
+  DO_Fill_WallEditor;
   MapWindow.SetFocus;
 end;
 
@@ -168,7 +183,9 @@ begin
   if Shift = [] then
     Case Key of
       VK_F1     : MapWindow.HelpTutorialClick(NIL);
-      VK_F2     : SBCommitClick(NIL);
+      VK_F2     : MapWindow.SpeedButtonINFClick(NIL);
+      VK_F3,
+      VK_RETURN : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
       VK_HOME,
@@ -190,6 +207,19 @@ begin
     end;
 end;
 
+procedure TWallEditor.WLEdMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  // This is a hack to prevent refocus on own object
+  // Do not autocommit multiple items as it is dangerous
+  if AUTOCOMMIT and (WL_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      DO_Commit_WallEditor;
+      AUTOCOMMIT_FLAG := False;
+    end;
+end;
+
 procedure TWallEditor.WLEdDblClick(Sender: TObject);
 var doomdata : TIniFile;
     datastr  : String;
@@ -199,8 +229,8 @@ begin
     4 : Cells[1,  4] := FlagEdit(Cells[1,  4], 'wl_flag1.wdf', 'Wall Flag 1');
     5 : Cells[1,  5] := FlagEdit(Cells[1,  5], 'wl_flag2.wdf', 'Wall Flag 2');
     6 : Cells[1,  6] := FlagEdit(Cells[1,  6], 'wl_flag3.wdf', 'Wall Flag 3');
-    7 : Cells[1,  7] := ResEdit(Cells[1,  7], RST_BM);
-   11 : Cells[1, 11] := ResEdit(Cells[1, 11], RST_BM);
+    7 : Cells[1,  7] := ResEdit(Cells[1,  7], RST_BM, 0, WallEditor.PanelHeight.Caption);
+   11 : Cells[1, 11] := ResEdit(Cells[1, 11], RST_BM, 0, WallEditor.PanelHeight.Caption);
    14 : if DOOM then
          begin
           {show the line action info}
@@ -214,8 +244,9 @@ begin
             doomdata.Free;
            end;
          end;
-   15 : Cells[1, 15] := ResEdit(Cells[1, 15], RST_BM);
-   19 : Cells[1, 19] := ResEdit(Cells[1, 19], RST_BM);
+   15 : Cells[1, 15] := ResEdit(Cells[1, 15], RST_BM, 0, WallEditor.PanelHeight.Caption);
+   19 : Cells[1, 19] := ResEdit(Cells[1, 19], RST_BM, RST_TYPE_SWITCH);
+
   end;
 end;
 

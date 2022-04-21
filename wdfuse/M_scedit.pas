@@ -39,6 +39,7 @@ type
     SBHelp: TSpeedButton;
     SCStayOnTopCheckBox: TCheckBox;
     INFButton: TSpeedButton;
+    INFBUttonOff: TSpeedButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure SBOpenINFClick(Sender: TObject);
@@ -53,7 +54,11 @@ type
     procedure StayOnTopClick(Sender: TObject);
     procedure SBCommitClick(Sender: TObject);
     procedure SCStayOnTopCheckBoxClick(Sender: TObject);
+    procedure SCEdMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
+    SC_MODIFIED : Boolean ;
+    OrigSC : TSector;
     { Private declarations }
   public
     { Public declarations }
@@ -109,10 +114,21 @@ begin
   SCEd.Cells[0, 14] := 'Ceil. Tx #';
   SCEd.Cells[0, 15] := 'Second Alt';
   SCEd.Cells[0, 16] := 'Layer';
+
 end;
 
 procedure TSectorEditor.FormDeactivate(Sender: TObject);
 begin
+
+  // This is a hack to prevent refocus on own object
+  // Don't autocommit when you have multiple sectors - dangerous!
+  if AUTOCOMMIT and (SC_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      DO_Commit_SectorEditor;
+      AUTOCOMMIT_FLAG := False;
+    end;
+
   SUPERHILITE := -1;
 
   Ini.WriteInteger('WINDOWS', 'Sector Editor  X', SectorEditor.Left);
@@ -150,7 +166,9 @@ begin
   if Shift = [] then
     Case Key of
       VK_F1     : MapWindow.HelpTutorialClick(NIL);
-      VK_F2     : SBCommitClick(NIL);
+      VK_F2     : MapWindow.SpeedButtonINFClick(NIL);
+      VK_F3,
+      VK_RETURN : SBCommitClick(NIL);
       VK_ESCAPE : SBRollbackClick(NIL);
       VK_TAB    : MapWindow.SetFocus;
       VK_HOME,
@@ -169,6 +187,18 @@ begin
                    ScEd.ColWidths[0] := ScEd.ColWidths[0] + 1;
                    PanelInfoLeft.Width := PanelInfoLeft.Width + 1;
                   end;
+    end;
+end;
+
+procedure TSectorEditor.SCEdMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  // This is a hack to prevent refocus on own object
+  if AUTOCOMMIT and (SC_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      DO_Commit_SectorEditor;
+      AUTOCOMMIT_FLAG := False;
     end;
 end;
 
@@ -191,14 +221,26 @@ end;
 procedure TSectorEditor.SCEdDblClick(Sender: TObject);
 var doomdata : TIniFile;
     datastr  : String;
+    ALong    : LongInt;
+    Code     : Integer;
 begin
  with SCEd do
   case Row of
     2 : Cells[1,  2] := FlagEdit(Cells[1,  2], 'sc_flag1.wdf', 'Sector Flag 1');
     3 : Cells[1,  3] := FlagEdit(Cells[1,  3], 'sc_flag2.wdf', 'Sector Flag 2');
     4 : Cells[1,  4] := FlagEdit(Cells[1,  4], 'sc_flag3.wdf', 'Sector Flag 3');
-    6 : Cells[1,  6] := ResEdit(Cells[1,  6], RST_BM);
-   11 : Cells[1, 11] := ResEdit(Cells[1, 11], RST_BM);
+    6 : Cells[1,  6] := ResEdit(Cells[1,  6], RST_BM, RST_TYPE_FLOOR );
+   11 : begin
+         // Special cast to flip skies vs ceiling
+         Val( Cells[1, 2], ALong, Code);
+         if (Code = 0) then
+           begin
+             if (ALong mod 2 = 1) then
+               Cells[1, 11] := ResEdit(Cells[1, 11], RST_BM, RST_TYPE_SKY)
+             else
+               Cells[1, 11] := ResEdit(Cells[1, 11], RST_BM, RST_TYPE_CEILING);
+           end;
+        end;
    14 : if DOOM then
          begin
           {show the line action info}

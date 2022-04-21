@@ -9,11 +9,13 @@ uses
 {$IFDEF WDF32}
   ComCtrls ,
 {$ENDIF}
-  TabNotBk;
+  TabNotBk, StrUtils;
 
 CONST INF_NAVIG_MAX = 30;
 
 type
+  TSearchOption = (soIgnoreCase, soFromStart, soWrap);
+  TSearchOptions = set of TSearchOption;
   TINFWindow2 = class(TForm)
     MainNotebook: TTabbedNotebook;
     PanelMain: TPanel;
@@ -100,7 +102,7 @@ type
     SBHelpWiz: TSpeedButton;
     SBStop: TSpeedButton;
     SBAdjoin: TSpeedButton;
-    INFTextEditToolbar3: TPanel;
+    INFTextEditToolbar4: TPanel;
     LBElevSlaves: TListBox;
     Label1: TLabel;
     LBTrigClients: TListBox;
@@ -143,11 +145,9 @@ type
     EDMsgParam2: TEdit;
     STParam1: TLabel;
     STParam2: TLabel;
-    CBSectors: TComboBox;
     SBMessage: TSpeedButton;
     SBPage: TSpeedButton;
     SBText: TSpeedButton;
-    SpeedButton16: TSpeedButton;
     CBKeywords: TComboBox;
     CBINFNavigator: TComboBox;
     SBINFNavigNext: TSpeedButton;
@@ -163,19 +163,16 @@ type
     CBElevMaster: TComboBox;
     CBTrigMaster: TComboBox;
     LBTextTextMSG: TListBox;
-    SBRenumStops: TSpeedButton;
     SBIndent: TSpeedButton;
     CBElevSeqSeqend: TCheckBox;
     SEAdjoinWL1: TSpinEdit;
     SEAdjoinWL2: TSpinEdit;
     SEMessageWL: TSpinEdit;
-    SBRefreshSCLists: TSpeedButton;
     SBRefreshSCLists2: TSpeedButton;
     CBMessageUseWL: TCheckBox;
     CBStopValue: TComboBox;
     CBTrigEventMask: TCheckBox;
     CBElevEventMask: TCheckBox;
-    SBLinks: TSpeedButton;
     LBEvMkEventMask: TListBox;
     Label7: TLabel;
     Label8: TLabel;
@@ -186,10 +183,20 @@ type
     EDTexture: TEdit;
     Label10: TLabel;
     Label11: TLabel;
+    SBRefreshSCLists: TSpeedButton;
+    INFSearch: TEdit;
+    INFTextEDitToolbar3: TPanel;
+    SpeedButton1: TSpeedButton;
+    SpeedButton2: TSpeedButton;
+    SpeedButton3: TSpeedButton;
+    CBSectors: TComboBox;
+    INFReplace: TEdit;
+    SBINFSearchButton: TButton;
+    SBINFReplaceButton: TButton;
+    LookUpSector: TSpeedButton;
+    INFStayOnTopCheckBox: TCheckBox;
     procedure SBRollbackClick(Sender: TObject);
     procedure SBFontClick(Sender: TObject);
-    procedure FormKeyUp(Sender: TObject; var Key: Word;
-      Shift: TShiftState);
     procedure SBCommitClick(Sender: TObject);
     procedure SBHelpClick(Sender: TObject);
     procedure SBCheckClick(Sender: TObject);
@@ -231,19 +238,34 @@ type
     procedure BNChuteSCSelClick(Sender: TObject);
     procedure BNMessageUseWLSelClick(Sender: TObject);
     procedure BNElevSCMultisClick(Sender: TObject);
-    procedure SBLinksClick(Sender: TObject);
+    procedure SBMakeLinks(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
+    procedure SBINFSearchButtonClick(Sender: TObject);
+    function SearchText(Control: TCustomEdit; Search: string;
+                        SearchOptions: TSearchOptions): Boolean;
+    procedure SBINFReplaceButtonClick(Sender: TObject);
+    procedure INFSearchClick(Sender: TObject);
+    procedure INFReplaceClick(Sender: TObject);
+    procedure INFReplaceChange(Sender: TObject);
+    procedure INFSearchChange(Sender: TObject);
+    procedure LookUpSectorClick(Sender: TObject);
+    procedure INFStayOnTopCheckBoxClick(Sender: TObject);
+
   private
     { Private declarations }
   public
     { Public declarations }
+    ontop : Boolean;
     procedure AddToNavigator(SC, WL : Integer);
     procedure HiliteINFMemoLine(TheLine : Integer);
     procedure ActivateItem;
+
   end;
+
 
 var
   INFWindow2: TINFWindow2;
+
 
 implementation
 uses Mapper;
@@ -268,6 +290,7 @@ else {wall}
   {should use wall name later on (ie tagNNN)}
   str := str + Format('%-6.6d',[WL]);
  end;
+
 
  if CBINFNavigator.Items.Count > INF_NAVIG_MAX then
    CBINFNavigator.Items.Delete(CBINFNavigator.Items.Count - 1);
@@ -297,6 +320,67 @@ begin
  MemoINF.SelLength := Length(MemoINF.Lines[Line]);
 end;
 
+
+procedure TINFWindow2.INFReplaceChange(Sender: TObject);
+begin
+    if INFReplace.Text = '' then
+      INFReplace.Text := 'Replace...';
+end;
+
+procedure TINFWindow2.INFReplaceClick(Sender: TObject);
+begin
+    if INFReplace.Text = 'Replace...' then
+      INFReplace.Text := '';
+end;
+
+procedure TINFWindow2.INFSearchChange(Sender: TObject);
+begin
+    if INFSearch.Text = '' then
+      INFSearch.Text := 'Search...';
+end;
+
+procedure TINFWindow2.INFSearchClick(Sender: TObject);
+begin
+   if INFSearch.Text = 'Search...' then
+      INFSearch.Text := '';
+end;
+
+function TINFWindow2.SearchText(Control: TCustomEdit;
+                     Search: string;
+                     SearchOptions: TSearchOptions): Boolean;
+var
+  Text: string;
+  Index: Integer;
+  Search_orig,
+  Reaplace_orig : String;
+begin
+  if soIgnoreCase in SearchOptions then
+  begin
+    Search_orig := Search;
+    Search := UpperCase(Search);
+    Text := UpperCase(Control.Text);
+  end
+  else
+    Text := Control.Text;
+
+  Index := 0;
+  if not (soFromStart in SearchOptions) then
+    Index := PosEx(Search, Text,
+         Control.SelStart + Control.SelLength + 1);
+
+  if (Index = 0) and
+      ((soFromStart in SearchOptions) or
+       (soWrap in SearchOptions)) then
+    Index := PosEx(Search, Text, 1);
+
+  Result := Index > 0;
+  if Result then
+  begin
+    Control.SelStart := Index - 1;
+    Control.SelLength := Length(Search);
+  end;
+end;
+
 {***************************************************************************}
 
 procedure TINFWindow2.ActivateItem;
@@ -304,8 +388,11 @@ var ret : Integer;
     lst : TStringList;
     msg : String;
 begin
+ INFReplace.Text := 'Replace...';
+ INFSearch.Text := 'Search...';
  lst := TStringList.Create;
  ret := ParseINFItemsSCWL(INFSector, INFWall, lst, msg);
+ INF2Status.Font.Color := clGreen;
  CASE ret OF
   -2 : begin
         InfWindow2.MemoINF.Clear;
@@ -319,6 +406,7 @@ begin
         INFItemsToMemo(INFSector, INFWall, InfWindow2.MemoINF);
         HiliteINFMemoLine(ret);
         INF2Status.Caption := msg;
+        INF2Status.Font.Color := clRed;
        end;
  END;
  FreeINFList(lst);
@@ -352,7 +440,8 @@ BEGIN
   INFWindow2.Height := Ini.ReadInteger('WINDOWS', 'INF Editor2    H', 444);
 
   iFont := TFont.create;
-  sfont := Ini.ReadString('INF Editor', 'Font', 'System:10:10').Split([':']);
+  sfont := Ini.ReadString('INF Editor2', 'Font', 'System:10:10').Split([':']);
+  ontop := Ini.ReadBool('INF Editor2', 'StayOnTop', False);
 
   iFont.Name := sfont[0];
   iFont.size := StrToint(sfont[1]);
@@ -360,6 +449,9 @@ BEGIN
 
   MemoINF.Font     := iFont;
   MemoINFMisc.Font := MemoINF.Font;
+
+  INFStayOnTopCheckBox.Checked := ontop;
+  INFStayOnTopCheckBoxClick(NIL);
 
 
  {Initialize the Misc part if first load for this level}
@@ -396,24 +488,9 @@ begin
   Ini.WriteInteger('WINDOWS', 'INF Editor2    Y', INFWindow2.Top);
   Ini.WriteInteger('WINDOWS', 'INF Editor2    W', INFWindow2.Width);
   Ini.WriteInteger('WINDOWS', 'INF Editor2    H', INFWindow2.Height);
+  Ini.WriteBool('INF Editor2', 'StayOnTop', ontop);
 end;
 
-procedure TINFWindow2.FormKeyUp(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
-begin
- CASE MainNotebook.PageIndex OF
-  0 : begin
-       if (Shift = []) and (Key = VK_F1) then SBHelpClick(NIL);
-       if (Shift = []) and (Key = VK_F2) then SBCommitClick(NIL);
-       if (Shift = []) and (Key = VK_ESCAPE) then SBRollbackClick(NIL);
-      end;
-  2 : begin
-       if (Shift = []) and (Key = VK_F1) then SBHelpClick(NIL);
-       if (Shift = []) and (Key = VK_F2) then SBCommitMiscClick(NIL);
-       if (Shift = []) and (Key = VK_ESCAPE) then SBRollbackMiscClick(NIL);
-      end;
-  END;
-end;
 
 {***************************************************************************}
 {PAGE 1}
@@ -422,6 +499,27 @@ procedure TINFWindow2.SBINFNavigPrevClick(Sender: TObject);
 begin
  CBINFNavigator.ItemIndex := CBINFNavigator.ItemIndex + 1;
  CBINFNavigatorClick(NIL);
+end;
+
+procedure TINFWindow2.SBINFReplaceButtonClick(Sender: TObject);
+var searchstr,
+    replacestr : String;
+    searchres : Boolean;
+    options : TSearchOptions;
+begin
+  searchstr := INFSearch.Text;
+  replacestr := INFReplace.Text;
+  MemoINF.Text := ReplaceText(MemoINF.Text,searchstr, replacestr);
+end;
+
+procedure TINFWindow2.SBINFSearchButtonClick(Sender: TObject);
+var searchstr : String;
+    searchres : Boolean;
+    options : TSearchOptions;
+begin
+  searchstr := INFSearch.Text;
+  options := [soIgnoreCase, soFromStart, soWrap];
+  searchres := SearchText(MemoINF, searchstr, options);
 end;
 
 procedure TINFWindow2.SBINFNavigNextClick(Sender: TObject);
@@ -441,8 +539,12 @@ procedure TINFWindow2.CBINFNavigatorClick(Sender: TObject);
 var strin : string;
     sc    : Integer;
     wl    : Integer;
+    i     : Integer;
+    found : Integer;
     closeok : Boolean;
     TheSector : TSector;
+    TempCBItems : TStringList;
+    OrigName : String;
 begin
  closeok := TRUE;
  if MemoINF.Modified then
@@ -456,6 +558,26 @@ begin
    END;
   end
  else ;
+
+ OrigName :=  CBINFNavigator.items[CBINFNavigator.ItemIndex];
+
+ TempCBItems := TStringList.Create;
+ TempCBItems.Assign(CBINFNavigator.items);
+
+ for i:=0 to CBINFNavigator.Items.count-1 do
+   begin
+    found := INFSectors.IndexOf(RTrim(CBINFNavigator.Items[i]));
+    if found = -1 then
+     begin
+      TempCBItems.Delete(TempCBItems.IndexOf(CBINFNavigator.Items[i]));
+     end;
+   end;
+
+ CBINFNavigator.Items.Assign(TempCBItems);
+
+ // Reset index after deleting
+ CBINFNavigator.ItemIndex := CBINFNavigator.Items.IndexOf(OrigName);
+
 
  if closeok then
   begin
@@ -503,7 +625,7 @@ begin
   end
  else
   begin
-   Application.MessageBox('Item was not found. Removed!', 'INF Editor', mb_Ok or mb_IconExclamation);
+   //Application.MessageBox('Item was not found. Removed!', 'INF Editor', mb_Ok or mb_IconExclamation);
    CBINFNavigator.Items.Delete(CBINFNavigator.ItemIndex);
    if CBINFNavigator.Items.Count > 0 then
     begin
@@ -550,7 +672,7 @@ begin
    MainNotebook.PageIndex := 2;
    if MemoINFMisc.Modified then
     begin
-     CASE Application.MessageBox('Commit changes ?', 'INF Editor',
+     CASE Application.MessageBox('Commit changes ?', 'INF Editor2',
                                  mb_YesNoCancel or mb_IconQuestion) OF
       idYes : begin
                SBCommitMiscClick(NIL);
@@ -566,37 +688,37 @@ begin
 end;
 
 procedure TINFWindow2.SBCommitClick(Sender: TObject);
+var TheSector : TSector;
+    TheWall : TWall;
+    j : Integer;
+    hasInf : Boolean;
 begin
  SBCheckClick(NIL);
- if (INF2Status.Caption = '') or (INF2Status.Caption = 'No Error') then
-  begin
+
+ // Check if ok if errors and then continue
+ if (not (INF2Status.Caption = '')) and (not (INF2Status.Caption = 'No Error')) then
+   begin
+       CASE Application.MessageBox('Error found! Commit anyway ?', 'INF Editor',
+                               mb_YesNo or mb_IconQuestion) OF
+           idYes :; //noop
+           idNo  : exit;
+       END;
+   end;
+
+   DO_StoreUndo;
+
    MemoToINFItems(INFSector, INFWall, MemoINF);
    ComputeINFClasses(INFSector, INFWall);
+
+   UpdateSectorName(INFSector);
+
+
    CASE MAP_MODE OF
     MM_SC : DO_Fill_SectorEditor;
     MM_WL : DO_Fill_WallEditor;
    END;
    MODIFIED := TRUE;
-   MemoINF.Modified := FALSE;
-  end
- else
-  begin
-   CASE Application.MessageBox('Error found! Commit anyway ?', 'INF Editor',
-                               mb_YesNo or mb_IconQuestion) OF
-    idYes : begin
-             MemoToINFItems(INFSector, INFWall, MemoINF);
-             {do this anyway, for the flags... part}
-             ComputeINFClasses(INFSector, INFWall);
-             CASE MAP_MODE OF
-              MM_SC : DO_Fill_SectorEditor;
-              MM_WL : DO_Fill_WallEditor;
-             END;
-             MODIFIED := TRUE;
-             MemoINF.Modified := FALSE;
-            end;
-    idNo  : ;
-   END;
-  end;
+
 end;
 
 procedure TINFWindow2.SBRollbackClick(Sender: TObject);
@@ -606,6 +728,7 @@ var ret : Integer;
 begin
  lst := TStringList.Create;
  ret := ParseINFItemsSCWL(INFSector, INFWall, lst, msg);
+ INF2Status.Font.Color := clGreen;
  CASE ret OF
   -2 : begin
         InfWindow2.MemoINF.Clear;
@@ -619,6 +742,7 @@ begin
         INFItemsToMemo(INFSector, INFWall, InfWindow2.MemoINF);
         HiliteINFMemoLine(ret);
         INF2Status.Caption := msg;
+        INF2Status.Font.Color := clRed;
        end;
  END;
  FreeINFList(lst);
@@ -636,6 +760,7 @@ begin
  ml.AddStrings(MemoINF.Lines);
  ret := ParseINFItems(ml, lst, msg);
  ml.Free;
+ INF2Status.Font.Color := clGreen;
  CASE ret of
   -2 : begin
         INF2Status.Caption := '';
@@ -647,6 +772,7 @@ begin
   else begin
         HiliteINFMemoLine(ret);
         INF2Status.Caption := msg;
+        INF2Status.Font.Color := clRed;
        end;
  END;
  FreeINFList(lst);
@@ -753,7 +879,7 @@ begin
   end;
 end;
 
-procedure TINFWindow2.SBLinksClick(Sender: TObject);
+procedure TINFWindow2.SBMakeLinks(Sender: TObject);
 begin
  MemoINF.Lines.Insert(0, '/* LINKS :  */');
 end;
@@ -800,6 +926,19 @@ begin
       $52 {VK_R} : SBRenumStopsClick(NIL);
       $53 {VK_S} : MemoINF.SelText := #13 + #10 + '    stop: ';
     end;
+    CASE MainNotebook.PageIndex OF
+  0 : begin
+       if (Shift = []) and (Key = VK_F1) then SBHelpClick(NIL);
+       if (Shift = []) and (Key = VK_F3) then SBCommitClick(NIL);
+       if (Shift = []) and (Key = VK_F4) then MemoINFDblClick(NIL);
+       if (Shift = []) and (Key = VK_ESCAPE) then SBRollbackClick(NIL);
+      end;
+  2 : begin
+       if (Shift = []) and (Key = VK_F1) then SBHelpClick(NIL);
+       if (Shift = []) and (Key = VK_F4) then SBCommitMiscClick(NIL);
+       if (Shift = []) and (Key = VK_ESCAPE) then SBRollbackMiscClick(NIL);
+      end;
+  END;
 end;
 
 procedure TINFWindow2.MemoINFDblClick(Sender: TObject);
@@ -1075,6 +1214,11 @@ begin
  msgnum := StrToIntDef(RTrim(Copy(strin,1,3)), -12345);
  if msgnum <> -12345 then
   EDTextMsgNum.Text := IntToStr(msgnum);
+end;
+
+procedure TINFWindow2.LookUpSectorClick(Sender: TObject);
+begin
+   MemoINFDblClick(NIL);
 end;
 
 procedure TINFWindow2.EDElevSound1DblClick(Sender: TObject);
@@ -1542,6 +1686,20 @@ begin
  END;
 
  MainNotebook.PageIndex := 0;
+end;
+
+procedure TINFWindow2.INFStayOnTopCheckBoxClick(Sender: TObject);
+begin
+  if INFStayOnTopCheckBox.Checked then
+    begin
+     ontop := true;
+     INFWindow2.FormStyle := fsStayOnTop;
+    end
+   else
+    begin
+     ontop := false;
+     INFWindow2.FormStyle := fsNormal;
+    end;
 end;
 
 procedure TINFWindow2.BNChuteSCSelClick(Sender: TObject);

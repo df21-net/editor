@@ -4,7 +4,7 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, IniFiles, Graphics,
   Generics.Collections, Vcl.Dialogs, StrUtils, LoggerPro, LoggerPro.FileAppender,
-  LoggerPro.OutputDebugStringAppender, VCL.forms;
+  LoggerPro.OutputDebugStringAppender, VCL.forms,_Strings;
 
 TYPE Integ16 =
 {$IFNDEF WDF32}
@@ -13,13 +13,15 @@ TYPE Integ16 =
                SmallInt;
 {$ENDIF}
 
+// For the square
+type TPointArray = array [0..3] of Tpoint;
 
 { CONSTANTS }
 CONST
 {$IFNDEF WDF32}napi.
- WDFUSE_VERSION      = 'Version 2.60 Beta 2 (32 bits)';
+ WDFUSE_VERSION      = 'Version 2.61 (32 bits)';
 {$ELSE}
- WDFUSE_VERSION      = 'Version 2.60 Beta 2 (32 bits)';
+ WDFUSE_VERSION      = 'Version 2.61 (32 bits)';
 {$ENDIF}
 
  MM_SC               = 0;
@@ -39,6 +41,10 @@ CONST
  RST_WAX             = 3;
  RST_FME             = 4;
  RST_SND             = 5;
+ RST_TYPE_FLOOR      = 3;
+ RST_TYPE_CEILING    = 4;
+ RST_TYPE_SKY        = 7;
+ RST_TYPE_SWITCH     = 8;
  OBT_SPIRIT          = 0;
  OBT_SAFE            = 1;
  OBT_3D              = 2;
@@ -61,6 +67,11 @@ CONST
  Cbigob_dim_max      = 5;
  perp_ratio          = 0.25e0;
  extr_ratio          = 0.25e0;
+
+ SEC_SQUARE : TPointArray =  ((X: 1; Y: 1),
+                              (X: 1; Y: -1),
+                              (X: -1; Y: -1),
+                              (X: -1; Y: 1));
 
 { DEFAULTS }
 CONST
@@ -382,6 +393,7 @@ VAR
  INFComments         : TStringList;
  INFErrors           : TStringList;
  INFLevel            : TStringlist;
+ INFSectors          : TStringList;
  INFMisc             : Integer;
  INFRemote           : Boolean;
  INFSector           : Integer;
@@ -408,6 +420,9 @@ VAR
  CONFIRMObjectDelete : Boolean;
  CONFIRMWallSplit    : Boolean;
  CONFIRMWallExtrude  : Boolean;
+ AUTOCOMMIT          : Boolean;
+ AUTOCOMMIT_FLAG     : Boolean;
+ AUTOCOMMIT_MULTI    : Boolean;
  USERName            : string[20];
  USERreg             : string[12];
  USERemail           : string[40];
@@ -430,6 +445,8 @@ VAR
  FINDSC_VALUE     : String[20];
  RES_PICKER_MODE  : Integer;
  RES_PICKER_VALUE : String[20];
+ RES_PICKER_TYPE  : Integer;
+ RES_PICKER_LEN   : Integer;
  OBCLASS_VALUE    : String[20];
  OBSEQNUMBER      : Integer;
  OBSEL_VALUE      : String[20];
@@ -471,6 +488,8 @@ DOOM          : Boolean;
 FIRSTLOAD     : Boolean;
 NO_INI        : Boolean;
 LOADPREVPRJ   : Boolean;
+AUTOSAVE      : Boolean;
+SKIPCUT       : Boolean;
 MAP_RECT      : TRect;
 MAP_SEC       : TStringList;
 MAP_DEBUG     : TSector;
@@ -480,6 +499,7 @@ POD_LIST      : TStringList;
 SPR_LIST      : TStringList;
 FME_LIST      : TStringList;
 SND_LIST      : TStringList;
+FILTER_LIST   : TStringList;
 PROJECTFile   : TFileName;
 LEVELName     : String;
 LEVELPath     : TFileName;
@@ -488,6 +508,7 @@ LEVELloaded   : Boolean;
 OFILELoaded   : Boolean;
 INFFILELoaded : Boolean;
 GOLFILELoaded : Boolean;
+PROMPT_SAVE   : Boolean;
 LEV_VERSION,
 LEV_LEVELNAME,
 LEV_PALETTE,
@@ -514,6 +535,8 @@ Xoffset       : Integer;
 Zoffset       : Integer;
 SHADOW        : Boolean;
 OBSHADOW      : Boolean;
+SHOW_LENGTHS     : Boolean;
+SHOW_NORMALS     : Boolean;
 OBDIFF        : Integer;
 OBLAYERMODE   : Integer; {0 : no layering, 1 floor, 2 ceiling}
 LAYER         : Integer;
@@ -535,6 +558,7 @@ SC_MULTIS,
 WL_MULTIS,
 VX_MULTIS,
 OB_MULTIS     : TStringList;
+
 
 MAP_GLOBAL_UNDO : TList<TStringList>;
 MAP_GLOBAL_UNDO_INDEX : Integer;
@@ -586,6 +610,8 @@ ORIVertex     : TVertex;
 TMPObject,
 ORIObject     : TOB;
 TMPHWindow    : HWnd;
+WALL_LENGTH   : Real;
+HEADERS_MAP   : TDictionary<String, Integer>;
 
 TheRESOURCE   : TRESOURCE;
 CurFrame      : Integer;
@@ -637,7 +663,8 @@ function M2SX(x : Real) : Integer;
 function M2SZ(z : Real) : Integer;
 
 function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
-
+function PosTrim(x : Real) : String;
+function isFileLocked(FileName: String): Boolean; stdcall;
 
 
 {*****************************************************************************}
@@ -805,6 +832,30 @@ begin
     end;
 end;
 
+// Trims a String Real to two decimal places. This
+// happens often in the code especialy with coordinates
+function PosTrim(x : Real) : String;
+begin
+   Result := RTrim(Format('%-5.2f', [x]));
+end;
+
+// Check for file locks (Ex:  TEXTURES.GOB)
+function isFileLocked(FileName: String): Boolean; stdcall;
+var
+  FileHandle : Integer;
+begin
+  Result := False;
+  FileHandle := FileOpen(FileName, (fmOpenRead or fmShareExclusive));
+  if FileHandle > 0 then begin
+    {valid file handle}
+    FileClose(FileHandle);
+  end else begin
+    {Open error: }
+    Result := True;
+  end;
+end;
+
+
 begin
 
   // First time launching or deleted ini file
@@ -858,6 +909,33 @@ begin
   WL_MULTIS   := TStringList.Create;
   VX_MULTIS   := TStringList.Create;
   OB_MULTIS   := TStringList.Create;
+
+  // Initiate Resource Texture Header Height Map
+  HEADERS_MAP := TDictionary<String,Integer>.Create;
+
+  // GOB Filters
+  FILTER_LIST   := TStringList.Create;
+  FILTER_LIST.Add('LEV');
+  FILTER_LIST.Add('LVL');
+  FILTER_LIST.Add('BM');
+  FILTER_LIST.Add('O');
+  FILTER_LIST.Add('GOL');
+  FILTER_LIST.Add('INF');
+  FILTER_LIST.Add('FME');
+  FILTER_LIST.Add('WAX');
+  FILTER_LIST.Add('3DO');
+  FILTER_LIST.Add('VUE');
+  FILTER_LIST.Add('PAL');
+  FILTER_LIST.Add('CMP');
+  FILTER_LIST.Add('FNT');
+  FILTER_LIST.Add('VOC');
+  FILTER_LIST.Add('GMD');
+  FILTER_LIST.Add('MSG');
+  FILTER_LIST.Add('TXT');
+
+  INFSectors := TStringList.Create;
+  INFSectors.Sorted := True;
+  INFSectors.Duplicates := dupIgnore;
 
   MULTISEL_RECT := False;
   MULTISEL_MODE := 'T';

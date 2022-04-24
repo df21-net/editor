@@ -2015,6 +2015,7 @@ begin
   UsePlusOBShad    := Ini.ReadBool(Section,     'UsePlusOBShad', CUsePlusOBShad);
   SpecialsVX       := Ini.ReadBool(Section,     'SpecialsVX',    CSpecialsVX);
   SpecialsOB       := Ini.ReadBool(Section,     'SpecialsOB',    CSpecialsOB);
+  NORMALIZE_WALLS  := Ini.ReadBool(Section,     'NORMALIZE_WALLS',    NORMALIZE_WALLS);
 
   vx_scale         := Ini.ReadInteger(Section,  'vx_scale',      Cvx_scale);
   vx_dim_max       := Ini.ReadInteger(Section,  'vx_dim_max',    Cvx_dim_max);

@@ -150,6 +150,7 @@ type
     Label15: TLabel;
     CBAutoCommit: TCheckBox;
     Label16: TLabel;
+    CBNormalizeWalls: TCheckBox;
     procedure FormShow(Sender: TObject);
     procedure OkButtonClick(Sender: TObject);
     procedure LBColorsClick(Sender: TObject);
@@ -253,6 +254,7 @@ begin
   CBUsePlusOBShad.Checked      := UsePlusOBShad;
   CBSpecialsVX.Checked         := SpecialsVX;
   CBSpecialsOB.Checked         := SpecialsOB;
+  CBNormalizeWalls.Checked     := NORMALIZE_WALLS;
 
   EDvxscale.Text               := IntToStr(vx_scale);
   EDvxdimmax.Text              := IntToStr(vx_dim_max);
@@ -415,11 +417,14 @@ begin
   UsePlusOBShad := CBUsePlusOBShad.Checked;
   SpecialsVX    := CBSpecialsVX.Checked;
   SpecialsOB    := CBSpecialsOB.Checked;
+  NORMALIZE_WALLS := CBNormalizeWalls.Checked;
 
-  Ini.WriteBool('FINE TUNING',  'UsePlusVX',     CBUsePlusVX.Checked);
-  Ini.WriteBool('FINE TUNING',  'UsePlusOBShad', CBUsePlusOBShad.Checked);
-  Ini.WriteBool('FINE TUNING',  'SpecialsVX',    CBSpecialsVX.Checked);
-  Ini.WriteBool('FINE TUNING',  'SpecialsOB',    CBSpecialsOB.Checked);
+  Ini.WriteBool('FINE TUNING',  'UsePlusVX',       CBUsePlusVX.Checked);
+  Ini.WriteBool('FINE TUNING',  'UsePlusOBShad',   CBUsePlusOBShad.Checked);
+  Ini.WriteBool('FINE TUNING',  'SpecialsVX',      CBSpecialsVX.Checked);
+  Ini.WriteBool('FINE TUNING',  'SpecialsOB',      CBSpecialsOB.Checked);
+  Ini.WriteBool('FINE TUNING',  'NORMALIZE_WALLS', CBNormalizeWalls.Checked);
+
 
 
   vx_scale      := StrToInt(EDvxscale.Text);

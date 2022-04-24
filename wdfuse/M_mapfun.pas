@@ -1177,19 +1177,25 @@ var
 err_msg : String;
 begin
  // Normalize offsets
-
- if isFileLocked(TEXTURESGOB) then
+ if NORMALIZE_WALLS then
    begin
-    err_msg := 'TEXTURES.GOB is Locked. Is Dark Forces running?';
-    log.Info(err_msg, LogName);
-    showmessage(err_msg);
-    Result := AWall;
+
+     if isFileLocked(TEXTURESGOB) then
+       begin
+        err_msg := 'TEXTURES.GOB is Locked. Is Dark Forces running?';
+        log.Info(err_msg, LogName);
+        showmessage(err_msg);
+        Result := AWall;
+       end;
+
+     AWall.Mid := NormalizeOffsets(AWall.Mid);
+     AWall.Top := NormalizeOffsets(AWall.Top);
+     AWall.Bot := NormalizeOffsets(AWall.Bot);
+
+     // Do not normalize signs
+     //AWall.Sign := NormalizeOffsets(AWall.Sign);
    end;
 
- AWall.Mid := NormalizeOffsets(AWall.Mid);
- AWall.Top := NormalizeOffsets(AWall.Top);
- AWall.Bot := NormalizeOffsets(AWall.Bot);
- AWall.Sign := NormalizeOffsets(AWall.Sign);
  Result := AWall;
 end;
 

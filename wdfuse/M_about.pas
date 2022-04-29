@@ -3,7 +3,8 @@ unit M_about;
 interface
 
 uses WinTypes, WinProcs, Classes, Graphics, Forms, Controls, StdCtrls,
-  Buttons, ExtCtrls, M_Global, ShellApi, Vcl.Imaging.pngimage;
+  Buttons, ExtCtrls, M_Global, ShellApi, Vcl.Imaging.pngimage, DateUtils,
+  SysUtils;
 
 type
   TAboutBox = class(TForm)
@@ -21,6 +22,7 @@ type
     Panel8: TPanel;
     Panel7: TPanel;
     Image2: TImage;
+    Build: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure LogoClick(Sender: TObject);
   private
@@ -37,8 +39,12 @@ implementation
 {$R *.DFM}
 
 procedure TAboutBox.FormCreate(Sender: TObject);
+var
+builddate : TDateTime;
 begin
   Version.Caption := WDFUSE_VERSION;
+  builddate := UnixToDateTime(StrToInt(BuildVersion));
+  Build.Caption := 'Build ' + FormatDateTime('YYYY-MMM-dd HH:MM:SS', builddate);;
 end;
 
 procedure TAboutBox.LogoClick(Sender: TObject);

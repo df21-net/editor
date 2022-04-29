@@ -371,6 +371,7 @@ VAR
  DarkInst            : TFileName;
  RenderInst          : TFileName;
  DarkCD              : String[20];
+ BuildVersion        : String;
 
  DARKgob,
  SPRITESgob,
@@ -878,8 +879,10 @@ begin
   LogFilePath := LogPath + '\' + 'wdfuse32.00.' + LogName + '.log';
   Log.Info('Starting WDFUSE...',LogName);
   Log.info('Will Write Logs to ' + LogFilePath, LogName);
-  log.Info('WDFUSE Compile Timestamp ' + floattostr(PImageNtHeaders(HInstance +
-   Cardinal(PImageDosHeader(HInstance)^._lfanew))^.FileHeader.TimeDateStamp), LogName);
+
+  BuildVersion := floattostr(PImageNtHeaders(HInstance +
+   Cardinal(PImageDosHeader(HInstance)^._lfanew))^.FileHeader.TimeDateStamp);
+  log.Info('WDFUSE Compile Timestamp ' + BuildVersion, LogName);
 
 
 

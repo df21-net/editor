@@ -445,8 +445,16 @@ var minX,
     maxZ      : Real;
 begin
   DO_GetMapLimits(minX, minY, minZ, maxX, maxY, maxZ);
+  log.Info('Map Limit Values are ' +
+           ' MinX='+ FloatToStr(minx) +
+           ' MaxX='+ FloatToStr(maxx) +
+           ' MinY='+ FloatToStr(minY) +
+           ' MaxY='+ FloatToStr(maxY) +
+           ' MinZ='+ FloatToStr(minZ) +
+           ' MaxZ='+ FloatToStr(maxZ), LogName);
   Xoffset := Round((minX + maxX) / 2);
   Zoffset := Round((minZ + maxZ) / 2);
+  log.Info('Center Offsets are X = ' + FloatToStr(XOffset) + ' Z = ' + FloatToSTr(ZOffset), LogName);
   // TODO(azurda): This does not play nicely.
   // DO_Set_ScrollBars_Ranges(round(minX), round(maxX), round(minZ), round(maxZ));
   MapWindow.Map.Invalidate;

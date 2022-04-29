@@ -2726,6 +2726,7 @@ if (ObjectA.ClassName = ObjectB.ClassName) and
    (ObjectA.Special = ObjectB.Special) then
 
     begin
+      Result := True;
       // Need to compare the logic lists as well
       if ObjectA.Seq.Count = ObjectB.Seq.Count  then
         begin
@@ -2735,8 +2736,10 @@ if (ObjectA.ClassName = ObjectB.ClassName) and
                 Result := False;
                 exit;
               end;
-        end;
-      Result := True;
+        end
+      else
+        // You changed something in the logic
+        Result := False;
     end;
 end;
 

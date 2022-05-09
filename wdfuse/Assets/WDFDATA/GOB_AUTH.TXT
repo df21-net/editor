@@ -1,0 +1,55 @@
+================================================================
+Title                   :    
+Filename                : xxxx.GOB
+Author                  : Your name here
+Email Address           : 
+Misc. Author Info       : 
+
+Description             : Set the mood here.
+
+Additional Credits to   : 
+================================================================
+
+* Play Information *
+
+Level(s) replaced       : levelname1(,levelname2,...)
+Difficulty Settings     : Yes/Not implemented
+New BMs                 : Yes/No
+New FMEs                : Yes/No
+New WAXs                : Yes/No
+New 3DOs                : Yes/No
+New VOCs                : Yes/No
+New GMDs                : Yes/No
+New VUEs                : Yes/No
+
+* Construction *
+
+Base                    : New level from scratch/Modified levelname
+Editor(s) used          : 
+Known Bugs              : 
+
+
+* Copyright / Permissions *
+
+Authors (MAY/may NOT) use this level as a base to build additional
+levels.  
+
+(One of the following)
+
+You MAY distribute this GOB, provided you include this file, with
+no modifications.  You may distribute this file in any electronic
+format (BBS, Diskette, CD, etc) as long as you include this file 
+intact.
+
+You MAY not distribute this GOB file in any format.
+
+You may do whatever you want with this file.
+
+
+* Where to get this GOB *
+
+FTP sites:
+
+BBS numbers:
+
+Other:

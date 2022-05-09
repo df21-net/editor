@@ -1,7 +1,6 @@
 # WDFUSE specific
 *.wdp
 *.gob
-*.txt
 
 # logging
 log/

@@ -157,6 +157,7 @@ var TheGob : TFileName;
     tmp    : array[0..511] of char;
     ExecuteResult : Integer;
     TextConf : String;
+  j: Integer;
 begin
  if not LEVELLoaded then exit;
  Log.Info('GOB Start', LogName);
@@ -201,14 +202,25 @@ begin
  ProgressWindow.Show;
  ProgressWindow.Update;
 
- Log.Info('GOB copying files', LogName);
- {This uses a dummy, invisible TFileListBox on The MapWindow form}
- MapWindow.DummyFileListBox.Visible := FALSE;
- MapWindow.DummyFileListBox.MultiSelect := TRUE;
- MapWindow.DummyFileListBox.Directory := LEVELPath;
- MapWindow.DummyFileListBox.Update;
- for i:= 0 to MapWindow.DummyFileListBox.Items.Count - 1 do MapWindow.DummyFileListBox.Selected[i] := TRUE;
- GOB_AddFiles(LEVELPath, TheGOB, MapWindow.DummyFileListBox, ProgressWindow.Gauge);
+ Log.Info('GOB copying files from ' + LEVELPath, LogName);
+ Log.Info('to ' + TheGob, LogName);
+
+ if False then
+  begin
+   {This uses a dummy, invisible TFileListBox on The MapWindow form}
+   MapWindow.DummyFileListBox.Visible := FALSE;
+   MapWindow.DummyFileListBox.MultiSelect := TRUE;
+   MapWindow.DummyFileListBox.Directory := LEVELPath;
+   MapWindow.DummyFileListBox.Update;
+   for i:= 0 to MapWindow.DummyFileListBox.Items.Count - 1 do MapWindow.DummyFileListBox.Selected[i] := TRUE;
+   GOB_AddFiles(LEVELPath, TheGOB, MapWindow.DummyFileListBox, ProgressWindow.Gauge);
+  end
+ else
+  begin
+   GOB_Folder(LEVELPath, TheGOB);
+  end;
+
+ Log.Info('GOB copying files DONE!', LogName);
 
  ProgressWindow.Hide;
 

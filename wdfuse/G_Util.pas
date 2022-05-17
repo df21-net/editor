@@ -2,7 +2,7 @@ unit G_util;
 
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes,
-     StdCtrls, Gauges, FileCtrl, Forms, Dialogs, M_Global;
+     StdCtrls, Gauges, FileCtrl, Forms, Dialogs, M_Global, IOUtils;
 
 CONST
  ERRGOB_NOERROR   =  0;
@@ -34,6 +34,7 @@ function GOB_CreateEmpty(GOBname : TFileName) : Integer;
 function GOB_ExtractResource(OutputDir : String ; GOBname : TFileName; ResName : String) : Integer;
 function GOB_ExtractFiles(OutputDir : String ; GOBname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
 function Valid_GOB_Asset(FileName : String) : Boolean;
+function GOB_Folder(InputDir : String; GOBname : TFileName): Integer;
 function GOB_AddFiles(InputDir : String ; GOBname : TFileName; DirList : TFileListBox; ProgressBar : TGauge) : Integer;
 function GOB_RemoveFiles(GOBname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
 
@@ -366,6 +367,119 @@ var valid : Boolean;
  end;
 
 
+function GOB_Folder(InputDir : String; GOBname : TFileName): Integer;
+var i,j         : LongInt;
+    gs          : GOB_BEGIN;
+    gx          : GOB_INDEX;
+    gf          : Integer;
+    gdf         : Integer;
+    fsf         : Integer;
+    GOBDIRName  : TFileName;   {dynamic GOB dir }
+    Buffer      : array[0..262143] of Char;
+    { OldCursor   : HCursor; }
+begin
+
+ {
+ F:\Program Files (x86)\Steam\steamapps\common\Dark Forces\Game>fc /b TEST001.GOB TEST001_.GOB
+ Comparing files TEST001.GOB and TEST001_.GOB shows a few differences in the binary comparison
+
+ Both load with WDFUSE Gob Manager and both load in the game though lol...
+ We'll need to compare the directories in more detail, maybe it's just a couple of entries in the index that are in another order or something?
+ OR simply it's the unused bytes in the names that are shorter than the max length that are not initialized to 0's?
+ }
+
+ {this really doesn't belong here, the UI should do this}
+ {OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));}
+
+ {enumerate the files in the folder}
+ var filesToGob := TDirectory.GetFiles(InputDir);
+ var filesCount := Length(filesToGob);
+
+ {if no file, we're done}
+ if filesCount = 0 then
+   begin
+     GOB_Folder := ERRGOB_NOERROR;
+     exit;
+   end;
+
+ FileSetAttr(GOBName, 0);
+
+ GOBDIRName := ChangeFileExt(GOBName, '.~D~');
+
+ gf  := FileCreate(GOBName);
+ gdf := FileCreate(GOBDIRName);
+
+ { This is redundant with GOB_CreateEmpty, but we're going for to the metal speed in this function
+   I don't want to close and reopen the file for nothing }
+ with gs do
+   begin
+     GOB_MAGIC[1] := 'G';
+     GOB_MAGIC[2] := 'O';
+     GOB_MAGIC[3] := 'B';
+     GOB_MAGIC[4] := #10;
+     MASTERX      := 8;
+   end;
+ FileWrite(gf, gs, SizeOf(gs));
+
+ for var filepath in filesToGob do
+   begin
+     { we have a full file name here }
+     { first make a gob name for it }
+     var filenameInGob := UpperCase(ExtractFileName(filepath));
+
+     { then copy that file into the gob and a record into the index }
+     fsf := FileOpen(filepath, fmOpenRead);
+     gx.IX   := FilePosition(gf);
+     gx.LEN  := FileSizing(fsf);
+     StrPcopy(gx.NAME, filenameInGob);
+
+     { Log.Info('GOB_Folder: adding ' + filepath + ' as ' + gx.NAME + ' size: ' + IntToStr(gx.LEN), LogName); }
+
+     FileWrite(gdf, gx, SizeOf(gx));
+
+     var toCopy := gx.LEN;
+     while toCopy >= SizeOf(Buffer) do
+       begin
+         FileRead(fsf, Buffer, SizeOf(Buffer));
+         FileWrite(gf, Buffer, SizeOf(Buffer));
+         toCopy := toCopy - SizeOf(Buffer);
+       end;
+     FileRead(fsf, Buffer, toCopy);
+     FileWrite(gf, Buffer, toCopy);
+     FileClose(fsf);
+   end;
+
+ FileClose(gdf);
+
+ { append the index }
+ gs.MASTERX := FilePosition(gf);
+ FileWrite(gf, filesCount, SizeOf(filesCount));
+ gdf := FileOpen(GOBDIRName, fmOpenRead);
+
+ var toCopy := FileSizing(gdf);
+ while toCopy >= SizeOf(Buffer) do
+   begin
+     FileRead(gdf, Buffer, SizeOf(Buffer));
+     FileWrite(gf, Buffer, SizeOf(Buffer));
+     toCopy := toCopy - SizeOf(Buffer);
+   end;
+ FileRead(gdf, Buffer, toCopy);
+ FileWrite(gf, Buffer, toCopy);
+ FileClose(gdf);
+
+ { Update MASTERX field }
+ FileSeek(gf, 4, 0);
+ FileWrite(gf, gs.MASTERX, 4);
+ FileClose(gf);
+
+ SysUtils.DeleteFile(GOBDIRName);
+
+ { SetCursor(OldCursor);}
+
+ GOB_Folder := ERRGOB_NOERROR;
+end;
+
+
 function GOB_AddFiles(InputDir    : String;
                       GOBname     : TFileName;
                       DirList     : TFileListBox;
@@ -388,7 +502,8 @@ var i,j         : LongInt;
     tmp,tmp2    : array[0..255] of Char;
     go          : Boolean;
     OldCursor   : HCursor;
-    Buffer      : array[0..4095] of Char;
+    {Buffer      : array[0..4095] of Char;}
+    Buffer      : array[0..262143] of Char;
     Counter     : LongInt;
 begin
 { ALGORITHM

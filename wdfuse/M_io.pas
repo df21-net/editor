@@ -224,12 +224,13 @@ begin
 
  ProgressWindow.Hide;
 
- Log.Info('GOB copying Text File from ' + ChangeFileExt(PROJECTFile, '.TXT') + ' to '
-           + DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')), LogName);
+ Log.Info('GOB copying Text File from ' + ChangeFileExt(PROJECTFile, '.TXT'), LogName);
+ Log.Info('to ' + DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')), LogName);
 
  {copy the txt file also...}
  CopyFile(ChangeFileExt(PROJECTFile, '.TXT'),
           DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')));
+
 
  if TestLaunch then
   begin
@@ -901,18 +902,17 @@ var lev       : System.TextFile;
     s,v,w,i   : Integer;
     tmpLight  : LongInt;
 begin
- {check registration again}
-
-
- OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
  numsectors := MAP_SEC.Count;
 
+ {
+ OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
  ProgressWindow.Progress1.Caption := 'Saving LEV File';
  ProgressWindow.Gauge.Progress    := 0;
  ProgressWindow.Gauge.MinValue    := 0;
  ProgressWindow.Gauge.MaxValue    := 0;
  ProgressWindow.Show;
  ProgressWindow.Update;
+ }
 
  AssignFile(lev, levname);
  Rewrite(lev);
@@ -957,10 +957,12 @@ begin
  WriteLn(lev, 'NUMSECTORS ', numsectors);
  WriteLn(lev, '#');
 
+ {
  ProgressWindow.Progress2.Caption := 'Writing GEOMETRY...';
  ProgressWindow.Gauge.Progress    := 0;
  ProgressWindow.Gauge.MaxValue    := numsectors;
  ProgressWindow.Progress2.Update;
+ }
 
  for s := 0 to MAP_SEC.Count - 1 do
   begin
@@ -1018,13 +1020,21 @@ begin
                           [Adjoin, Mirror, Walk, Flag1, Flag2, Flag3, tmpLight]));
     end;
    WriteLn(lev, '#');
+
+   {
    if s mod 20 = 19 then
     ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 20;
+   }
+
   end;
 
  System.CloseFile(lev);
+
+ {
  ProgressWindow.Hide;
  SetCursor(OldCursor);
+ }
+
  IO_WriteLEV := TRUE;
 end;
 
@@ -1360,17 +1370,17 @@ var o         : System.TextFile;
     numobjects: Integer;
     s,i       : Integer;
 begin
- {check registration again}
-
- OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
  numobjects := MAP_OBJ.Count;
 
+ {
+ OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
  ProgressWindow.Progress1.Caption := 'Saving O File';
  ProgressWindow.Gauge.Progress    := 0;
  ProgressWindow.Gauge.MinValue    := 0;
  ProgressWindow.Gauge.MaxValue    := 0;
  ProgressWindow.Show;
  ProgressWindow.Update;
+ }
 
  AssignFile(o, oname);
  Rewrite(o);
@@ -1452,10 +1462,12 @@ begin
  WriteLn(o, 'OBJECTS ', numobjects);
  WriteLn(o, '');
 
+ {
  ProgressWindow.Progress2.Caption := 'Writing OBJECTS...';
  ProgressWindow.Gauge.Progress    := 0;
  ProgressWindow.Gauge.MaxValue    := numobjects;
  ProgressWindow.Progress2.Update;
+ }
 
  for s := 0 to MAP_OBJ.Count - 1 do
   begin
@@ -1482,13 +1494,20 @@ begin
     end;
 
    WriteLn(o, '');
+
+   {
    if s mod 20 = 19 then
     ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 20;
+   }
   end;
 
  System.CloseFile(o);
+
+ {
  ProgressWindow.Hide;
  SetCursor(OldCursor);
+ }
+
  IO_WriteO := TRUE;
 end;
 
@@ -1862,8 +1881,8 @@ var i,j,k,l  : Integer;
    TheINFSeq : TINFSequence;
    foundcopy : Boolean;
 begin
+ {
  OldCursor := SetCursor(LoadCursor(0, IDC_WAIT));
-
  ProgressWindow.Progress1.Caption := 'Writing INF File';
  ProgressWindow.Progress2.Caption := 'Writing INF items...';
  ProgressWindow.Gauge.Progress    := 0;
@@ -1871,6 +1890,7 @@ begin
  ProgressWindow.Gauge.MaxValue    := 0;
  ProgressWindow.Show;
  ProgressWindow.Update;
+ }
 
  AssignFile(inf, infname);
  Rewrite(inf);
@@ -1953,7 +1973,9 @@ begin
  for i := 0 to INFLevel.Count - 1 do WriteLn(inf, INFLevel[i]);
  WriteLn(inf, ' ');
 
+ {
  ProgressWindow.Gauge.MaxValue    := MAP_SEC.Count - 1;
+ }
 
  {then all other items}
  for i := 0 to MAP_SEC.Count - 1 do
@@ -2055,10 +2077,13 @@ begin
      FreeINFList(INFList);
     end;
 
+   {
    if i mod 30 = 29 then
     ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 30;
+   }
   end;
 
+ { WTF is this ugly duck ??? }
  MapWindow.HiddenINFOutMemo.Clear;
 
  {last any possible errors}
@@ -2067,8 +2092,10 @@ begin
 
  System.CloseFile(inf);
 
+ {
  ProgressWindow.Hide;
  SetCursor(OldCursor);
+ }
 end;
 
 procedure IO_ReadGOL(golname : TFileName);

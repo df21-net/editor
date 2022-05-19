@@ -316,6 +316,8 @@ begin
    disk space < 10 Mb box, which will let him make room before going on
 }
  Log.Info('Saving Project ' + PROJECTFile, LogName);
+
+ Log.Info('Disk Free check...', LogName);
  drv    := Ord(LevelPATH[1]) - 96;
  if drv < 0 then drv := Ord(LevelPATH[1]) - 64;
 
@@ -324,9 +326,12 @@ begin
                          'WDFUSE Mapper - Save Project',
                          mb_Ok or mb_IconExclamation);
 
+ Log.Info('Disk Free check done!', LogName);
+
  path1 := LEVELPath + '\' + LEVELName;
  path2 := LEVELPath + '\BACKUPS\' + LEVELName;
 
+ Log.Info('Writing backup...', LogName);
  CASE Backup_Method of
   0 : begin
        {full incremented backup names are xxxx.L00 => xxxx.L99}
@@ -371,11 +376,20 @@ begin
         end;
       end;
  END;
+ Log.Info('Writing backup done!', LogName);
 
 
+ Log.Info('Writing LEV...', LogName);
  IO_WriteLEV(LEVELPath + '\' + LEVELName + '.LEV');
+ Log.Info('Writing LEV Done!', LogName);
+
+ Log.Info('Writing O...', LogName);
  IO_WriteO(LEVELPath + '\' + LEVELName + '.O');
+ Log.Info('Writing O Done!', LogName);
+
+ Log.Info('Writing INF...', LogName);
  IO_WriteINF2(LEVELPath + '\' + LEVELName + '.INF');
+ Log.Info('Writing INF Done!', LogName);
 
  Ini.WriteString('DARK FORCES',  'PROJECTFile', PROJECTFile);
 
@@ -387,6 +401,8 @@ begin
   pjf.Free;
  end;
  MODIFIED := FALSE;
+
+ Log.Info('Saving Project done!', LogName);
 end;
 
 

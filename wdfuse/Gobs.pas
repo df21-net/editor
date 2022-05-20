@@ -110,6 +110,12 @@ type
     GOBBrowse: TBitBtn;
     GOBOKBtn: TBitBtn;
     GOBCancelBtn: TBitBtn;
+    PanelRight: TPanel;
+    PanelRightBottom: TPanel;
+    PanelTop: TPanel;
+    PanelMiddle: TPanel;
+    Splitter1: TSplitter;
+    Splitter2: TSplitter;
     procedure SpeedButtonExitClick(Sender: TObject);
     procedure Popup_ExitClick(Sender: TObject);
     procedure GOBBrowseClick(Sender: TObject);

@@ -1654,7 +1654,20 @@ var i,j         : Integer;
     TheMsg      : TMsg;
 begin
 
+{ YB -- I think the only way to salvage this is to rewrite the whole paint to
+  paint in a bitmap in memory, then in the actual paint event just blt that bmp
+  on the canvas. I tried setting double buffering on the form, it didn't help.
+
+  Also, there could be some optimization if we can determine we're PANNING
+  (not sure how) -- then we could just render the current layer and skip the
+  shadowed layers, the fills for lighting, and so on }
+
+
 { Special Case - when Painting first time see if there is an old project we can load }
+
+{ YB -- This is terrible. Why not load the previous level in OnLoad or something?
+  MapPaint should just paint the map, to the metal and have no other junk in it }
+
 if LOADPREVPRJ and FIRSTLOAD and not LevelLoaded and (PROJECTFile <> '') then
   begin
     FIRSTLOAD := FALSE;

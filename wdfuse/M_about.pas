@@ -13,7 +13,6 @@ type
     ImageMap: TImage;
     ProductName: TLabel;
     Version: TLabel;
-    Panel2: TPanel;
     Image1: TImage;
     Memo1: TMemo;
     Panel4: TPanel;
@@ -23,6 +22,7 @@ type
     Panel7: TPanel;
     Image2: TImage;
     Build: TLabel;
+    Panel3: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure LogoClick(Sender: TObject);
   private

@@ -261,6 +261,13 @@ CNT=1
 101=LOGIC:     YELLOW
 102=LOGIC:     ANIM
 
+# -----<<<<< CODES>>>>>-----
+
+[DET_CODE.FME]
+CNT=1
+100=1
+101=LOGIC:     CODE1
+
 # -----<<<<< ARMOR and HEAL >>>>>-----
 
 [BON1.WAX]

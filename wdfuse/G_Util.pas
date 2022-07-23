@@ -2,7 +2,7 @@ unit G_util;
 
 interface
 uses SysUtils, WinTypes, WinProcs, Messages, Classes,
-     StdCtrls, Gauges, FileCtrl, Forms, Dialogs, M_Global;
+     StdCtrls, Gauges, FileCtrl, Forms, Dialogs, M_Global, IOUtils;
 
 CONST
  ERRGOB_NOERROR   =  0;
@@ -34,6 +34,7 @@ function GOB_CreateEmpty(GOBname : TFileName) : Integer;
 function GOB_ExtractResource(OutputDir : String ; GOBname : TFileName; ResName : String) : Integer;
 function GOB_ExtractFiles(OutputDir : String ; GOBname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
 function Valid_GOB_Asset(FileName : String) : Boolean;
+function GOB_Folder(InputDir : String; GOBname : TFileName): Integer;
 function GOB_AddFiles(InputDir : String ; GOBname : TFileName; DirList : TFileListBox; ProgressBar : TGauge) : Integer;
 function GOB_RemoveFiles(GOBname : TFileName; DirList : TListBox; ProgressBar : TGauge) : Integer;
 
@@ -366,6 +367,140 @@ var valid : Boolean;
  end;
 
 
+{ GOB_Folder()
+
+  This function gobs the contents of a full folder in a VERY efficient way.
+  Note that it ONLY creates a full brand new GOB with the contents of the folder
+  and as such is NOT a general replacement for GOB_AddFiles (which can, as its
+  name implies, actually add files to an existing GOB or replace files in it).
+}
+function GOB_Folder(InputDir : String; GOBname : TFileName): Integer;
+var i,j         : LongInt;
+    gs          : GOB_BEGIN;
+    gx          : GOB_INDEX;
+    gf          : Integer;
+    gdf         : Integer;
+    fsf         : Integer;
+    GOBDIRName  : TFileName;   {dynamic GOB dir }
+    Buffer      : array[0..262143] of Char;
+begin
+ { enumerate the files in the folder }
+ var filesToGob := TDirectory.GetFiles(InputDir);
+ var filesCount := Length(filesToGob);
+
+ { if there are no files, we're done }
+ if filesCount = 0 then
+   begin
+     GOB_Folder := ERRGOB_NOERROR;
+     exit;
+   end;
+
+ FileSetAttr(GOBName, 0);
+
+ GOBDIRName := ChangeFileExt(GOBName, '.~D~');
+
+ gf  := FileCreate(GOBName);
+ gdf := FileCreate(GOBDIRName);
+
+ { this is redundant with GOB_CreateEmpty, but we're going for to the metal
+   speed in this function, so I don't want to close and reopen the file }
+ with gs do
+   begin
+     GOB_MAGIC[1] := 'G';
+     GOB_MAGIC[2] := 'O';
+     GOB_MAGIC[3] := 'B';
+     GOB_MAGIC[4] := #10;
+     MASTERX      := 8;
+   end;
+ FileWrite(gf, gs, SizeOf(gs));
+
+ { we are going to keep track of the current position in the gob, to avoid
+   needless calls to FilePosition() }
+ var currentGobPosition := 8;
+
+ for var filepath in filesToGob do
+   begin
+     { we have a full file path here }
+     { first make a gob name by uppercasing the filename }
+     var filenameInGob := UpperCase(ExtractFileName(filepath));
+
+     { open the file to copy into the gob }
+     fsf := FileOpen(filepath, fmOpenRead);
+
+     { get the length of the file more efficiently than using FilePosition()
+       since we just opened it, we know it's at position 0 }
+     var fileSize := FileSeek(fsf, 0, 2);
+     FileSeek(fsf, 0, 0);
+
+     { add a record into the index for this file...  }
+     gx.IX := currentGobPosition;
+     gx.LEN := fileSize;
+
+     { Before copying the name, let's fully clear with #0 to be deterministic
+       as this memory is un-initialized.
+       This allows doing a binary comparison of 2 gobs built with this function
+       e.g. by using the FC /B command
+       Note that WDFUSE puts timestamps in some files, so this is a bit of a
+       moot point, but it's nice to have to do dev work on gobs }
+     FillChar(gx.NAME, 13, #0);
+     StrPcopy(gx.NAME, filenameInGob);
+
+     { uncomment to log file by file }
+     { Log.Info('GOB_Folder: adding ' + filepath + ' as ' + gx.NAME + ' size: ' + IntToStr(gx.LEN), LogName); }
+
+     { write the index entry into the index file }
+     FileWrite(gdf, gx, SizeOf(gx));
+
+     { ... and copy that file into the gob }
+     var toCopy := gx.LEN;
+     while toCopy >= SizeOf(Buffer) do
+       begin
+         FileRead(fsf, Buffer, SizeOf(Buffer));
+         FileWrite(gf, Buffer, SizeOf(Buffer));
+         toCopy := toCopy - SizeOf(Buffer);
+       end;
+     FileRead(fsf, Buffer, toCopy);
+     FileWrite(gf, Buffer, toCopy);
+     FileClose(fsf);
+
+     currentGobPosition := currentGobPosition + fileSize;
+   end;
+
+ FileClose(gdf);
+
+ { remember the MASTERX position}
+ gs.MASTERX := FilePosition(gf);
+
+ { write MASTERN }
+ FileWrite(gf, filesCount, SizeOf(filesCount));
+
+ { append the index to the gob }
+ gdf := FileOpen(GOBDIRName, fmOpenRead);
+
+ var toCopy := FileSizing(gdf);
+ while toCopy >= SizeOf(Buffer) do
+   begin
+     FileRead(gdf, Buffer, SizeOf(Buffer));
+     FileWrite(gf, Buffer, SizeOf(Buffer));
+     toCopy := toCopy - SizeOf(Buffer);
+   end;
+ FileRead(gdf, Buffer, toCopy);
+ FileWrite(gf, Buffer, toCopy);
+ FileClose(gdf);
+
+ { update the MASTERX field }
+ FileSeek(gf, 4, 0);
+ FileWrite(gf, gs.MASTERX, 4);
+ FileClose(gf);
+
+ { delete the temporary file that contained the index }
+ SysUtils.DeleteFile(GOBDIRName);
+
+ { return success }
+ GOB_Folder := ERRGOB_NOERROR;
+end;
+
+
 function GOB_AddFiles(InputDir    : String;
                       GOBname     : TFileName;
                       DirList     : TFileListBox;
@@ -388,7 +523,8 @@ var i,j         : LongInt;
     tmp,tmp2    : array[0..255] of Char;
     go          : Boolean;
     OldCursor   : HCursor;
-    Buffer      : array[0..4095] of Char;
+    {Buffer      : array[0..4095] of Char;}
+    Buffer      : array[0..262143] of Char;
     Counter     : LongInt;
 begin
 { ALGORITHM

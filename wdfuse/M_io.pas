@@ -5,12 +5,12 @@ uses SysUtils, WinTypes, WinProcs, Messages, Classes, Forms, IniFiles, Dialogs,
      StdCtrls, IOUtils,  ShellApi,
      _Strings, _Files, M_Global, M_Progrs, G_Util, FileCtrl, V_Util,
      M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util, StrUtils,
-     M_Option, Generics.Collections, System.Types, TlHelp32;
+     M_Option, Generics.Collections, System.Types, TlHelp32, Jsons;
 
 procedure FreeLevel;
 procedure GOB_Test_Level;
 procedure Preview_3D_Level;
-procedure UpdateDOSBOX_CONF( levname : String);
+procedure UpdateDOSBOX_CONF( gobname : String);
 function  IO_ReadLEV(levname : TFileName) : Boolean;
 function  IO_ReadO(oname : TFileName) : Boolean;
 function  IO_WriteLEV(levname : TFileName) : Boolean;
@@ -20,7 +20,10 @@ procedure IO_ReadINF2(infname : TFileName);
 procedure IO_WriteINF2(infname : TFileName);
 procedure IO_ReadGOL(golname : TFileName);
 procedure IO_WriteGOL(golname : TFileName);
-function ProcessRunning (sExeName: String = 'dosbox.exe') : Boolean;
+procedure IO_ReplaceFile(filename : TFileName; source, target : string);
+function ProcessRunning (sExeName: String = '') : Boolean;
+function IsFileInUse(FileName: TFileName): Boolean;
+
 
 
 implementation
@@ -121,13 +124,21 @@ end;
 
 
 { We don't want to run the game if it is already running }
-function ProcessRunning (sExeName: String = 'dosbox.exe') : Boolean;
+function ProcessRunning (sExeName: String = '') : Boolean;
 var
     hSnapShot : THandle;
     ProcessEntry32 : TProcessEntry32;
 
 begin
     Result := false;
+
+    if sExeName = '' then
+      begin
+        if ENGINE_TYPE = 'JEDI' then
+          sExeName := 'dosbox.exe'
+        else
+          sExeName := 'theforceengine.exe'
+      end;
 
     hSnapShot := CreateToolhelp32Snapshot (TH32CS_SNAPPROCESS, 0);
     Win32Check (hSnapShot <> INVALID_HANDLE_VALUE);
@@ -154,14 +165,25 @@ end;
 procedure GOB_Test_Level;
 var TheGob : TFileName;
     i      : Integer;
-    tmp    : array[0..511] of char;
     ExecuteResult : Integer;
-    TextConf : String;
+    TextConf,
+    TrimmedGOBName,
+    TFE_MODS : String;
+    j: Integer;
+    executable,
+    params  :  PChar;
 begin
  if not LEVELLoaded then exit;
  Log.Info('GOB Start', LogName);
 
- if LEVELLoaded and MODIFIED then
+ if not DO_GOB_Verify then exit;
+
+ if ENGINE_TYPE = 'JEDI' then
+   TrimmedGOBName :=  LeftStr(TPath.GetFileNameWithoutExtension(PROJECTFile),8) + '.GOB'
+ else
+   TrimmedGOBName := TPath.GetFileNameWithoutExtension(PROJECTFile) + '.GOB';
+
+ if LEVELLoaded and ((MODIFIED = true) or (UseShowCase = true)) then
   begin
     if AUTOSAVE then
        MapWindow.SpeedButtonSaveClick(NIL)
@@ -179,7 +201,7 @@ begin
 
  // Don't continue if Dark Forces is already Running
  if ProcessRunning() then
-   CASE Application.MessageBox('Dosbox is aleady running. If is is Dark Forces, the Level may not compile due to file lock. Continue anyway?',
+   CASE Application.MessageBox( PChar('Engine ' +ENGINE_TYPE + ' is aleady running. The may not compile due to file lock. Continue anyway?'),
                                    'Continue ',
                                    mb_YesNoCancel or mb_IconQuestion) OF
        idYes    : ;
@@ -187,30 +209,21 @@ begin
        idCancel : exit;
       END;
 
- Log.Info('GOB Making Empty GOG = ' +
-          DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB'), LogName);
- TheGob := DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB');
+ TheGob := DarkInst + '\' + TrimmedGOBName;
+
+
+ Log.Info('GOB Making Empty GOG = ' + TheGob, LogName);
+
  GOB_CreateEmpty(TheGob);
+ Log.Info('GOB copying files from ' + LEVELPath, LogName);
+ Log.Info('to ' + TheGob, LogName);
 
- ProgressWindow.Progress1.Caption := 'Creating the project GOB file';
- ProgressWindow.Gauge.Progress    := 0;
- ProgressWindow.Gauge.MinValue    := 0;
- ProgressWindow.Gauge.MaxValue    := 0;
- ProgressWindow.Progress2.Caption := 'GOBing...';
- ProgressWindow.Progress2.Update;
- ProgressWindow.Show;
- ProgressWindow.Update;
 
- Log.Info('GOB copying files', LogName);
- {This uses a dummy, invisible TFileListBox on The MapWindow form}
- MapWindow.DummyFileListBox.Visible := FALSE;
- MapWindow.DummyFileListBox.MultiSelect := TRUE;
- MapWindow.DummyFileListBox.Directory := LEVELPath;
- MapWindow.DummyFileListBox.Update;
- for i:= 0 to MapWindow.DummyFileListBox.Items.Count - 1 do MapWindow.DummyFileListBox.Selected[i] := TRUE;
- GOB_AddFiles(LEVELPath, TheGOB, MapWindow.DummyFileListBox, ProgressWindow.Gauge);
+ GOB_Folder(LEVELPath, TheGOB);
 
- ProgressWindow.Hide;
+ Log.Info('GOB copying files DONE!', LogName);
+
+{ ProgressWindow.Hide;}
 
  Log.Info('GOB copying Text File from ' + ChangeFileExt(PROJECTFile, '.TXT') + ' to '
            + DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')), LogName);
@@ -221,7 +234,8 @@ begin
 
  if TestLaunch then
   begin
-   if not FileExists(DOSBOX_PATH) then
+
+   if not FileExists(DOSBOX_PATH) and (ENGINE_TYPE = 'JEDI')then
     begin
        CASE Application.MessageBox('You do not have DOSBOX setup, do you just want to GOB it?',
                                    'Just GOB the map?',
@@ -235,26 +249,60 @@ begin
        end;
 
     end;
-   log.info('GOB Updating DOSBOX CONFIG ' + PROJECTFile, LogName);
-   UpdateDOSBOX_CONF(PROJECTFile);
+
+   if not FileExists(TFE_EXE) and (ENGINE_TYPE = 'TFE') then
+      begin
+        showmessage('Missing The Force Engine Executable. Please set it up first!');
+        OptionsDialog.ShowModal;
+        OptionsDialog.OptionsNoteBook.PageIndex := 0;
+        exit;
+      end
+   else if not FileExists(DARKINST + '\DARK.EXE') and (ENGINE_TYPE = 'JEDI') then
+      begin
+        showmessage('Missing DARK.EXE Executable. Please set it up first!');
+        OptionsDialog.ShowModal;
+        OptionsDialog.OptionsNoteBook.PageIndex := 0;
+        exit;
+      end;
+        
+
+   log.info('GOB Updating DOSBOX CONFIG ' + TrimmedGOBName, LogName);
+   if ENGINE_TYPE = 'JEDI' then
+     begin
+      UpdateDOSBOX_CONF(TrimmedGOBName);
+      executable :=  PChar(DOSBOX_PATH);
+      params := Pchar(' -conf "' +  String(WDFUSEdir) + '\WDFDATA\dosbox.conf"' + ' -noconsole -c "exit"');
+     end
+   else
+     begin
+       executable := PCHAR(TFE_EXE);
+       if SKIPCUT then
+          params := PCHAR(' -gDark -u' + TrimmedGOBName + ' -c0 -l' + LEVELName)
+       else
+          params := PCHAR(' -gDark -u' + TrimmedGOBName);
+       TFE_MODS := TFE_FLD + '\MODS';
+       if not DirectoryExists(TFE_MODS) then
+          CreateDir(TFE_MODS);
+       CopyFile(TheGob, TFE_MODS + '\' + TrimmedGOBName );
+     end;
    try
      TextConf := String(WDFUSEdir);
-     ExecuteResult := ShellExecute(0, 'open', PChar(DOSBOX_PATH), Pchar(' -conf "' +  String(WDFUSEdir) + '\WDFDATA\dosbox.conf"' + ' -noconsole -c "exit"'), nil, SW_SHOWNORMAL) ;
-     log.info('GOB DosBox Path = ' + DOSBOX_PATH + ' Result = ' + IntToStr(ExecuteResult), LogName);
+     executable := 'C:\Users\Karjala\editor\wdfuse\3drender.bat';
+     log.info('Executing ' + executable + ' with params ' + params + ' Result = ' + IntToStr(ExecuteResult), LogName);
+
+     ExecuteResult := ShellExecute(0, 'open', executable, nil, nil, SW_SHOWNORMAL) ;
+
    Except
       on E : Exception do
-          begin
-            Log.error('GOB Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
-            showmessage('GOB Error ' + E.ClassName+' error raised, with message : '+E.Message);
-          end
+          HandleException('GOB Error ', E);
     end;
   end
  else
   begin
    MapWindow.PanelText.Caption := ' GOBBed and placed in [ ' + DarkInst +  '\' +
-                                  ExtractFileName(ChangeFileExt(PROJECTFile, '.GOB')) + ' ] . Press F9 to Change these Settings';
+                                  TrimmedGOBName + ' ] . Press F9 to Change these Settings';
    MapWindow.NotifyMessage(MapWindow.PanelText.Caption);
-   log.info('GOB places into [ ' + DarkInst +  '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.GOB')) + ' ]', LogName);
+   log.info('GOB placed into [ ' + DarkInst +  '\' + TrimmedGOBName + ' ]', LogName);
   end;
 end;
 
@@ -284,17 +332,11 @@ begin
       END;
     end;
 
-  // Don't continue if Dark Forces is already Running
- if ProcessRunning() then
-   CASE Application.MessageBox('Dark Forces is aleady running. Level may not compile due to file lock. Continue anyway?',
-                                   'Continue ',
-                                   mb_YesNoCancel or mb_IconQuestion) OF
-       idYes    : ;
-       idNo     : exit;
-       idCancel : exit;
-      END;
+  // Don't continue if Dark Forces Showcase is already Running
 
- if not StrUtils.ContainsStr(LowerCase(renderInst), 'showcase.exe') then
+
+
+ if not StrUtils.ContainsStr(LowerCase(renderInst), 'showcase.exe') or not FileExists(renderInst) then
    begin
      showmessage('Missing Dark Forces Showcase renderer in ' + renderInst);
      OptionsDialog.OptionsNoteBook.PageIndex := 1;
@@ -302,28 +344,16 @@ begin
      exit;
    end;
 
- TheGob := DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'.GOB');
+ TheGob := DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'_SHOWCASE.GOB');
  log.info('3D Start GOB=' + TheGob, LogName);
+
+
  GOB_CreateEmpty(TheGob);
+ GOB_Folder(LEVELPath, TheGOB);
 
- ProgressWindow.Progress1.Caption := 'Creating the project GOB file';
- ProgressWindow.Gauge.Progress    := 0;
- ProgressWindow.Gauge.MinValue    := 0;
- ProgressWindow.Gauge.MaxValue    := 0;
- ProgressWindow.Progress2.Caption := 'GOBing...';
- ProgressWindow.Progress2.Update;
- ProgressWindow.Show;
- ProgressWindow.Update;
+ //for i:= 0 to MapWindow.DummyFileListBox.Items.Count - 1 do MapWindow.DummyFileListBox.Selected[i] := TRUE;
+ //GOB_AddFiles(LEVELPath, TheGOB, MapWindow.DummyFileListBox, ProgressWindow.Gauge);
 
- {This uses a dummy, invisible TFileListBox on The MapWindow form}
- MapWindow.DummyFileListBox.Visible := FALSE;
- MapWindow.DummyFileListBox.MultiSelect := TRUE;
- MapWindow.DummyFileListBox.Directory := LEVELPath;
- MapWindow.DummyFileListBox.Update;
- for i:= 0 to MapWindow.DummyFileListBox.Items.Count - 1 do MapWindow.DummyFileListBox.Selected[i] := TRUE;
- GOB_AddFiles(LEVELPath, TheGOB, MapWindow.DummyFileListBox, ProgressWindow.Gauge);
-
- ProgressWindow.Hide;
 
  log.info('3D Copy Project File from ' + ChangeFileExt(PROJECTFile, '.TXT') +
           ' to ' + DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')), LogName);
@@ -332,6 +362,14 @@ begin
  CopyFile(ChangeFileExt(PROJECTFile, '.TXT'),
         DarkInst + '\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.TXT')));
 
+ if ProcessRunning('Dark Forces Showcase.exe') OR SHOWCASE_DEBUG then
+   begin
+     MapWindow.ToolsResetShowCaseClick(NIL);
+     exit;
+   end;
+
+ ShowCaseReset := False;
+
  try
    strPcopy(tmp, '"' + renderInst + '" -d "' + darkinst + '" "' + TheGOB + '" -t LevelExplorer');
    log.info('3D Run Command ' + AnsiString(tmp), LogName);
@@ -339,14 +377,11 @@ begin
    log.info('Return Value = ' + IntToStr(returnVal), LogName);
   Except
     on E : Exception do
-        begin
-          Log.error('Renderer Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
-          showmessage('Renderer Error ' + E.ClassName+' error raised, with message : '+E.Message);
-        end
+        HandleException('Renderer Error ', E);
   end;
 end;
 
-procedure UpdateDOSBOX_CONF( levname : String);
+procedure UpdateDOSBOX_CONF( gobname : String);
 var textTmp : String;
     fileTmp : TextFile;
     confTxt : String;
@@ -370,7 +405,7 @@ begin
        ReadLn(fileTmp, textTmp);
        if StrUtils.ContainsText(LowerCase(textTmp), 'dark') then
         begin
-         textTmp := 'dark -u' + TPath.GetFileNameWithoutExtension(levname) + '.GOB';
+         textTmp := 'dark -u' + gobname;
          if SKIPCUT then
           textTMP := textTmp + ' -c0 -l' + LEVELName;
         end;
@@ -385,10 +420,7 @@ begin
     CloseFile(fileTmp);
   Except
     on E : Exception do
-        begin
-          Log.error('Options Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
-          showmessage('Options Error ' + E.ClassName+' error raised, with message : '+E.Message);
-        end
+      HandleException('Options Error ', E);
   end;
   Log.Info('UPDATE DOSBOXCONF done', LogName);
 end;
@@ -467,6 +499,22 @@ begin
                       TheVertex.X := tmpreal;
                       Val(pars[4], tmpreal, code);
                       TheVertex.Z := tmpreal;
+
+                      // This is due to Dtide being dumb with a sector that is at pos 400000,-90000 !!!
+                      if (TheVertex.X > MAP_LIMIT) or (TheVertex.X < -MAP_LIMIT)  then
+                        begin
+                          log.error('Sector ' + inttostr(MAP_SEC.Count) + 
+                          '  has a vertex X [' + PosTrim(TheVertex.X) + ']  that is outside 32000 map limit. This will cause issues!', LogName);
+                          loaderror := true;                          
+                        end;
+                      if (TheVertex.Z > MAP_LIMIT) or (TheVertex.Z < -MAP_LIMIT)  then
+                        begin
+                          log.error('Sector ' + inttostr(MAP_SEC.Count) + 
+                          ' has a vertex Z [' + PosTrim(TheVertex.Z) + '] that is outside 32000 map limit. This will cause issues!', LogName);
+                          loaderror := true;                          
+                        end;  
+                        
+                      
                       TheSector.Vx.AddObject('VX', TheVertex);
                     end;
                  finally
@@ -845,7 +893,7 @@ begin
           Except
             on E : Exception do
                 begin
-                  Log.error('Level Read Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
+                  HandleException('Level Read Error ', E, False);
                   Log.Error('Failure occured on sector ' + inttostr(sccounter) +
                   ' and wall = ' + inttostr(wlcounter) + ' and line ' + EOL + strin, logName );
                 end
@@ -865,6 +913,11 @@ begin
 
       ProgressWindow.Hide;
 
+      ShowCaseDelSC := TJsonArray.Create;
+      ShowCaseDelOB := TJsonArray.Create;
+      ShowCaseModSC := TJsonArray.Create;
+      ShowCaseModOB := TJsonArray.Create;
+
       if loaderror then
         showmessage('There are LEV Loading errors for this level.' + EOL +
          'Please look at the log for details [F5]');
@@ -872,10 +925,10 @@ begin
       { compare the textures and sectors found with those announced
         and report errors }
       LEVELLoaded := TRUE;
+      ShowCaseReset := True;
+      ShowCaseCameraReset := True;
       SetCursor(OldCursor);
       IO_ReadLEV := TRUE;
-
-
     end;
 end;
 
@@ -1036,6 +1089,8 @@ var o         : System.TextFile;
     COLORini  : TIniFile;
     i         : Integer;
     obcount   : Integer;
+    loaderror : boolean;
+    colorset  : Integer;
 begin
   if not FileExists(oname) then
     begin
@@ -1045,6 +1100,8 @@ begin
     end
   else
     begin
+
+      Log.Info('Loading Object data from ' + oname, LogName);
       OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
       numobjects := 0;
       pods       := 0;
@@ -1071,6 +1128,7 @@ begin
 
       AssignFile(o, oname);
       Reset(o);
+      loaderror := false; 
 
       while not SeekEof(o) do
         begin
@@ -1140,6 +1198,20 @@ begin
 
                   Val(pars[6] , tmpreal, code);  TheObject.X   := tmpreal;
                   Val(pars[8] , tmpreal, code);  TheObject.Y   := -tmpreal;
+
+                  if (TheObject.X > MAP_LIMIT) or (TheObject.X < -MAP_LIMIT)  then
+                      begin
+                        log.error('Object ' + inttostr(MAP_OBJ.Count) + 
+                        ' has a position X [' + PosTrim(TheObject.X) + '] that is outside 32000 map limit. This will cause issues!', LogName);
+                        loaderror := true;                          
+                      end;
+                  if (TheObject.Y > MAP_LIMIT) or (TheObject.Y < -MAP_LIMIT)  then
+                      begin
+                        log.error('Object ' + inttostr(MAP_OBJ.Count) + 
+                        ' has a position Y [' + PosTrim(TheObject.Y) + '] that is outside 32000 map limit. This will cause issues!', LogName);
+                        loaderror := true;                          
+                      end; 
+                  
                   Val(pars[10], tmpreal, code);  TheObject.Z   := tmpreal;
                   Val(pars[12], tmpreal, code);  TheObject.PCH := tmpreal;
                   Val(pars[14], tmpreal, code);  TheObject.YAW := tmpreal;
@@ -1156,7 +1228,11 @@ begin
                    TheObject.Sec  := -1;
 
                   { Encore remplir Type, Col, Special }
-                  TheObject.Col := COLORini.ReadInteger(TheObject.DataName, 'COLOR', Ccol_shadow);
+                   colorset := Ini.ReadInteger('OB-COLORS',  TheObject.DataName, -1);
+                   if colorset <> -1 then
+                     TheObject.Col :=  colorset
+                   else
+                      TheObject.Col := COLORini.ReadInteger(TheObject.DataName, 'COLOR', Ccol_shadow);
                   TheObject.OType := 0;
                   TheObject.Special := 0; {temporary}
                  end;
@@ -1332,6 +1408,10 @@ begin
          end;
        end;
 
+      if loaderror then
+        showmessage('There are O Loading errors for this level.' + EOL +
+         'Please look at the log for details [F5]'); 
+
       ProgressWindow.Hide;
 
       OFILELoaded := TRUE;
@@ -1380,7 +1460,7 @@ begin
  WriteLn(o, '');
 
  DO_RecomputeObjectsLists(TRUE, 'Saving O File');
- 
+
  {PODS}
  WriteLn(o, '/*');
  WriteLn(o, '# 3D OBJECTS');
@@ -2124,6 +2204,40 @@ end;
 
 procedure IO_WriteGOL(golname : TFileName);
 begin
+end;
+
+// Replace strings
+procedure IO_ReplaceFile(filename : TFileName; source, target : string);
+var
+  fs : TFileStream;
+  s  : AnsiString;
+begin
+  fs := TFileStream.Create(filename, fmOpenread or fmShareDenyNone);
+  try
+    SetLength(S, fs.Size);
+    fs.ReadBuffer(S[1], fs.Size);
+  finally
+    fs.Free;
+  end;
+  s := StringReplace(s, source, target, [rfReplaceAll, rfIgnoreCase]);
+  fs := TFileStream.Create(filename, fmCreate);
+  try
+    fs.WriteBuffer(S[1], Length(S));
+  finally
+    fs.Free;
+  end;
+end;
+
+function IsFileInUse(FileName: TFileName): Boolean;
+var
+  HFileRes: HFILE;
+begin
+  result := False;
+  if not FileExists(FileName) then exit;
+   HFileRes := CreateFile(PChar(FileName), GENERIC_READ or GENERIC_WRITE, 0, nil,
+OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+   result := (HFileRes = INVALID_HANDLE_VALUE);
+   if not result then CloseHandle(HFileRes);
 end;
 
 end.

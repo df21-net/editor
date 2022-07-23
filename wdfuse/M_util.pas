@@ -6,23 +6,26 @@ uses
   _Math, _Strings, _Files,
   M_Global, M_io, M_Progrs, M_Find, M_Multi, M_Checks,
   M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit,
-  V_Util, I_Util, G_Util, Generics.Collections, clipBrd,  System.JSON,
+  V_Util, I_Util, G_Util, Generics.Collections, clipBrd,
   REST.JsonReflect, StrUtils, Jsons, JsonsUtilsEx, IOUTils, System.diagnostics,
-  System.TimeSpan;
+  System.TimeSpan, REST.Client, REST.Types, System.JSON, System.Math;
 
 procedure DO_Help;
 function  DO_InitGOBS : Boolean;
-procedure DO_LoadLevel;
+procedure DO_LoadProjectWrapper(ProjectPath : String);
+function  DO_GOB_Verify : Boolean;
+procedure DO_LoadLevel(CustomProject : string='');
 Procedure DO_OpenProject;
 procedure DO_SaveProject;
 procedure DO_SaveProjectAs(NewProjectWDFFile : String);
+procedure SaveShowCaseData;
 
 procedure DO_SetMapButtonsState;
 
 function  GetSectorNumFromName(Name : String; VAR Num : Integer) : Boolean;
 function  GetSectorNumFromNameNoCase(Name : String; VAR Num : Integer) : Boolean;
 
-function  GetNearestSC(X, Z : Real; VAR ASector : Integer) : Boolean;
+function  GetNearestSC(X, Z : Real; VAR ASector : Integer; ignore_layer : boolean = False) : Boolean;
 function  GetNearestOB(X, Z : Real; VAR AObject : Integer) : Boolean;
 function  GetNearestWL(X, Z : Real; VAR ASector : Integer; VAR AWall : Integer) : Boolean;
 function  GetNearestVX(X, Z : Real; VAR ASector : Integer; VAR AVertex : Integer) : Boolean;
@@ -40,13 +43,16 @@ function  GetObjectSC(obnum : Integer; VAR ASector : Integer) : Boolean;
 
 function  ForceLayerObject(ob : Integer) : Boolean;
 function  MultiForceLayerObject : Integer;
-
+function  DO_SameVXPosition(left, right : TVertex) : Boolean;
+procedure DO_MarkAdjacentVertices(sc, wl : integer; rootvx : TVertex);
+procedure DO_TranslateVertex(sc,vx : Integer; x,z : Real);
+procedure DO_ProcessMarkedVX(x,z : Real);
 procedure DO_Translate_SelMultiSel(x, z : Real);
 procedure DO_Select_In_Rect;
 
 procedure DO_Find_SC_By_Name;
 procedure DO_Find_WL_Adjoin;
-procedure DO_Find_PlayerStart;
+function  DO_Find_PlayerStart(update_player : boolean = True) : Integer;
 procedure DO_Find_VX_AtSameCoords;
 
 function  GetWLLen(sc, wl : Integer) : Real;
@@ -65,6 +71,7 @@ procedure DO_Goto_Marker(n : Integer);
 procedure DO_RecomputeTexturesLists(usegauge : Boolean; maintitle : string);
 procedure DO_RecomputeObjectsLists(usegauge : Boolean; maintitle : string);
 
+procedure UpdateShowCase;
 procedure DO_StoreUndo;
 procedure DO_FreeUndo(UndoIndex : Integer = -1);
 procedure DEBUG_UNDO;
@@ -73,6 +80,9 @@ procedure DO_ApplyUndo(reverse : Boolean = False);
 procedure DO_FreeGeometryClip;
 procedure DO_FreeObjectsClip;
 
+function  SerializeSector(sc : Integer) : string;
+function  SerializeObject(ob : Integer) : string;
+
 procedure DO_CopyGeometry;
 procedure DO_PasteGeometry(cursX, cursZ : Real; payload : TJson);
 
@@ -80,7 +90,9 @@ procedure DO_CopyObjects;
 procedure DO_PasteObjects(cursX, cursZ : Real; payload : TJson);
 
 procedure DO_PasteWrapper(cursX, cursZ : Real);
+function IsPointInSector(sc : integer; x, z : real): Boolean;
 
+procedure DO_UpdatePRJHistory;
 {  **********  **********  **********  **********  **********  **********  }
 
 implementation
@@ -100,6 +112,7 @@ var header : array[0..40] of Char;
     crlf   : String;
     lineC  : array[0..200] of Char;
 begin
+
   strcopy(header, 'WDFUSE Mapper - Initializing');
   line1P  := 'WDFUSE cannot find ';
   line2P  := 'Set Installed Dir / CD-ROM in Options.';
@@ -130,6 +143,12 @@ begin
      Application.MessageBox(lineC, header, mb_Ok or mb_IconExclamation);
      DO_InitGOBS := FALSE;
      exit;
+    end;
+
+  if IsFileInUse(DarkInst + '\DARK.GOB') then
+    begin
+      showmessage('Error ! DARK.GOB is locked! Cannot extract data. Is Dark Forces Running? Turn it off first');
+      exit;
     end;
 
   SPRITESgob := '';
@@ -177,14 +196,100 @@ begin
      exit;
     end;
 
+
+ if (ENGINE_TYPE = 'TFE') and not fileexists(TFE_EXE) then
+   begin
+     showmessage('Warning! Cannot find The Force Engine executable at ' + TFE_EXE);
+     DO_InitGOBS := FALSE;
+     exit;
+   end;
+
+
  DO_InitGOBS := TRUE;
 end;
 
-procedure DO_LoadLevel;
+
+procedure DO_LoadProjectWrapper(ProjectPath : String);
+begin
+  if fileexists(ProjectPath) then
+     begin
+      try
+        MapWindow.Update;
+        if LEVELLoaded then FreeLevel;
+        DO_LoadLevel(ProjectPath);
+      except on E: Exception do
+        // So you don't go into a crash loop
+        begin
+          HandleException('Failed to load previous project. Disabling level auto-loading.', E);
+          LOADPREVPRJ := False;
+          Ini.WriteBool('DARK FORCES', 'LOADPREVPRJ', LOADPREVPRJ);
+        end;
+      end
+  end;
+end;
+
+// Checks to make sure you didn't mess anything up.
+function DO_GOB_Verify : boolean;
+var
+  TheObject           : TOB;
+  i, j, o : integer;
+  logic : TStringList;
+
+begin
+  Result := True;
+
+  // Check for player start
+  o := DO_Find_PlayerStart(False);
+  if o = -1 then
+     begin
+       showmessage('Missing Player Start! The GOB will crash!');
+       Result := False
+     end
+  else
+    begin
+      // Check that player is inside the sector
+      TheObject := TOB(MAP_OBJ.Objects[o]);
+      if not GetNearestSC(TheObject.X, TheObject.Z, j, True) then
+        begin
+           showmessage('Player start is not in a sector! The GOB will crash!');
+           Result := False
+        end;
+    end;
+
+  // Ensure all objects have classes and names
+
+  for o := 0 to MAP_OBJ.Count - 1 do
+    begin
+     TheObject := TOB(MAP_OBJ.Objects[o]);
+     if TheObject.ClassName = '' then
+      begin
+        showmessage('Object ' + inttostr(o) + ' does not have a valid class name! Dark Forces will crash!');
+        Result := False;
+        exit;
+      end;
+
+     if TheObject.DataName = '' then
+      begin
+        showmessage('Object ' + inttostr(o) + ' does not have a valid date name! Dark Forces will crash!');
+        Result := False;
+        exit;
+      end;
+    end;
+
+end;
+
+
+
+procedure DO_LoadLevel(CustomProject : string='');
 var pjf  : TIniFile;
 begin
- pjf := TIniFile.Create(PROJECTFile);
+
+ if CustomProject <> '' then
+    PROJECTFile := CustomProject;
+
  try
+
+  pjf := TIniFile.Create(PROJECTFile);
   LEVELPath := pjf.ReadString('WDFUSE Project', 'DIRECTORY', '');
   LEVELName := pjf.ReadString('WDFUSE Project', 'LEVELNAME', '');
   LEVELBNum := pjf.ReadInteger('WDFUSE Project', 'BACKUPNUM', -1);
@@ -203,9 +308,9 @@ begin
       BACKUPED      := FALSE;
       Xoffset       := 0;
       Zoffset       := 0;
-      Scale         := 1;
+      {Scale         := 1;
       grid          := 8;
-      grid_offset   := 4;
+      grid_offset   := 4;} // Loaded via config now
       ScreenX       := MapWindow.Map.Width;
       ScreenZ       := MapWindow.Map.Height;
       ScreenCenterX := MapWindow.Map.Width div 2;
@@ -222,6 +327,16 @@ begin
       DO_Switch_To_SC_Mode;
       MapWindow.Caption := 'WDFUSE ' +  WDFUSE_VERSION + ' - ' + LowerCase(PROJECTFile) + ' : SECTORS';
       DO_FreeUndo;
+      MapWindow.KeyPreview := True;
+      DO_UpdatePRJHistory;
+      MapWindow.UpdateRecent;
+
+      // Handle previews
+      if AutoStartShowCase then
+        Preview_3D_Level
+      else if ProcessRunning('Dark Forces Showcase.exe') OR SHOWCASE_DEBUG then
+        MapWindow.ToolsResetShowCaseClick(NIL);
+
      end
   end
  else
@@ -234,6 +349,7 @@ begin
 end;
 
 procedure DO_OpenProject;
+var i : integer;
 begin
  with MapWindow.OpenProjectDialog do
   begin
@@ -248,6 +364,25 @@ begin
        Ini.WriteString('DARK FORCES',  'PROJECTFile', PROJECTFile);
        DO_LoadLevel;
        BACKUPED := FALSE;
+
+       if PRJ_History.count > 0 then
+          // Delete any instances of the same file from history to remove dupes
+         for i := 0 to PRJ_History.count -1 do
+            begin
+              if PRJ_History[i] = PROJECTFile then
+                begin
+                  PRJ_History.delete(i);
+                  break;
+                end
+          end;
+
+       PRJ_History.insert(0, PROJECTFile);
+
+       // Clean up anything over limit
+       if PRJ_History.count > MAX_RECENT then
+          PRJ_History.Delete(MAX_RECENT);
+
+
        MapWindow.Map.Invalidate;
       end
      else
@@ -304,7 +439,7 @@ begin
 end;
 
 procedure DO_SaveProject;
-var drv    : Integer;
+var drv,i  : Integer;
     path1,
     path2  : String;
     pjf  : TIniFile;
@@ -316,6 +451,9 @@ begin
    disk space < 10 Mb box, which will let him make room before going on
 }
  Log.Info('Saving Project ' + PROJECTFile, LogName);
+
+ DO_UpdatePRJHistory;
+
  drv    := Ord(LevelPATH[1]) - 96;
  if drv < 0 then drv := Ord(LevelPATH[1]) - 64;
 
@@ -331,18 +469,18 @@ begin
   0 : begin
        {full incremented backup names are xxxx.L00 => xxxx.L99}
        Inc(LEVELBNum);
-       if LEVELBNum > 99 then LEVELBNum := 0;
-       CopyFile(path1 + '.LEV', path2 + '.L' + Format('%-2.2d',[LEVELBNum]));
-       CopyFile(path1 + '.O'  , path2 + '.O' + Format('%-2.2d',[LEVELBNum]));
-       CopyFile(path1 + '.INF', path2 + '.I' + Format('%-2.2d',[LEVELBNum]));
-       CopyFile(path1 + '.GOL', path2 + '.G' + Format('%-2.2d',[LEVELBNum]));
-       CopyFile(path1 + '.PAL', path2 + '.P' + Format('%-2.2d',[LEVELBNum]));
-       CopyFile(path1 + '.CMP', path2 + '.C' + Format('%-2.2d',[LEVELBNum]));
+       if LEVELBNum > MAXBACKUPS then LEVELBNum := 0;
+       CopyFile(path1 + '.LEV', path2 + '.L' + Format('%-2.3d',[LEVELBNum]));
+       CopyFile(path1 + '.O'  , path2 + '.O' + Format('%-2.3d',[LEVELBNum]));
+       CopyFile(path1 + '.INF', path2 + '.I' + Format('%-2.3d',[LEVELBNum]));
+       CopyFile(path1 + '.GOL', path2 + '.G' + Format('%-2.3d',[LEVELBNum]));
+       CopyFile(path1 + '.PAL', path2 + '.P' + Format('%-2.3d',[LEVELBNum]));
+       CopyFile(path1 + '.CMP', path2 + '.C' + Format('%-2.3d',[LEVELBNum]));
 
        CopyFile(ChangeFileExt(PROJECTFile, '.TXT'),
-                LEVELPath + '\BACKUPS\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.T')) + Format('%-2.2d',[LEVELBNum]));
-       CopyFile(LEVELPath + '\jedi.lvl', LEVELPath + '\BACKUPS\jedi.L' + Format('%-2.2d',[LEVELBNum]));
-       CopyFile(LEVELPath + '\text.msg', LEVELPath + '\BACKUPS\text.M' + Format('%-2.2d',[LEVELBNum]));
+                LEVELPath + '\BACKUPS\' + ExtractFileName(ChangeFileExt(PROJECTFile, '.T')) + Format('%-2.3d',[LEVELBNum]));
+       CopyFile(LEVELPath + '\jedi.lvl', LEVELPath + '\BACKUPS\jedi.L' + Format('%-2.3d',[LEVELBNum]));
+       CopyFile(LEVELPath + '\text.msg', LEVELPath + '\BACKUPS\text.M' + Format('%-2.3d',[LEVELBNum]));
 
        {save the backup num}
        pjf := TIniFile.Create(PROJECTFile);
@@ -390,6 +528,22 @@ begin
 end;
 
 
+//  This is to only save individual LEV/O data for showcase.
+procedure SaveShowCaseData;
+var showcase_path  : String;
+begin
+
+ Log.Info('Saving Showcase Data ' + PROJECTFile, LogName);
+ showcase_path := LEVELPath + '\SHOWCASE\';
+
+ if not directoryexists(showcase_path) then
+    createdir(showcase_path);
+
+ // Only write LEV and O
+ IO_WriteLEV(LEVELPath + '\' + LEVELName + '.LEV');
+ IO_WriteO(LEVELPath + '\' + LEVELName + '.O');
+end;
+
 procedure DO_SetMapButtonsState;
 begin
   if LevelLOADED then
@@ -432,6 +586,8 @@ begin
   MapWindow.PanelMapType.Enabled         := LEVELLoaded;
   MapWindow.Panel1MapType.Enabled        := LEVELLoaded;{//Added DL 12/nov/96            }
   MapWindow.SpeedButtonQuery.Enabled     := LEVELLoaded;
+  MapWindow.FileOpenFolder.Enabled       := LEVELLoaded;
+  MapWindow.ProjectReopen.Enabled        := LEVELLoaded;
 
 
 
@@ -554,7 +710,7 @@ begin
    end;
 end;
 
-function  GetNearestSC(X, Z : Real; VAR ASector : Integer) : Boolean;
+function  GetNearestSC(X, Z : Real; VAR ASector : Integer; ignore_layer : boolean = False) : Boolean;
 var
   TheSector           : TSector;
   TheSector2          : TSector;
@@ -573,14 +729,28 @@ begin
  dmin := 999999.0;
  its  := -1;
 
- for s := 0 to MAP_SEC.Count - 1 do
+ // Count backwards to capture subsectors first
+ // Hacks R' Us!
+ for s := MAP_SEC.Count - 1 downto 0 do
   begin
+
    TheSector := TSector(MAP_SEC.Objects[s]);
-   if TheSector.Layer = LAYER then
+   if (TheSector.Layer = LAYER) or ignore_layer then
     begin
+
+
+     // Quick polgygon check
+    if IsPointInSector(s, x, z) then
+       begin
+         its := s;
+         break;
+       end;
+
      for w := 0 to TheSector.Wl.Count - 1 do
       begin
        TheWall := TWall(TheSector.Wl.Objects[w]);
+
+       
        LVertex := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
        RVertex := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
        x1      := LVertex.X;
@@ -667,6 +837,7 @@ var
   dmin, cal           : Real;
   xi, zi              : Real;
   Sector              : Integer;
+  offset              : Real;
 begin
  dmin := 9999999.0;
  itw  := -1;
@@ -682,6 +853,22 @@ begin
      z1      := LVertex.Z;
      x2      := RVertex.X;
      z2      := RVertex.Z;
+
+     // This kinda fixes the walls you are unable to click due to low z-delta
+     if ((abs(z2-z1) < 1.0) and (z2<>z1)) then
+       begin
+         if z1 > z2 then
+          begin
+           z1 := z1 + (1 * scale);
+           z2 := z2 - (1 * scale);
+          end
+         else
+          begin
+           z1 := z1 - (1 *scale);
+           z2 := z2 + (1 *scale);
+          end;
+       end;
+
      if z1 <> z2 then { if not HORIZONTAL }
       begin
        if x1 = x2 then { if VERTICAL}
@@ -690,8 +877,8 @@ begin
         end
        else
         begin
-         dd := (z1 - z2) / (x1 - x2);
-         xi := (z + dd * x1 - z1) / dd;
+           dd := (z1 - z2) / (x1 - x2);
+           xi := (z + dd * x1 - z1) / dd;
         end; {if VERTICAL}
 
        if (z >= real_min(z1, z2)) and (z <= real_max(z1, z2)) then { if intersection on wall }
@@ -851,6 +1038,8 @@ begin
   GetNextNearestVX := FALSE;
 end;
 
+
+
 function  GetWLfromLeftVX(sector, leftvx : Integer; VAR AWallNum : Integer) : Boolean;
 var TheWall   : TWall;
     w, itw    : Integer;
@@ -895,6 +1084,30 @@ begin
   GetWLfromRightVX := FALSE;
 end;
 
+function IsPointInSector(sc : integer; x, z : real): Boolean;
+var i : integer;
+    TheSector : TSector;
+    rgn : HRGN;
+begin
+
+  Result := True;
+  TheSector := TSector(MAP_SEC.Objects[sc]);
+
+
+  // Create region of sector verteces.
+  //SetLength(secPolygon, TheSector.Vx.Count);
+  for i:= 0 to TheSector.Vx.Count - 1 do
+    secPolygon[i] := VxToPoint(TVertex(TheSector.Vx.objects[i]));
+
+  rgn := CreatePolygonRgn(secPolygon[0], TheSector.Vx.Count, WINDING);
+
+  // We don't want the subsector to be sticking outside the walls
+  if not PtInRegion(rgn, trunc(m2sx(X)), trunc(m2sz(Z))) then
+    Result := False;
+  DeleteObject(rgn);
+
+end;
+
 procedure LayerAllObjects;
 var o         : Integer;
     TheObject : TOB;
@@ -915,9 +1128,9 @@ begin
  for o := 0 to MAP_OBJ.Count - 1 do
   begin
    TheObject := TOB(MAP_OBJ.Objects[o]);
-   if TheObject.Sec = -1 then LayerObject(o);
-   if o mod 10 = 0 then
-    ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 9;
+     if TheObject.Sec = -1 then LayerObject(o);
+     if o mod 10 = 0 then
+      ProgressWindow.Gauge.Progress := ProgressWindow.Gauge.Progress + 9;
   end;
   ProgressWindow.Hide;
   SetCursor(OldCursor);
@@ -939,6 +1152,8 @@ var sc        : Integer;
     TheObject : TOB;
 begin
  sc := -1;
+ if obnum = 360 then
+    log.info('wtf', Logname);
  TheObject := TOB(MAP_OBJ.Objects[obnum]);
  if GetObjectSC(obnum, sc) then
   begin
@@ -1055,15 +1270,191 @@ if OB_MULTIS.Count <> 0 then
 SetCursor(OldCursor);
 end;
 
+// Quickly check if vertices are at identical pos
+function DO_SameVXPosition(left, right : TVertex) : Boolean;
+begin
+  Result := False;
+  if (left.X = right.X) and (left.Z = right.Z) then Result := True;
+end;
+
+procedure DO_MarkAdjacentVertices(sc, wl : integer; rootvx : TVertex);
+var i,j,m     : Integer;
+    TheSector : TSector;
+    TheSector2: TSector;
+    TheVertex : TVertex;
+    TheVertex2: TVertex;
+    TheVertex3: TVertex;
+    TheWall   : TWall;
+    TheWall2  : TWall;
+    TheObject : TOB;
+    SectorID  : Integer;
+    WallID    : Integer;
+    VXID      : Integer;
+begin
+  TheSector := TSector(MAP_SEC.Objects[sc]);
+
+  if TheSector.Layer <> Layer then exit;
+
+  TheWall  := TWall(TheSector.Wl.Objects[wl]);
+
+  if TheWall.adjoin = -1 then exit;
+
+  TheSector2 := TSector(MAP_SEC.Objects[TheWall.adjoin]);
+  TheWall2   := TWall(TheSector2.wl.Objects[TheWall.Mirror]);
+
+  // Check Left
+  TheVertex := TVertex(TheSector2.vx.Objects[TheWall2.left_vx]);
+  if (TheVertex.mark <> 2) and DO_SameVXPosition(TheVertex, rootvx) then
+    begin
+      TheVertex.mark := 2;
+      if not ShowCaseModSC.ContainsInt(TheWall.adjoin) then ShowCaseModSC.put(TheWall.adjoin);
+
+      // Recurse from Left
+      if GetWLfromRightVX(TheWall.adjoin, TheWall2.left_vx, WallID) then
+          DO_MarkAdjacentVertices(TheWall.adjoin , WallID, rootvx);
+    end;
+
+  // Check Right
+  TheVertex := TVertex(TheSector2.vx.Objects[TheWall2.right_vx]);
+  if (TheVertex.mark <> 2) and DO_SameVXPosition(TheVertex, rootvx) then
+    begin
+      TheVertex.mark := 2;
+      if not ShowCaseModSC.ContainsInt(TheWall.adjoin) then ShowCaseModSC.put(TheWall.adjoin);
+
+      // Recurse from Right
+      if GetWLfromLeftVX(TheWall.adjoin, TheWall2.right_vx, WallID) then
+          DO_MarkAdjacentVertices(TheWall.adjoin , WallID, rootvx);
+    end;
+
+end;
+
+procedure DO_TranslateVertex(sc,vx : Integer; x,z : Real);
+var i,j,m     : Integer;
+    TheSector : TSector;
+    TheSector2: TSector;
+    TheVertex : TVertex;
+    TheVertex2: TVertex;
+    TheVertex3: TVertex;
+    TheWall   : TWall;
+    TheWall2  : TWall;
+    TheObject : TOB;
+    SectorID  : Integer;
+    WallID    : Integer;
+    VXID      : Integer;
+begin
+
+    TheSector := TSector(MAP_SEC.Objects[sc]);
+    TheVertex  := TVertex(TheSector.Vx.Objects[vx]);
+    TheVertex.mark := 2;
+
+
+    // Check Adjacent on Right
+    if GetWLfromLeftVX(sc, vx, WallID) then
+       DO_MarkAdjacentVertices(sc, WallID, TheVertex);
+
+    // Check Adjacent on Left
+    if GetWLfromRightVX(sc, vx, WallID) then
+       DO_MarkAdjacentVertices(sc, WallID, TheVertex);
+
+   {
+
+    // Mark all vertices that match the hilighted one
+    for i := 0 to MAP_SEC.Count - 1 do
+      begin
+
+       TheSector2 := TSector(MAP_SEC.Objects[i]);
+       if TheSector2.layer = LAYER then
+         begin
+           for j := 0 to TheSector2.Vx.Count - 1 do
+            begin
+             // Don't look at yourself
+             if (SC_HILITE = i) and (VX_HILITE = j)  then continue;
+
+             TheVertex2      := TVertex(TheSector2.Vx.Objects[j]);
+
+             // Make sure the positiosn are the same
+             if (TheVertex2.X = TheVertex.X) and (TheVertex2.Z = TheVertex.Z)  then
+              begin
+                // Do not move vertices
+                if sc = i  then
+
+                TheVertex2.mark := 2;
+                if not ShowCaseModSC.ContainsInt(i) then ShowCaseModSC.put(i);
+              end;
+            end;
+         end;
+      end;
+    }
+
+    // Update the new position for the initial vertex
+    {TheVertex.X := RoundTo(TheVertex.X + x, -2);
+    TheVertex.Z := RoundTo(TheVertex.Z + z, -2);
+
+    // Now update the positions of all the adjoined ones.
+    for i := 0 to MAP_SEC.Count - 1 do
+      begin
+       if (SC_HILITE = i) and (VX_HILITE = j)  then continue;
+       TheSector2 := TSector(MAP_SEC.Objects[i]);
+       for j := 0 to TheSector2.Vx.Count - 1 do
+        begin
+         TheVertex2      := TVertex(TheSector2.Vx.Objects[j]);
+         if TheVertex2.mark = 2 then
+          begin
+            TheVertex2.X := TheVertex.X;
+            TheVertex2.Z := TheVertex.Z;
+            TheVertex2.mark := 0;
+          end;
+        end;
+      end;
+    TheVertex.mark := 0; }
+end;
+
+procedure DO_ProcessMarkedVX(x,z : Real);
+var TheSector : TSector;
+    TheVertex : TVertex;
+    i,j : integer;
+begin
+
+    // Now update the positions of all the marked ones
+
+    for i := 0 to MAP_SEC.Count - 1 do
+      begin
+       TheSector := TSector(MAP_SEC.Objects[i]);
+       for j := 0 to TheSector.Vx.Count - 1 do
+        begin
+         TheVertex      := TVertex(TheSector.Vx.Objects[j]);
+         if TheVertex.mark = 2 then
+          begin
+            TheVertex.X := RoundTo(TheVertex.X + x, -2);
+            TheVertex.Z := RoundTo(TheVertex.Z + z, -2);
+            TheVertex.mark := 0;
+          end;
+        end;
+      end;
+end;
+
 procedure DO_Translate_SelMultiSel(x, z : Real);
 var i,j,m     : Integer;
     TheSector : TSector;
     TheSector2: TSector;
     TheVertex : TVertex;
+    TheVertex2: TVertex;
     TheWall   : TWall;
     TheWall2  : TWall;
     TheObject : TOB;
+    SectorID  : Integer;
+    WallID    : Integer;
+    VXID      : Integer;
 begin
+
+ // Log.Info('X = '  + PosTrim(x) + ' Z = ' + PosTrim(Z), LogName);
+
+  // NO OP
+  if (x = 0) and (z = 0) then exit;
+
+  x := RoundTo(x, -2);
+  z := RoundTo(z, -2);
+
  {First clear all the VX marks}
  for i := 0 to MAP_SEC.Count - 1 do
   begin
@@ -1080,136 +1471,59 @@ begin
             {include the multiselection}
             for m := 0 to SC_MULTIS.Count - 1 do
               begin
-               TheSector := TSector(MAP_SEC.Objects[StrToInt(Copy(SC_MULTIS[m],1,4))]);
+               SectorID := StrToInt(Copy(SC_MULTIS[m],1,4));
+               TheSector := TSector(MAP_SEC.Objects[SectorID]);
                for i := 0 to TheSector.Vx.Count - 1 do
                 begin
-                 TheVertex   := TVertex(TheSector.Vx.Objects[i]);
-                 TheVertex.Mark := 1;
+                  DO_TranslateVertex(SectorID, i, x,z);
+                  if not ShowCaseModSC.ContainsInt(SectorID) then ShowCaseModSC.put(SectorID);
                 end;
               end;
-            {include the selection}
-            TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
-            for i := 0 to TheSector.Vx.Count - 1 do
-             begin
-              TheVertex   := TVertex(TheSector.Vx.Objects[i]);
-              TheVertex.Mark := 1;
-             end;
-            {include the vertices of the adjoins}
-            for m := 0 to SC_MULTIS.Count - 1 do
-              begin
-               TheSector := TSector(MAP_SEC.Objects[StrToInt(Copy(SC_MULTIS[m],1,4))]);
-               for i := 0 to TheSector.Wl.Count - 1 do
-                begin
-                 TheWall := TWall(TheSector.Wl.Objects[i]);
-                 if TheWall.Adjoin <> -1 then
-                  begin
-                   TheSector2  := TSector(MAP_SEC.Objects[TheWall.Adjoin]);
-                   TheWall2    := TWall(TheSector2.Wl.Objects[TheWall.Mirror]);
-                   TheVertex   := TVertex(TheSector2.Vx.Objects[TheWall2.left_vx]);
-                   TheVertex.Mark := 1;
-                   TheVertex   := TVertex(TheSector2.Vx.Objects[TheWall2.right_vx]);
-                   TheVertex.Mark := 1;
-                  end;
-                end;
-              end;
-            {include the vertices of the adjoins of the selection}
-            TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
-            for i := 0 to TheSector.Wl.Count - 1 do
-             begin
-              TheWall := TWall(TheSector.Wl.Objects[i]);
-               if TheWall.Adjoin <> -1 then
-                begin
-                 TheSector2     := TSector(MAP_SEC.Objects[TheWall.Adjoin]);
-                 TheWall2       := TWall(TheSector2.Wl.Objects[TheWall.Mirror]);
-                 TheVertex      := TVertex(TheSector2.Vx.Objects[TheWall2.left_vx]);
-                 TheVertex.Mark := 1;
-                 TheVertex      := TVertex(TheSector2.Vx.Objects[TheWall2.right_vx]);
-                 TheVertex.Mark := 1;
-                end;
-              end;
-
-            {process the marked VXs}
-            for i := 0 to MAP_SEC.Count - 1 do
-             begin
-              TheSector := TSector(MAP_SEC.Objects[i]);
-              for j := 0 to TheSector.Vx.Count - 1 do
+            if SC_MULTIS.Count = 0 then
                begin
-                TheVertex      := TVertex(TheSector.Vx.Objects[j]);
-                if TheVertex.Mark = 1 then
-                 begin
-                  TheVertex.X := TheVertex.X + x;
-                  TheVertex.Z := TheVertex.Z + z;
-                 end;
+                 TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
+                 for i := 0 to TheSector.Vx.Count - 1 do
+                    DO_TranslateVertex(SC_HILITE, i, x,z );
                end;
-             end;
+
           end;
   MM_WL : begin
+
             {include the multiselection and its mirrors}
             for m := 0 to WL_MULTIS.Count - 1 do
               begin
-               TheSector      := TSector(MAP_SEC.Objects[StrToInt(Copy(WL_MULTIS[m],1,4))]);
+               SectorID       := StrToInt(Copy(WL_MULTIS[m],1,4));
+               TheSector      := TSector(MAP_SEC.Objects[SectorID]);
                TheWall        := TWall(TheSector.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
-               TheVertex      := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
-               TheVertex.Mark := 1;
-               TheVertex      := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
-               TheVertex.Mark := 1;
-               if TheWall.Adjoin <> -1 then
-                begin
-                 TheSector2  := TSector(MAP_SEC.Objects[TheWall.Adjoin]);
-                 TheWall2    := TWall(TheSector2.Wl.Objects[TheWall.Mirror]);
-                 TheVertex   := TVertex(TheSector2.Vx.Objects[TheWall2.left_vx]);
-                 TheVertex.Mark := 1;
-                 TheVertex   := TVertex(TheSector2.Vx.Objects[TheWall2.right_vx]);
-                 TheVertex.Mark := 1;
-                end;
+
+               DO_TranslateVertex(SectorID, TheWall.left_vx, x,z);
+               DO_TranslateVertex(SectorID, TheWall.right_vx, x,z);
+               if not ShowCaseModSC.ContainsInt(SectorID) then ShowCaseModSC.put(SectorID);
               end;
-            {include the selection and its mirrors}
-            TheSector      := TSector(MAP_SEC.Objects[SC_HILITE]);
-            TheWall        := TWall(TheSector.Wl.Objects[WL_HILITE]);
-            TheVertex      := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
-            TheVertex.Mark := 1;
-            TheVertex      := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
-            TheVertex.Mark := 1;
-            if TheWall.Adjoin <> -1 then
-             begin
-              TheSector2  := TSector(MAP_SEC.Objects[TheWall.Adjoin]);
-              TheWall2    := TWall(TheSector2.Wl.Objects[TheWall.Mirror]);
-              TheVertex   := TVertex(TheSector2.Vx.Objects[TheWall2.left_vx]);
-              TheVertex.Mark := 1;
-              TheVertex   := TVertex(TheSector2.Vx.Objects[TheWall2.right_vx]);
-              TheVertex.Mark := 1;
-             end;
-            {process the marked VXs}
-            for i := 0 to MAP_SEC.Count - 1 do
-             begin
-              TheSector := TSector(MAP_SEC.Objects[i]);
-              for j := 0 to TheSector.Vx.Count - 1 do
-               begin
-                TheVertex      := TVertex(TheSector.Vx.Objects[j]);
-                if TheVertex.Mark = 1 then
-                 begin
-                  TheVertex.X := TheVertex.X + x;
-                  TheVertex.Z := TheVertex.Z + z;
-                 end;
-               end;
-             end;
+
+            if WL_MULTIS.Count = 0 then
+              begin
+                 TheSector      := TSector(MAP_SEC.Objects[SC_HILITE]);
+                 TheWall        := TWall(TheSector.Wl.Objects[WL_HILITE]);
+                 DO_TranslateVertex(SC_HILITE, TheWall.left_vx, x,z);
+                 DO_TranslateVertex(SC_HILITE, TheWall.right_vx, x,z);
+              end;
+
           end;
   MM_VX : begin
+
+            // Handle Multi  - modern rewrite
             for m := 0 to VX_MULTIS.Count - 1 do
               begin
-               TheSector := TSector(MAP_SEC.Objects[StrToInt(Copy(VX_MULTIS[m],1,4))]);
-               TheVertex := TVertex(TheSector.Vx.Objects[StrToInt(Copy(VX_MULTIS[m],5,4))]);
-               TheVertex.X := TheVertex.X + x;
-               TheVertex.Z := TheVertex.Z + z;
+               SectorID := StrToInt(Copy(VX_MULTIS[m],1,4));
+               TheSector := TSector(MAP_SEC.Objects[SectorID]);
+               if not ShowCaseModSC.ContainsInt(SectorID) then ShowCaseModSC.put(SectorID);
+               VXID := StrToInt(Copy(VX_MULTIS[m],5,4));
+               DO_TranslateVertex(SectorID, VXID, x,z);
               end;
-            {if sel not in multisel then process it}
-            if VX_MULTIS.IndexOf(Format('%4d%4d', [SC_HILITE, VX_HILITE])) = - 1 then
-             begin
-              TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
-              TheVertex := TVertex(TheSector.Vx.Objects[VX_HILITE]);
-              TheVertex.X := TheVertex.X + x;
-              TheVertex.Z := TheVertex.Z + z;
-             end;
+
+           if VX_MULTIS.Count = 0 then
+             DO_TranslateVertex(SC_HILITE, VX_HILITE, x,z);
           end;
   MM_OB : begin
             for m := 0 to OB_MULTIS.Count - 1 do
@@ -1229,7 +1543,10 @@ begin
           end;
  END;
 
-MODIFIED := TRUE;
+  // Update Marked ones
+ if MAP_MODE <> MM_OB then DO_ProcessMarkedVX(x,z);
+
+ MODIFIED := TRUE;
 end;
 
 procedure DO_Select_In_Rect;
@@ -1429,10 +1746,11 @@ begin
    end;
 end;
 
-procedure DO_Find_PlayerStart;
+function DO_Find_PlayerStart(update_player : boolean = true) : Integer;
 var TheObject : TOB;
     o,s       : Integer;
 begin
+ RESULT := -1;
  for o := 0 to MAP_OBJ.Count - 1 do
    begin
     TheObject := TOB(MAP_OBJ.Objects[o]);
@@ -1441,11 +1759,16 @@ begin
       begin
        if Pos('EYE:', UpperCase(TheObject.Seq[s])) <> 0 then
         begin
-         OB_HILITE := o;
-         DO_Fill_ObjectEditor;
-         MapWindow.SetXOffset(Round(TheObject.X));
-         MapWindow.SetZOffset(Round(TheObject.Z));
-         MapWindow.Map.Invalidate;
+         if update_player then
+           begin
+             OB_HILITE := o;
+             DO_Fill_ObjectEditor;
+             MapWindow.SetXOffset(Round(TheObject.X));
+             MapWindow.SetZOffset(Round(TheObject.Z));
+             MapWindow.Map.Invalidate;
+           end
+         else
+           RESULT :=  o;
          break;
         end;
       end;
@@ -2084,6 +2407,193 @@ begin
 
 end;
 
+procedure UpdateShowCase;
+var
+  client: TRESTClient;
+  request: TRESTRequest;
+  response: TCustomRESTResponse;
+  i : integer;
+  errmsg ,
+  TheGob ,
+  LevPath,
+  ShowCaseStr,
+  secidstr,
+  obidstr : string;
+  secid,
+  objid : integer;
+  tmp : array[0..255] of char;
+  PayLoad,
+  Sectors,
+  Objects : TJson;
+  SkipConnect : Boolean;
+begin
+  if (IGNORE_UNDO) or (UseShowCase <> True) or (IGNORE_SHOWCASE) then exit;
+
+  PayLoad := TJson.Create;
+  Sectors := TJson.Create;
+  Objects := TJson.Create;
+
+  TheGob := DarkInst + '\' + ChangeFileExt(ExtractFileName(PROJECTFile),'_SHOWCASE.GOB');
+  LevPath :=  LEVELName;
+
+
+  if not ProcessRunning('Dark Forces Showcase.exe') and not SHOWCASE_DEBUG then
+   CASE Application.MessageBox('Dark Forces Showcase is not running. Level may not render due to file lock. Do you want to start it?',
+                                   'Continue ',
+                                   mb_YesNoCancel or mb_IconQuestion) OF
+       idYes    : Preview_3D_Level;
+       idNo     : exit;
+       idCancel : exit;
+      END;
+
+  //  GOB it if you are resetting
+  if ShowCaseReset then
+    begin
+      log.info('Resetting 3D Renderer with for GOB ' + TheGOB, LogName);
+      PayLoad.put('Reset', True);
+      GOB_CreateEmpty(TheGob);
+      GOB_Folder(LEVELPath, TheGOB);
+      ShowCaseReset := False;
+    end;
+
+    if ShowCaseCameraReset then
+      begin
+        ShowCaseCameraReset := False;
+        PayLoad.put('UpdateCamera','True');
+      end;
+
+  PayLoad.put('GOBPath', TheGob);
+  PayLoad.put('LEVPath', LevPath);
+
+  // Sectors Walls and Vertices
+  if MAP_MODE <> MM_OB then
+    begin
+
+      // Handle Multiselection
+      if (SC_MULTIS.Count > 1) then
+        begin
+          for i := 0 to SC_MULTIS.Count - 1 do
+            begin
+              secid := StrToInt(Copy(SC_MULTIS[i],1,4));
+              if not ShowCaseModSC.ContainsInt(secid) then
+                 ShowCaseModSC.put(secid);
+            end;
+        end
+      else
+        if (not ShowCaseDelSC.ContainsInt(SC_HILITE) and not ShowCaseModSC.ContainsInt(SC_HILITE)) then
+          Sectors.Put(IntToStr(SC_HILITE), SerializeSector(SC_HILITE));
+
+      // Handle Modded Adjoins (things not specifically selected
+      if ShowCaseModSC.Count > 0 then
+         begin
+           for i := 0 to ShowCaseModSC.Count - 1 do
+            begin
+              secid    := ShowCaseModSC.Items[i].AsInteger;
+              secidstr := IntToStr(secid);
+
+              // Don't Accidentally try to add sectors that don't are deleted
+              if (not ShowCaseDelSC.ContainsInt(secid) and
+                 (MAP_SEC.count > secid)) then
+                 begin
+                   ShowCaseStr := SerializeSector(secid);
+                   Sectors.Put(secidstr, ShowCaseStr );
+                 end;
+            end;
+         end;
+
+      PayLoad.Put('Sectors', Sectors.Stringify);
+      PayLoad.Put('SectorsDel', ShowCaseDelSC.Stringify);
+    end;
+
+  // Objects
+  if MAP_MODE = MM_OB then
+    begin
+      if (OB_MULTIS.Count > 1) then
+        begin
+          for i := 0 to OB_MULTIS.Count - 1 do
+            begin
+              obidstr := Copy(OB_MULTIS[i],5,4);
+              objid := StrToInt(obidstr);
+
+              // Don't Accidentally try to add objects that don't are deleted
+              if (not ShowCaseDelOB.ContainsInt(objid) and
+                  (MAP_OBJ.count > objid)) then
+                begin
+                  ShowCaseStr := SerializeObject(objid);
+                  Objects.Put(obidstr, ShowCaseStr );
+                end;
+            end;
+        end
+      else
+        if (not ShowCaseDelOB.ContainsInt(OB_HILITE)) then
+          Objects.Put(IntToStr(OB_HILITE), SerializeObject(OB_HILITE));
+
+      PayLoad.Put('Objects', Objects.Stringify);
+      PayLoad.Put('ObjectsDel', ShowCaseDelOB.Stringify);
+    end;
+
+
+  // Send Request to ShowCase
+  client := TRESTClient.Create(nil);
+  try
+    SkipConnect := False;
+
+    while not SkipConnect do
+      begin
+        client.BaseURL := 'http://localhost:' + IntToStr(ShowCasePort) + '/';
+        //log.Info('Connecting with port ' +  IntToStr(ShowCasePort), LogName );
+        errmsg := 'Failed to contact the Showcase on port ' +  IntToStr(ShowCasePort);
+        try
+          request := TRESTRequest.Create(nil);
+          request.Timeout := 1;
+          try
+            request.Client := client;
+            request.Method := rmPOST;
+            request.AddParameter('Payload', PayLoad.Stringify, pkREQUESTBODY);
+            request.Execute;
+            response := request.Response;
+            if not response.Status.Success then
+            begin
+              log.Info(errmsg, LogName);
+              ShowMessage(errmsg);
+            end
+            else
+              begin
+                SkipConnect := True;
+                break;
+              end;
+          except
+            on Exception do
+             begin
+              log.Info(errmsg, LogName);
+              strPcopy(tmp, 'Could not connect to 3D Preview on port ' + IntToStr(ShowCasePort) +
+                                          '. Abandon Attempt?');
+              CASE Application.MessageBox(tmp, 'ShowCase Connect Error', mb_YesNo or mb_IconQuestion) OF
+               idNo    : begin
+                            request.Free;
+                         end;
+               idYes   : begin
+                            UseShowCase := False;
+                            if (MAP_MODE = MM_OB) then ShowCaseDelOB.Clear;
+                            if (MAP_MODE = MM_SC) then ShowCaseDelSC.Clear;
+                            ShowCaseModSC.Clear;
+                            exit;
+                          end;
+              END;
+             end
+          end;
+        finally
+        end;
+      end;
+  finally
+    if (MAP_MODE = MM_OB) then ShowCaseDelOB.Clear;
+    if (MAP_MODE = MM_SC) then ShowCaseDelSC.Clear;
+    ShowCaseModSC.Clear;
+    client.Free;
+    ShowCasePort := ShowCasePortBase;
+  end;
+end;
+
 procedure DO_StoreUndo;
 var i,j,k     : Integer;
     TheSector : TSector;
@@ -2099,151 +2609,171 @@ begin
  { DO_FreeUndo;}
  if IGNORE_UNDO = True then exit;
 
-
- { If you UNDO a few times and then make a STORE operation
-  Wipe the UNDO history to the RIGHT (newer) than now }
- if (MAP_GLOBAL_UNDO.Count / 3) > MAP_GLOBAL_UNDO_INDEX  then
-    begin
-      for i := MAP_GLOBAL_UNDO_INDEX to round((MAP_GLOBAL_UNDO.Count / 3) - 1)  do
+ try
+     { If you UNDO a few times and then make a STORE operation
+      Wipe the UNDO history to the RIGHT (newer) than now }
+     if (MAP_GLOBAL_UNDO.Count / 5) > MAP_GLOBAL_UNDO_INDEX  then
         begin
-           DO_FreeUndo(MAP_GLOBAL_UNDO_INDEX);
-           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
-           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
-           MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*3);
+          for i := MAP_GLOBAL_UNDO_INDEX to round((MAP_GLOBAL_UNDO.Count / 5) - 1)  do
+            begin
+               DO_FreeUndo(MAP_GLOBAL_UNDO_INDEX);
+               MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*5);
+               MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*5);
+               MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*5);
+               MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*5);
+               MAP_GLOBAL_UNDO.Delete(MAP_GLOBAL_UNDO_INDEX*5);
+            end;
         end;
-    end;
+     MAP_SEC_UNDO := TStringList.Create;
+     MAP_OBJ_UNDO := TStringList.Create;
+     MAP_GUI_UNDO := TStringList.Create;
+     MAP_SCMULTI_UNDO := TStringList.Create;
+     MAP_OBMULTI_UNDO := TStringList.Create;
 
- MAP_SEC_UNDO := TStringList.Create;
- MAP_OBJ_UNDO := TStringList.Create;
- MAP_GUI_UNDO := TStringList.Create;
+     { Store the UI assets }
+     MAP_GUI_UNDO.CommaText := Format('MAP_MODE=%d, SC_HILITE=%d, WL_HILITE=%d, ' +
+     'VX_HILITE=%d, OB_HILITE=%d, XOffset=%d, ZOffset=%d, LAYER=%d, LAYER_MIN=%d, LAYER_MAX=%d',
+     [MAP_MODE,SC_HILITE,WL_HILITE,VX_HILITE,OB_HILITE,XOffset,ZOffset,LAYER,LAYER_MIN,LAYER_MAX]);
 
- { Store the UI assets }
- MAP_GUI_UNDO.CommaText := Format('MAP_MODE=%d, SC_HILITE=%d, WL_HILITE=%d, ' +
- 'VX_HILITE=%d, OB_HILITE=%d, XOffset=%d, ZOffset=%d, LAYER=%d, LAYER_MIN=%d, LAYER_MAX=%d',
- [MAP_MODE,SC_HILITE,WL_HILITE,VX_HILITE,OB_HILITE,XOffset,ZOffset,LAYER,LAYER_MIN,LAYER_MAX]);
-                                                                                   {                      }
+     for i := 0 to MAP_SEC.Count - 1 do
+      begin
+        TheSector := TSector(MAP_SEC.Objects[i]);
+        NewSector := TSector.Create;
 
- for i := 0 to MAP_SEC.Count - 1 do
-  begin
-    TheSector := TSector(MAP_SEC.Objects[i]);
-    NewSector := TSector.Create;
+        NewSector.Name       := TheSector.Name;
+        NewSector.Ambient    := TheSector.Ambient;
+        NewSector.Flag1      := TheSector.Flag1;
+        NewSector.Flag2      := TheSector.Flag2;
+        NewSector.Flag3      := TheSector.Flag3;
+        NewSector.Floor_Alt  := TheSector.Floor_Alt;
+        NewSector.Floor.Name := TheSector.Floor.Name;
+        NewSector.Floor.f1   := TheSector.Floor.f1;
+        NewSector.Floor.f2   := TheSector.Floor.f2;
+        NewSector.Floor.i    := TheSector.Floor.i;
+        NewSector.Ceili_Alt  := TheSector.Ceili_Alt;
+        NewSector.Ceili.Name := TheSector.Ceili.Name;
+        NewSector.Ceili.f1   := TheSector.Ceili.f1;
+        NewSector.Ceili.f2   := TheSector.Ceili.f2;
+        NewSector.Ceili.i    := TheSector.Ceili.i;
+        NewSector.Second_Alt := TheSector.Second_Alt;
+        NewSector.Layer      := TheSector.Layer;
 
-    NewSector.Name       := TheSector.Name;
-    NewSector.Ambient    := TheSector.Ambient;
-    NewSector.Flag1      := TheSector.Flag1;
-    NewSector.Flag2      := TheSector.Flag2;
-    NewSector.Flag3      := TheSector.Flag3;
-    NewSector.Floor_Alt  := TheSector.Floor_Alt;
-    NewSector.Floor.Name := TheSector.Floor.Name;
-    NewSector.Floor.f1   := TheSector.Floor.f1;
-    NewSector.Floor.f2   := TheSector.Floor.f2;
-    NewSector.Floor.i    := TheSector.Floor.i;
-    NewSector.Ceili_Alt  := TheSector.Ceili_Alt;
-    NewSector.Ceili.Name := TheSector.Ceili.Name;
-    NewSector.Ceili.f1   := TheSector.Ceili.f1;
-    NewSector.Ceili.f2   := TheSector.Ceili.f2;
-    NewSector.Ceili.i    := TheSector.Ceili.i;
-    NewSector.Second_Alt := TheSector.Second_Alt;
-    NewSector.Layer      := TheSector.Layer;
+        NewSector.Mark       := TheSector.Mark;
+        NewSector.Reserved   := TheSector.Reserved;
+        NewSector.InfItems.AddStrings(TheSector.InfItems);
+        { we don't copy the InfClasses, Elevator, Trigger, Secret !!!
+          if an undo must be made, we'll use ComputeINFClasses(SC, WL)
+          to recompute them from scratch for all sectors and walls
+        }
 
-    NewSector.Mark       := TheSector.Mark;
-    NewSector.Reserved   := TheSector.Reserved;
-    NewSector.InfItems.AddStrings(TheSector.InfItems);
-    { we don't copy the InfClasses, Elevator, Trigger, Secret !!!
-      if an undo must be made, we'll use ComputeINFClasses(SC, WL)
-      to recompute them from scratch for all sectors and walls
-    }
+        for j := 0 to TheSector.Vx.Count - 1 do
+         begin
+          TheVertex := TVertex(TheSector.Vx.Objects[j]);
+          Newvertex := TVertex.Create;
 
-    for j := 0 to TheSector.Vx.Count - 1 do
-     begin
-      TheVertex := TVertex(TheSector.Vx.Objects[j]);
-      Newvertex := TVertex.Create;
+          NewVertex.Mark := TheVertex.Mark;
+          NewVertex.X    := TheVertex.X;
+          NewVertex.Z    := TheVertex.Z;
 
-      NewVertex.Mark := TheVertex.Mark;
-      NewVertex.X    := TheVertex.X;
-      NewVertex.Z    := TheVertex.Z;
+          NewSector.Vx.AddObject('VX', NewVertex);
+         end;
 
-      NewSector.Vx.AddObject('VX', NewVertex);
+        for j := 0 to TheSector.Wl.Count - 1 do
+         begin
+          TheWall := TWall(TheSector.Wl.Objects[j]);
+          NewWall := TWall.Create;
+
+          NewWall.left_vx      := TheWall.left_vx;
+          NewWall.right_vx     := TheWall.right_vx;
+          NewWall.Adjoin       := TheWall.Adjoin;
+          NewWall.Mirror       := TheWall.Mirror;
+          NewWall.Walk         := TheWall.Walk;
+          NewWall.Light        := TheWall.Light;
+          NewWall.Flag1        := TheWall.Flag1;
+          NewWall.Flag2        := TheWall.Flag2;
+          NewWall.Flag3        := TheWall.Flag3;
+          NewWall.Mid.Name     := TheWall.Mid.Name;
+          NewWall.Mid.f1       := TheWall.Mid.f1;
+          NewWall.Mid.f2       := TheWall.Mid.f2;
+          NewWall.Mid.i        := TheWall.Mid.i;
+          NewWall.Top.Name     := TheWall.Top.Name;
+          NewWall.Top.f1       := TheWall.Top.f1;
+          NewWall.Top.f2       := TheWall.Top.f2;
+          NewWall.Top.i        := TheWall.Top.i;
+          NewWall.Bot.Name     := TheWall.Bot.Name;
+          NewWall.Bot.f1       := TheWall.Bot.f1;
+          NewWall.Bot.f2       := TheWall.Bot.f2;
+          NewWall.Bot.i        := TheWall.Bot.i;
+          NewWall.Sign.Name    := TheWall.Sign.Name;
+          NewWall.Sign.f1      := TheWall.Sign.f1;
+          NewWall.Sign.f2      := TheWall.Sign.f2;
+
+          NewWall.Mark         := TheWall.Mark;
+          NewWall.Reserved     := TheWall.Reserved;
+
+          NewWall.InfItems.AddStrings(TheWall.InfItems);
+
+          NewSector.Wl.AddObject('WL', NewWall);
+         end;
+       MAP_SEC_UNDO.AddObject('SC', NewSector);
+      end;
+
+     for i := 0 to MAP_OBJ.Count - 1 do
+      begin
+       TheObject := TOB(MAP_OBJ.Objects[i]);
+       NewObject := TOB.Create;
+
+       NewObject.ClassName := TheObject.ClassName;
+       NewObject.DataName  := TheObject.DataName;
+       NewObject.X         := TheObject.X;
+       NewObject.Y         := TheObject.Y;
+       NewObject.Z         := TheObject.Z;
+       NewObject.Yaw       := TheObject.Yaw;
+       NewObject.Pch       := TheObject.Pch;
+       NewObject.Rol       := TheObject.Rol;
+       NewObject.Diff      := TheObject.Diff;
+       NewObject.Sec       := TheObject.Sec;
+       NewObject.Col       := TheObject.Col;
+       NewObject.OType     := TheObject.OType;
+       NewObject.Special   := TheObject.Special;
+       NewObject.Mark      := TheObject.Mark;
+
+       NewObject.Seq.AddStrings(TheObject.Seq);
+       MAP_OBJ_UNDO.AddObject('OB', newObject);
+      end;
+
+      if SC_MULTIS.Count > 0 then
+         MAP_SCMULTI_UNDO.AddStrings(SC_MULTIS)
+      else
+         MAP_SCMULTI_UNDO.add(IntToStr(SC_HILITE));
+      if OB_MULTIS.Count > 0 then
+         MAP_OBMULTI_UNDO.AddStrings(OB_MULTIS)
+      else
+         MAP_OBMULTI_UNDO.Add(IntToStr(OB_HILITE));
+      MAP_GLOBAL_UNDO.Add(MAP_SEC_UNDO);
+      MAP_GLOBAL_UNDO.Add(MAP_OBJ_UNDO);
+      MAP_GLOBAL_UNDO.Add(MAP_GUI_UNDO);
+      MAP_GLOBAL_UNDO.Add(MAP_SCMULTI_UNDO);
+      MAP_GLOBAL_UNDO.Add(MAP_OBMULTI_UNDO);
+
+      // Trim the excess if past the limit.
+      if (MAP_GLOBAL_UNDO.Count / 5) >= UNDO_LIMIT  then
+        begin
+          DO_FreeUndo(0);
+          MAP_GLOBAL_UNDO.Delete(0);
+          MAP_GLOBAL_UNDO.Delete(0);
+          MAP_GLOBAL_UNDO.Delete(0);
+          MAP_GLOBAL_UNDO.Delete(0);
+          MAP_GLOBAL_UNDO.Delete(0);
+        end
+      else
+        MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX + 1;
+   except on E: Exception do
+        // So you don't go into a crash loop
+        begin
+          HandleException('Failed to Store Undo', E);
+        end;
      end;
-
-    for j := 0 to TheSector.Wl.Count - 1 do
-     begin
-      TheWall := TWall(TheSector.Wl.Objects[j]);
-      NewWall := TWall.Create;
-
-      NewWall.left_vx      := TheWall.left_vx;
-      NewWall.right_vx     := TheWall.right_vx;
-      NewWall.Adjoin       := TheWall.Adjoin;
-      NewWall.Mirror       := TheWall.Mirror;
-      NewWall.Walk         := TheWall.Walk;
-      NewWall.Light        := TheWall.Light;
-      NewWall.Flag1        := TheWall.Flag1;
-      NewWall.Flag2        := TheWall.Flag2;
-      NewWall.Flag3        := TheWall.Flag3;
-      NewWall.Mid.Name     := TheWall.Mid.Name;
-      NewWall.Mid.f1       := TheWall.Mid.f1;
-      NewWall.Mid.f2       := TheWall.Mid.f2;
-      NewWall.Mid.i        := TheWall.Mid.i;
-      NewWall.Top.Name     := TheWall.Top.Name;
-      NewWall.Top.f1       := TheWall.Top.f1;
-      NewWall.Top.f2       := TheWall.Top.f2;
-      NewWall.Top.i        := TheWall.Top.i;
-      NewWall.Bot.Name     := TheWall.Bot.Name;
-      NewWall.Bot.f1       := TheWall.Bot.f1;
-      NewWall.Bot.f2       := TheWall.Bot.f2;
-      NewWall.Bot.i        := TheWall.Bot.i;
-      NewWall.Sign.Name    := TheWall.Sign.Name;
-      NewWall.Sign.f1      := TheWall.Sign.f1;
-      NewWall.Sign.f2      := TheWall.Sign.f2;
-
-      NewWall.Mark         := TheWall.Mark;
-      NewWall.Reserved     := TheWall.Reserved;
-
-      NewWall.InfItems.AddStrings(TheWall.InfItems);
-
-      NewSector.Wl.AddObject('WL', NewWall);
-     end;
-   MAP_SEC_UNDO.AddObject('SC', NewSector);
-  end;
-
- for i := 0 to MAP_OBJ.Count - 1 do
-  begin
-   TheObject := TOB(MAP_OBJ.Objects[i]);
-   NewObject := TOB.Create;
-
-   NewObject.ClassName := TheObject.ClassName;
-   NewObject.DataName  := TheObject.DataName;
-   NewObject.X         := TheObject.X;
-   NewObject.Y         := TheObject.Y;
-   NewObject.Z         := TheObject.Z;
-   NewObject.Yaw       := TheObject.Yaw;
-   NewObject.Pch       := TheObject.Pch;
-   NewObject.Rol       := TheObject.Rol;
-   NewObject.Diff      := TheObject.Diff;
-   NewObject.Sec       := TheObject.Sec;
-   NewObject.Col       := TheObject.Col;
-   NewObject.OType     := TheObject.OType;
-   NewObject.Special   := TheObject.Special;
-   NewObject.Mark      := TheObject.Mark;
-
-   NewObject.Seq.AddStrings(TheObject.Seq);
-   MAP_OBJ_UNDO.AddObject('OB', newObject);
-  end;
-
-  MAP_GLOBAL_UNDO.Add(MAP_SEC_UNDO);
-  MAP_GLOBAL_UNDO.Add(MAP_OBJ_UNDO);
-  MAP_GLOBAL_UNDO.Add(MAP_GUI_UNDO);
-
-  // Trim the excess if past the limit.
-  if (MAP_GLOBAL_UNDO.Count / 3) >= UNDO_LIMIT  then
-    begin
-      DO_FreeUndo(0);
-      MAP_GLOBAL_UNDO.Delete(0);
-      MAP_GLOBAL_UNDO.Delete(0);
-      MAP_GLOBAL_UNDO.Delete(0);
-    end
-  else
-    MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX + 1;
 
 end;
 
@@ -2258,7 +2788,7 @@ begin
   if (UndoIndex = -1) then
     begin
       start := 0;
-      stop := Trunc(MAP_GLOBAL_UNDO.Count/3)- 1;
+      stop := Trunc(MAP_GLOBAL_UNDO.Count/5)- 1;
     end
   else
     begin
@@ -2268,9 +2798,11 @@ begin
 
   for k:=start to stop do
     begin
-        MAP_SEC_UNDO := MAP_GLOBAL_UNDO[k*3];
-        MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[k*3+1];
-        MAP_GUI_UNDO := MAP_GLOBAL_UNDO[k*3+2];
+        MAP_SEC_UNDO := MAP_GLOBAL_UNDO[k*5];
+        MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[k*5+1];
+        MAP_GUI_UNDO := MAP_GLOBAL_UNDO[k*5+2];
+        MAP_SCMULTI_UNDO := MAP_GLOBAL_UNDO[k*5+3];
+        MAP_OBMULTI_UNDO := MAP_GLOBAL_UNDO[k*5+4];
 
         for i := 0 to MAP_SEC_UNDO.Count - 1 do
          begin
@@ -2292,6 +2824,13 @@ begin
        MAP_SEC_UNDO.Free;
        MAP_OBJ_UNDO.Free;
        MAP_GUI_UNDO.Free;
+       MAP_SCMULTI_UNDO.Free;
+       MAP_OBMULTI_UNDO.Free;
+       MAP_GLOBAL_UNDO[k*5].clear;
+       MAP_GLOBAL_UNDO[k*5+1].clear;
+       MAP_GLOBAL_UNDO[k*5+2].clear;
+       MAP_GLOBAL_UNDO[k*5+3].clear;
+       MAP_GLOBAL_UNDO[k*5+4].clear;
     end;
 
   // Wipe everything
@@ -2302,12 +2841,13 @@ begin
     end;
 end;
 
-{ FOR DEBUGGING - REMOVE THIS FOR RELEASE }
+{ FOR DEBUGGING - REMOVE THIS FOR RELEASE } // <-- LOL ..two years later...
 procedure DEBUG_UNDO;
 var debugstr : string;
     i,j : Integer;
     tmpSector : TSector;
     arrowsuffix : String;
+    tmpstr : String;
     foundIdx : boolean;
     endloop : integer;
 begin
@@ -2315,27 +2855,19 @@ begin
              + inttostr(MAP_GLOBAL_UNDO_INDEX) + ' --> ' + EOL;
 
  foundIdx := False;
- endloop := round(MAP_GLOBAL_UNDO.Count/3)-1;
+ endloop := round(MAP_GLOBAL_UNDO.Count/5)-1;
  log.Info('endloop = ' + inttostr(endloop), logName);
- for i := 0 to endloop do
+ tmpstr := '';
+ for i := 0 to MAP_GLOBAL_UNDO_INDEX-1 do
   begin
-   j := MAP_GLOBAL_UNDO[i*3].count;
-   tmpSector := TSector(MAP_GLOBAL_UNDO[i*3].Objects[0]);
-   arrowsuffix := '';
-   if i = MAP_GLOBAL_UNDO_INDEX then
-    begin
-      arrowsuffix := ' <---IDX';
-      foundIdx := True;
-    end;
-
-   debugstr := debugstr + 'index = ' + inttostr(i) + ': Num Sec = ' + inttostr(j)
-     + ' first sector name = ' + tmpSector.name + ',' + arrowsuffix + EOL;
+    showmessage('SC=[' + MAP_GLOBAL_UNDO[i*5].CommaText + ']');
+    showmessage('OB=[' + MAP_GLOBAL_UNDO[i*5+1].CommaText + ']');
+    showmessage('GUI=[' + MAP_GLOBAL_UNDO[i*5+2].CommaText + ']');
+    showmessage('SCMULTIS=[' + MAP_GLOBAL_UNDO[i*5+3].CommaText + ']');
+    showmessage('OBMULTIS=[' + MAP_GLOBAL_UNDO[i*5+4].CommaText + ']');
   end;
 
-  if not foundIdx then
-    debugstr := debugstr + arrowsuffix + ' END';
 
-  showmessage(debugstr);
 end;
 
 { Reversing an Undo means a Redo }
@@ -2352,6 +2884,7 @@ var i,j,k     : Integer;
     Stopwatch: TStopwatch;
     Elapsed: TTimeSpan;
     TimerStr : String;
+    MultiStrList : String;
 begin
  if ((MAP_GLOBAL_UNDO_INDEX = 0) and (Not reverse)) then
   begin
@@ -2369,7 +2902,7 @@ begin
  if not reverse then
    begin
 
-    if (MAP_GLOBAL_UNDO.Count / 3) = MAP_GLOBAL_UNDO_INDEX then
+    if (MAP_GLOBAL_UNDO.Count / 5) = MAP_GLOBAL_UNDO_INDEX then
      begin
       Do_StoreUndo;
       MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
@@ -2380,14 +2913,14 @@ begin
    otherwise jump ahead into the Undo array and retrieve state }
  if reverse = True then
   begin
-   if MAP_GLOBAL_UNDO.Count / 3 <= MAP_GLOBAL_UNDO_INDEX + 1  then
+   if MAP_GLOBAL_UNDO.Count / 5 <= MAP_GLOBAL_UNDO_INDEX + 1  then
     begin
 
      showmessage('You cannot Redo this command. You are the end of the Undo List');
      exit;
     end
   else
-    MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX  + 2;
+    MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX  + 2 ;
  end;
 
  {first, empty the MAP completely}
@@ -2414,14 +2947,24 @@ begin
  TimerStr :=  TimerStr + 'Done Empty:' + FormatDateTime('hh:nn:ss.zzz', Time) + AnsiString(#13#10);
  MAP_SEC.Free;
  MAP_OBJ.Free;
+ SC_MULTIS.Clear;
+ OB_MULTIS.Clear;
  MAP_SEC := TStringList.Create;
  MAP_OBJ := TStringList.Create;
 
  { LOAD the UNDO Lists from the Global Mapper }
 
- MAP_SEC_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3];
- MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+1];
- MAP_GUI_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*3+2];
+ MAP_SEC_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*5];
+ MAP_OBJ_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*5+1];
+ MAP_GUI_UNDO := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*5+2];
+ MAP_SCMULTI_UNDO  := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*5+3];
+ MAP_OBMULTI_UNDO  := MAP_GLOBAL_UNDO[(MAP_GLOBAL_UNDO_INDEX-1)*5+4];
+
+ SC_MULTIS.AddStrings(MAP_SCMULTI_UNDO);
+ OB_MULTIS.AddStrings(MAP_OBMULTI_UNDO);
+
+
+
  MAP_GLOBAL_UNDO_INDEX := MAP_GLOBAL_UNDO_INDEX - 1;
 
  for i := 0 to MAP_SEC_UNDO.Count - 1 do
@@ -2543,6 +3086,11 @@ begin
  LAYER_MIN   := StrToInt(MAP_GUI_UNDO.Values['LAYER_MIN']);
  LAYER_MAX   := StrToInt(MAP_GUI_UNDO.Values['LAYER_MAX']);
 
+ // Fix hilights during multiselections
+ if MAP_SEC.Count <= SC_HILITE then SC_HILITE := MAP_SEC.Count-1;
+ if MAP_OBJ.Count <= OB_HILITE then OB_HILITE := MAP_OBJ.Count-1;
+
+
  {then recompute the INFClasses
   the following two lines are mandatory because ComputeINFClasses
   does update the sector/wall editor, so we must be sure there is
@@ -2550,7 +3098,6 @@ begin
 
   // To prevent full INF recalculation
   APPLYING_UNDO := True;
-
   for i := 0 to MAP_SEC.Count - 1 do
    begin
     TheSector := TSector(MAP_SEC.Objects[i]);
@@ -2563,7 +3110,6 @@ begin
        ComputeInfClasses(i, j);
      end;
    end;
-
   APPLYING_UNDO := FALSE;
 
  TimerStr :=  TimerStr + 'Done INF/Highlights:' + FormatDateTime('hh:nn:ss.zzz', Time) + AnsiString(#13#10);
@@ -2583,6 +3129,8 @@ begin
 
  {this will ensure multisels are cleared, and the editors
   refreshed correctly, as well as repaint the map.}
+ if UseShowCase then
+     MapWindow.ToolsResetShowCaseClick(NIL);
  DO_Clear_MultiSel;
  Elapsed := Stopwatch.Elapsed;
  MODIFIED := True;
@@ -2646,6 +3194,226 @@ begin
     end;
     Log.Info('Done Copying to ClipBoard', LogName);
 end;
+
+
+
+{ New Serialization for ShowCase }
+function SerializeSector(sc : Integer) : string;
+var i,j,k     : Integer;
+    TheSector : TSector;
+    TheWall   : TWall;
+    TheVertex : TVertex;
+    SecJson,
+    VertexJson,
+    TextureJson,
+    Position,
+    WallJson : TJSONObject;
+    Walls : TJSONArray;
+    a : TJsonPair;
+begin
+
+    SecJson := TJsonObject.Create();
+    TheSector := TSector(MAP_SEC.Objects[sc]);
+
+    // Base SC Properties
+    SecJson.AddPair('Name', TheSector.Name);
+    SecJson.AddPair('LightLevel', IntToStr(TheSector.Ambient));
+    SecJson.AddPair('AltY', PosTrim(-1*TheSector.Second_Alt));
+    SecJson.AddPair('Flags', IntToStr(TheSector.Flag1));
+    SecJson.AddPair('UnusuedFlags2', IntToStr(TheSector.Flag2));
+    SecJson.AddPair('AltLightLevel', IntToStr(TheSector.Flag3));
+    SecJson.AddPair('Layer', IntToStr(TheSector.Layer));
+
+    // Floor
+    TextureJson := TJsonObject.Create();
+    Position := TJsonObject.Create();
+    TextureJson.AddPair('Y', PosTrim(-1*TheSector.Floor_Alt));
+    TextureJson.AddPair('TextureFile', TheSector.Floor.Name);
+    TextureJson.AddPair('TextureUnknown',IntToStr(TheSector.Floor.i));
+
+    Position.AddPair('X', PosTrim(TheSector.Floor.f1));
+    Position.AddPair('Y', PosTrim(-1*TheSector.Floor.f2));
+    TextureJson.AddPair('TextureOffset', Position);
+    SecJson.AddPair('Floor', TextureJson);
+
+
+    // Ceiling
+    TextureJson := TJsonObject.Create();
+    Position := TJsonObject.Create();
+    TextureJson.AddPair('Y', PosTrim(-1*TheSector.Ceili_Alt));
+    TextureJson.AddPair('TextureFile', TheSector.Ceili.Name);
+    TextureJson.AddPair('TextureUnknown',IntToStr(TheSector.Floor.i));
+
+    Position.AddPair('X', PosTrim(TheSector.Ceili.f1));
+    Position.AddPair('Y', PosTrim(-1*TheSector.Ceili.f2));
+    TextureJson.AddPair('TextureOffset', Position);
+    SecJson.AddPair('Ceiling', TextureJson);
+
+
+
+    // Walls
+    Walls := TJSONArray.Create;
+
+    for j := 0 to TheSector.Wl.Count - 1 do
+      begin
+
+
+        WallJson := TJSONObject.Create();
+        TheWall := TWall(TheSector.Wl.Objects[j]);
+
+        // Left Vertex
+        VertexJson := TJsonObject.Create();
+        Position := TJSONObject.Create();
+        TheVertex := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
+        Position.AddPair('X', PosTrim(TheVertex.X));
+        Position.AddPair('Y', PosTrim(TheVertex.Z));
+        VertexJson.AddPair('Position', Position);
+        WallJson.AddPair('LeftVertex', VertexJson);
+
+        // Right Vertex
+        VertexJson := TJsonObject.Create();
+        Position := TJSONObject.Create();
+        TheVertex := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
+        Position.AddPair('X', PosTrim(TheVertex.X));
+        Position.AddPair('Y', PosTrim(TheVertex.Z));
+        VertexJson.AddPair('Position', Position);
+        WallJson.AddPair('RightVertex', VertexJson);
+
+
+        // Mid Texture
+        TextureJson := TJSONObject.Create();
+        Position := TJSONObject.Create();
+        TextureJson.AddPair('TextureFile', TheWall.Mid.Name);
+        TextureJson.AddPair('TextureUnknown', IntToStr(TheWall.Mid.i));
+
+        Position.AddPair('X', PosTrim(TheWall.Mid.f1));
+        Position.AddPair('Y', PosTrim(TheWall.Mid.f2));
+        TextureJson.AddPair('TextureOffset', Position);
+        WallJson.AddPair('MainTexture', TextureJson);
+
+         // Top Texture
+        TextureJson := TJSONObject.Create();
+        Position := TJSONObject.Create();
+        TextureJson.AddPair('TextureFile', TheWall.Top.Name);
+        TextureJson.AddPair('TextureUnknown', IntToStr(TheWall.Top.i));
+
+        Position.AddPair('X', PosTrim(TheWall.Top.f1));
+        Position.AddPair('Y', PosTrim(TheWall.Top.f2));
+        TextureJson.AddPair('TextureOffset', Position);
+        WallJson.AddPair('TopEdgeTexture', TextureJson);
+
+
+        // Bot Texture
+        TextureJson := TJSONObject.Create();
+        Position := TJSONObject.Create();
+        TextureJson.AddPair('TextureFile', TheWall.Bot.Name);
+        TextureJson.AddPair('TextureUnknown', IntToStr(TheWall.Bot.i));
+
+        Position.AddPair('X', PosTrim(TheWall.Bot.f1));
+        Position.AddPair('Y', PosTrim(TheWall.Bot.f2));
+        TextureJson.AddPair('TextureOffset', Position);
+        WallJson.AddPair('BottomEdgeTexture', TextureJson);
+
+
+        // Sign Texture
+        TextureJson := TJSONObject.Create();
+        Position := TJSONObject.Create();
+        TextureJson.AddPair('TextureFile', TheWall.sign.Name);
+        TextureJson.AddPair('TextureUnknown', IntToStr(TheWall.sign.i));
+
+        Position.AddPair('X', PosTrim(TheWall.sign.f1));
+        Position.AddPair('Y', PosTrim(TheWall.sign.f2));
+        TextureJson.AddPair('TextureOffset', Position);
+        WallJson.AddPair('SignTexture', TextureJson);
+
+        // Wall Properties
+        WallJson.AddPair('TextureAndMapFlags', IntToStr(TheWall.Flag1));
+        WallJson.AddPair('UnusuedFlags2', IntToStr(TheWall.Flag2));
+        WallJson.AddPair('AdjoinFlags', IntToStr(TheWall.Flag3));
+        WallJson.AddPair('LightLevel', IntToStr(TheWall.Light));
+        walljson.tostring;
+
+        // Hack Adjoin (sector + wall)
+        WallJson.AddPair('Adjoin', IntToStr(TheWall.Adjoin ));
+        WallJson.AddPair('Mirror', IntToStr(TheWall.Mirror ));
+        Walls.AddElement(WallJson);
+      end;
+
+    SecJson.AddPair('Walls', Walls);
+    Result := SecJson.toString;
+
+
+
+    {   // UNUSED
+    SecJson.put('NewSector.Secret',TheSector.Secret);
+    SecJson.put('NewSector.Mark',TheSector.Mark);
+    SecJson.put('NewSector.Reserved',TheSector.Reserved);
+    SecJson.put('NewSector.InfItems',TheSector.InfItems.DelimitedText);
+    }
+
+end;
+
+
+function  SerializeObject(ob : Integer) : string;
+var i,j,obclass     : Integer;
+    OBJson,
+    Position,
+    Angles : TJSONObject;
+    a : TJsonPair;
+    TheObject : TOB;
+    showclass : integer;
+    oblcass : string;
+    infs : TStrings;
+
+begin
+
+
+
+    OBJson := TJsonObject.Create();
+    Position := TJsonObject.Create();
+    Angles := TJsonObject.Create();
+
+    TheObject := TOB(MAP_OBJ.Objects[ob]);
+
+    if TheObject.ClassName = 'SPIRIT' then
+      showclass := 0
+    else if TheObject.ClassName = 'SAFE' then
+      showclass := 1
+    else if TheObject.ClassName = 'SPRITE' then
+      showclass := 2
+    else if TheObject.ClassName = 'FRAME' then
+      showclass := 3
+    else if TheObject.ClassName = '3D' then
+      showclass := 4
+    else if TheObject.ClassName = 'SOUND' then
+      showclass := 5;
+
+    // Base OB Properties
+    OBJson.AddPair('Type', IntToStr(showclass));
+    OBJson.AddPair('FileName', TheObject.DataName);
+    OBJson.AddPair('Difficulty', IntToStr(TheObject.Diff));
+
+    // OB Position
+    Position.AddPair('X', PosTrim(TheObject.X));
+    Position.AddPair('Y', PosTrim(-1*TheObject.Y));
+    Position.AddPair('Z', PosTrim(TheObject.Z));
+    OBJson.AddPair('Position', Position);
+
+    // Angles
+    Angles.AddPair('X', PosTrim(TheObject.Pch));
+    Angles.AddPair('Y', PosTrim(TheObject.Yaw));
+    Angles.AddPair('Z', PosTrim(TheObject.Rol));
+    OBJson.AddPair('EulerAngles', Angles);
+
+    // INF
+    //TheObject.Seq.Delimiter := '\n';
+    //TheObject.Seq.QuoteChar := #0;
+    OBJson.AddPair('Logic', TheObject.Seq.Text);
+
+    Result := OBJson.toString;
+
+end;
+
 
 procedure DO_CopyGeometry;
 var i,j,k     : Integer;
@@ -2862,6 +3630,8 @@ var i,j,k     : Integer;
     JSONPair       : TJSONPair;
     INFs           : TStringList;
     firstVX        : Boolean;
+    secname        : String;
+    secnum         : Integer;
 begin
  Log.Info('Pasting Geometry', LogName);
  SectorsJson := TJson.Create();
@@ -2872,12 +3642,13 @@ begin
  XZero     := 0;
  ZZero     := 0;
 
+
  for i := 0 to SectorsJson.Count - 1 do
    begin
      SecJson := TJSon.Create();
      SecJson.Parse(SectorsJson[IntToStr(i)].Stringify);
      NewSector := TSector.Create;
-     NewSector.Name       := SecJson['NewSector.Name'].AsString + '_' + IntToStr(Random(1000));
+     NewSector.Name       := SecJson['NewSector.Name'].AsString;
      NewSector.Ambient    := SecJson['NewSector.Ambient'].AsInteger;
      NewSector.Flag1      := SecJson['NewSector.Flag1'].AsInteger;
      NewSector.Flag2      := SecJson['NewSector.Flag2'].AsInteger;
@@ -2897,6 +3668,15 @@ begin
      NewSector.Secret     := SecJson['NewSector.Secret'].AsBoolean;
      NewSector.Mark       := SecJson['NewSector.Mark'].AsInteger;
      NewSector.Reserved   := SecJson['NewSector.Reserved'].asInteger;
+
+
+     // Ensure no dupe psector pastes
+     if (NewSector.name <> '') then
+        begin
+          NewSector.name := NewSEctor.Name + '_' + IntToStr(Random(1000));
+          if length(NewSector.Name) > 16 then
+             NewSector.name := 'NEWSECTOR_' + IntToStr(Random(1000));
+        end;
 
      { INFs}
      INFs := TStringList.Create;
@@ -3238,6 +4018,7 @@ begin
  MapWindow.Map.Invalidate;
 
  log.Info('Done Pasting Objects. Total ' + IntToStr(ObjectsJson.Count) + ' Objects', LogName );
+ UpdateShowCase;
 end;
 
 procedure DO_PasteWrapper(cursX, cursZ : Real);
@@ -3278,6 +4059,29 @@ begin
    end
  else
    raise Exception.Create('Invalid JSON. Missing Sector/Object data');
+ UpdateShowCase;
+end;
+
+procedure DO_UpdatePRJHistory;
+var i : integer;
+begin
+
+  if PRJ_History.count > 0 then
+    // Delete any instances of the same file from history to remove dupes
+   for i := 0 to PRJ_History.count -1 do
+      begin
+        if PRJ_History[i] = PROJECTFile then
+          begin
+            PRJ_History.delete(i);
+            break;
+          end
+      end;
+
+ PRJ_History.insert(0, PROJECTFile);
+
+ // Clean up anything over limit
+ if PRJ_History.count > MAX_RECENT then
+    PRJ_History.Delete(MAX_RECENT);
 end;
 
 end.

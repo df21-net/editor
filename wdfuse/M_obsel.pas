@@ -9,10 +9,12 @@ type
   TOBSelector = class(TForm)
     CBCategories: TComboBox;
     LBObjects: TListBox;
-    HiddenListBox: TListBox;
     Panel1: TPanel;
     SBCommit: TSpeedButton;
     SBRollback: TSpeedButton;
+    Label1: TLabel;
+    Label2: TLabel;
+    HiddenListBox: TListBox;
     procedure CBCategoriesChange(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure LBObjectsClick(Sender: TObject);
@@ -50,6 +52,8 @@ end;
 
 procedure TOBSelector.LBObjectsClick(Sender: TObject);
 begin
+if LBObjects.ItemIndex = -1  then LBObjects.ItemIndex := 0;
+
  OBSEL_VALUE := RTrim(Copy(LBObjects.Items[LBObjects.ItemIndex],1,12));
 end;
 

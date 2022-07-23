@@ -1,4 +1,4 @@
-                      WDfuse 2.61
+                      WDfuse 2.70
 
 
 Please visit https://df-21.net for any questions. 
@@ -25,6 +25,51 @@ DOSBOX CUSTOM SETTINGS
 
 1. WDFATA folder contains mutliple support files. If the editor cannot find your dosbox conf files
 it will fall back on the dosbox_default.conf file in that folder.feel free to edit it with your own settings.
+
+WDFUSE 2.70
+********************
+
+Projects:
+
+1. Added ability to load a list of Recent project
+2. You can now have projects longer than 8 characters long
+3. Added an option to open the project folder of the current project in explorer
+4. WDPs should now be auto-assosciated via the Options
+5. Added variable back-up limits via Options
+6. Added 100 vs 125 DPI support
+7. The Force Engine has been added as a Launch Menu in Options
+8. Added EA Origin support as an external storefront. 
+9. Added verification to project assets and added more logging when issues occur
+
+Map Editor:
+
+1. Added real-time sync with 3D Renderer 
+2. Clicking on Sector Find now updates the INF Editor as well
+3. You can now update multiple wall lengths at a time
+4. Sector Heights are now shown in the Wall Editor 
+5. BOSS and COMPLETE sectors are now different colors (controlled via Options)
+6. Normals now always show up when single-clicking on a single Wall
+7. Grid/Scale settings are now stored in the INI file
+8. Fixed an issue where some objects do not detect the sector they are in
+9. Bit values now show up in the INF Editor's event_masks
+10 You can now pan while holding ALT and left clicking
+11. Added freehand drawing of vertices while holding CTRL button
+12. Added control over object snapping (Floor/Ceiling/None) 
+13. Clicking away from objects will now auto commit (if enabled)
+14. Added support for negative Yaw values (will module to 360)
+
+Assets:
+
+1. The Asset Toolkit now loads DELT/ANIM filetypes
+2. Added WAV to VOC converters
+3. Added PAL/CMP/WAX converter tools from Jereth Kok and Oton Ribic
+
+Misc:
+
+1. Rewrote CopyFile code so now you get valid stacktrack during issues 
+2. You can now enable/disable Wall Texture modulo via Options
+3. Fixed Wall scale calculation where sometimes you could not click on walls that have small deltas (Ex: 0.01)
+
 
 WDFUSE 2.61
 ********************

@@ -1821,7 +1821,6 @@ begin
  //Ret := -1;
  INFList := TStringList.Create;
  try
-   //if not APPLYING_UNDO then
    Ret := ParseINFItems(TheINFItems, INFList, msg);
  except
   on E: Exception do
@@ -1894,11 +1893,11 @@ begin
 
  TheINFItems.Free;
  FreeINFList(INFList);
-
- if WL = -1 then
-  DO_Fill_SectorEditor
- else
-  DO_Fill_WallEditor;
+ if not APPLYING_UNDO then
+   if WL = -1 then
+    DO_Fill_SectorEditor
+   else
+    DO_Fill_WallEditor;
 
 end;
 

@@ -1,4 +1,4 @@
-program Wdfuse32;
+program wdfuse32;
 
 
 
@@ -41,7 +41,7 @@ uses
   Gobs in 'Gobs.pas' {GOBWindow},
   M_about in 'M_about.pas' {AboutBox},
   L_UTIL in 'L_UTIL.PAS',
-  LFDDIR in 'LFDDIR.PAS' {LFDDIRWindow},
+  Lfddir in 'Lfddir.pas' {LFDDIRWindow},
   LFDS in 'LFDS.PAS' {LFDWindow},
   T_INFO in 'T_INFO.PAS' {TktInfoWindow},
   T_CONVRT in 'T_CONVRT.PAS' {ConvertWindow},

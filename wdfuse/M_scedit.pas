@@ -16,8 +16,10 @@ type
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
+    Panel7: TPanel;
     PanelVXNum: TPanel;
     PanelWLnum: TPanel;
+    PanelSCHeight : TPanel;
     SBCommit: TSpeedButton;
     SBRollback: TSpeedButton;
     SCEdPopupMenu: TPopupMenu;
@@ -56,10 +58,15 @@ type
     procedure SCStayOnTopCheckBoxClick(Sender: TObject);
     procedure SCEdMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure FormKeyPress(Sender: TObject; var Key: Char);
+    procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
+    procedure UpdateTexturePos(cell_idx : integer; increment : boolean = True);
+    procedure MoveTexture(direction : Integer);
   private
     SC_MODIFIED : Boolean ;
     OrigSC : TSector;
     { Private declarations }
+    texture_type : integer;
   public
     { Public declarations }
   end;
@@ -79,10 +86,12 @@ begin
   SectorEditor.Left   := Ini.ReadInteger('WINDOWS', 'Sector Editor  X', 0);
   SectorEditor.Top    := Ini.ReadInteger('WINDOWS', 'Sector Editor  Y', 90);
   SectorEditor.Width  := Ini.ReadInteger('WINDOWS', 'Sector Editor  W', 280);
-  SectorEditor.Height := Ini.ReadInteger('WINDOWS', 'Sector Editor  H', 550);
+  SectorEditor.Height := Ini.ReadInteger('WINDOWS', 'Sector Editor  H', 566);
   OnTop               := Ini.ReadInteger('WINDOWS', 'Sector Editor  T', 1);
   ScEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Sector Editor  G', 90);
   PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Sector Editor  G', 90);
+
+  texture_type := 0;
 
   if OnTop = 0 then
    begin
@@ -142,6 +151,22 @@ begin
   Ini.WriteInteger('WINDOWS', 'Sector Editor  G', ScEd.ColWidths[0]);
 end;
 
+procedure TSectorEditor.FormKeyPress(Sender: TObject; var Key: Char);
+begin
+   if Integer(Key) = 13 then
+     SBCommitClick(NIL);
+end;
+
+// Ignore shift changes
+procedure TSectorEditor.FormShortCut(var Msg: TWMKey; var Handled: Boolean);
+var stcut : string;
+    state : integer;
+begin
+ stcut := ShortCutToText(ShortCut(Msg.CharCode, KeyDataToShiftState(Msg.KeyData)));
+ if (stcut = 'Shift+Up') or (stcut = 'Shift+Down') or (stcut = 'Shift+Left') or (stcut = 'Shift+Right') then
+    Handled := True;
+end;
+
 procedure TSectorEditor.SBOpenINFClick(Sender: TObject);
 begin
   MapWindow.SpeedButtonINFClick(Sender);
@@ -174,6 +199,16 @@ begin
       VK_HOME,
       VK_END    : SCEdDblClick(NIL);
     end;
+
+   // Move floor/ceiling
+   if Shift = [ssShift] then
+     case Key of
+      VK_RIGHT  : MoveTexture(1);
+      VK_LEFT   : MoveTexture(0);
+      VK_UP     : MoveTexture(3);
+      VK_DOWN   : MoveTexture(2);
+    end;
+
   if Shift = [ssCtrl] then
     Case Key of
       VK_LEFT   : begin
@@ -188,11 +223,26 @@ begin
                    PanelInfoLeft.Width := PanelInfoLeft.Width + 1;
                   end;
     end;
+
 end;
 
 procedure TSectorEditor.SCEdMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
+
+  // Figure out the texture type
+  with SCED do
+    case ROW of
+      5,
+      6,
+      7,
+      8:   texture_type := 0; // Floor
+      10,
+      11,
+      12,
+      13 : texture_type := 1; // Ceiling
+   end;
+
   // This is a hack to prevent refocus on own object
   if AUTOCOMMIT and (SC_MULTIS.Count = 0) then
     begin
@@ -255,6 +305,9 @@ begin
            end;
          end;
   end;
+
+  if AUTOCOMMIT and (SC_MULTIS.Count = 0) then
+    SectorEditor.SBCommitClick(NIL);
 end;
 
 procedure TSectorEditor.CBClassClick(Sender: TObject);
@@ -293,6 +346,62 @@ begin
    StayOnTop.Checked := TRUE;
    SectorEditor.FormStyle := fsStayOnTop;
   end;
+end;
+
+
+// Update the cell value
+procedure TSectorEditor.UpdateTexturePos(cell_idx : integer; increment : boolean = True);
+var AReal : Real;
+    Code : Integer;
+begin
+  with SCEd do
+    begin
+      Val(Cells[1,  cell_idx], AReal, Code);
+      if Code = 0 then
+         begin
+           if increment then
+              AReal := Areal + TEXTURE_OFFSET
+           else
+              AReal := Areal - TEXTURE_OFFSET;
+           Cells[1,  cell_idx] := PosTrim(Areal);
+         end;
+    end;
+
+end;
+
+{     Direction definition is
+
+      0 = Increase X
+      1 = Decrease X
+      2 = Increase Y
+      3 = Decrease Y
+
+      CELL OFFSETS
+      5,
+      6,
+      7,
+      8: texture_type := 0;  // floor
+      10,
+      11
+      12,
+      13 : texture_type := 1; // ceiling}
+procedure TSectorEditor.MoveTexture(direction : Integer);
+begin
+
+  case direction of
+    0 :  UpdateTexturePos(Texture_Type*5 + 7);
+    1 :  UpdateTexturePos(Texture_Type*5 + 7, False);
+    2 :  UpdateTexturePos(Texture_Type*5 + 8);
+    3 :  UpdateTexturePos(Texture_Type*5 + 8, False);
+  end;
+
+  if AUTOCOMMIT and (WL_MULTIS.Count = 0) then
+    begin
+      NO_INVALIDATE := True;
+      DO_Commit_SectorEditor;
+      UpdateShowCase;
+      NO_INVALIDATE := False;
+    end;
 end;
 
 end.

@@ -441,7 +441,7 @@ BEGIN
 
   iFont := TFont.create;
   sfont := Ini.ReadString('INF Editor2', 'Font', 'System:10:10').Split([':']);
-  ontop := Ini.ReadBool('INF Editor2', 'StayOnTop', False);
+  ontop := Ini.ReadBool('INF Editor2', 'StayOnTop', True);
 
   iFont.Name := sfont[0];
   iFont.size := StrToint(sfont[1]);

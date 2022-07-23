@@ -65,9 +65,14 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure WLEdMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure WLEdKeyPress(Sender: TObject; var Key: Char);
+    procedure UpdateTexturePos(cell_idx : integer; increment : boolean = True);
+    procedure MoveTexture(direction : Integer);
+    procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
 
   private
     { Private declarations }
+    texture_type : Integer;
   public
     { Public declarations }
   end;
@@ -90,6 +95,9 @@ begin
   WlEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Wall Editor    G', 95);
   PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Wall Editor    G', 95);
   OnTop               := Ini.ReadInteger('WINDOWS', 'Wall Editor    T', 1);
+
+  // This stores the texture type (mid/top/bot/sw)
+  texture_type := 0;
 
   if OnTop = 0 then
     begin
@@ -153,6 +161,16 @@ begin
   Ini.WriteInteger('WINDOWS', 'Wall Editor    G', WlEd.ColWidths[0]);
 end;
 
+// Ignore shift changes
+procedure TWallEditor.FormShortCut(var Msg: TWMKey; var Handled: Boolean);
+var stcut : string;
+    state : integer;
+begin
+ stcut := ShortCutToText(ShortCut(Msg.CharCode, KeyDataToShiftState(Msg.KeyData)));
+ if (stcut = 'Shift+Up') or (stcut = 'Shift+Down') or (stcut = 'Shift+Left') or (stcut = 'Shift+Right') then
+    Handled := True;
+end;
+
 procedure TWallEditor.SBOpenINFClick(Sender: TObject);
 begin
   MapWindow.SpeedButtonINFClick(Sender);
@@ -177,6 +195,13 @@ begin
  WLEd.Cells[1, 15] := WLEd.Cells[1,  7];
 end;
 
+
+procedure TWallEditor.WLEdKeyPress(Sender: TObject; var Key: Char);
+begin
+   if Integer(Key) = 13 then
+     SBCommitClick(NIL);
+end;
+
 procedure TWallEditor.WLEdKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
@@ -191,7 +216,17 @@ begin
       VK_HOME,
       VK_END    : WLEdDblClick(NIL);
     end;
+
+   if Shift = [ssShift] then
+     case Key of
+      VK_RIGHT  : MoveTexture(1);
+      VK_LEFT   : MoveTexture(0);
+      VK_UP     : MoveTexture(3);
+      VK_DOWN   : MoveTexture(2);
+    end;
+
   if Shift = [ssCtrl] then
+
     Case Key of
       VK_LEFT   : begin
                    if WlEd.ColWidths[0] > 1 then
@@ -210,6 +245,24 @@ end;
 procedure TWallEditor.WLEdMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
+   with WLED do
+
+   // Figure out the textgure type
+    case ROW of
+      7,
+      8,
+      9 : texture_type := 0;  // mid
+      11,
+      12,
+      13 : texture_type := 1; // top
+      15,
+      16,
+      17 : texture_type := 2; // bot
+      19,
+      20,
+      21 : texture_type := 3; // switch
+   end;
+
   // This is a hack to prevent refocus on own object
   // Do not autocommit multiple items as it is dangerous
   if AUTOCOMMIT and (WL_MULTIS.Count = 0) then
@@ -219,6 +272,7 @@ begin
       AUTOCOMMIT_FLAG := False;
     end;
 end;
+
 
 procedure TWallEditor.WLEdDblClick(Sender: TObject);
 var doomdata : TIniFile;
@@ -248,7 +302,12 @@ begin
    19 : Cells[1, 19] := ResEdit(Cells[1, 19], RST_BM, RST_TYPE_SWITCH);
 
   end;
+
+  if AUTOCOMMIT and (WL_MULTIS.Count = 0) then
+      WallEditor.SBCommitClick(NIL);
+
 end;
+
 
 procedure TWallEditor.CBClassClick(Sender: TObject);
 begin
@@ -285,6 +344,70 @@ begin
    WLStayOnTop.Checked := TRUE;
    WallEditor.FormStyle := fsStayOnTop;
   end;
+end;
+
+
+// Update the cell value
+procedure TWallEditor.UpdateTexturePos(cell_idx : integer; increment : boolean = True);
+var AReal : Real;
+    Code : Integer;
+begin
+  with WLEd do
+    begin
+      Val(Cells[1,  cell_idx], AReal, Code);
+      if Code = 0 then
+         begin
+           if increment then
+              AReal := Areal + TEXTURE_OFFSET
+           else
+              AReal := Areal - TEXTURE_OFFSET;
+           Cells[1,  cell_idx] := PosTrim(Areal);
+         end;
+    end;
+
+end;
+
+{     Direction definition is
+
+      0 = Increase X
+      1 = Decrease X
+      2 = Increase Y
+      3 = Decrease Y
+
+      CELL OFFSETS
+
+      8,
+      9 : texture_type := 0;  // mid
+      12,
+      13 : texture_type := 1; // top
+      16,
+      17 : texture_type := 2; // bot
+      20,
+      21 : texture_type := 3; // switch }
+procedure TWallEditor.MoveTexture(direction : Integer);
+begin
+
+  //Special case for signs - flip horizontal so you can use arrow keys
+  if (Texture_Type = 3) then
+   begin
+     if direction = 1 then direction := 0
+     else if direction = 0 then direction := 1;
+   end;
+
+  case direction of
+    0 :  UpdateTexturePos(Texture_Type*4 + 8);
+    1 :  UpdateTexturePos(Texture_Type*4 + 8, False);
+    2 :  UpdateTexturePos(Texture_Type*4 + 9);
+    3 :  UpdateTexturePos(Texture_Type*4 + 9, False);
+  end;
+
+  if AUTOCOMMIT and (WL_MULTIS.Count = 0) then
+    begin
+      NO_INVALIDATE := True;
+      DO_Commit_WallEditor;
+      UpdateShowCase;
+      NO_INVALIDATE := False;
+    end;
 end;
 
 end.

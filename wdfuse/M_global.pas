@@ -4,8 +4,12 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, IniFiles, Graphics,
   Generics.Collections, Vcl.Dialogs, StrUtils, LoggerPro, LoggerPro.FileAppender,
-  LoggerPro.OutputDebugStringAppender, VCL.forms,_Strings;
+  LoggerPro.OutputDebugStringAppender, VCL.forms,_Strings, Jsons, Math ;
 
+  // This dependency is large. - you can re-add it
+  // Install JCL from https://sourceforge.net/projects/jcl/
+  // LOOK FOR  "JCL UNCOMMENT" so you can uncomment these items.
+  // JCLDebug
 TYPE Integ16 =
 {$IFNDEF WDF32}
                Integer;
@@ -16,14 +20,18 @@ TYPE Integ16 =
 // For the square
 type TPointArray = array [0..3] of Tpoint;
 
+
+
 { CONSTANTS }
 CONST
 {$IFNDEF WDF32}napi.
- WDFUSE_VERSION      = 'Version 2.61 (32 bits)';
+ WDFUSE_VERSION      = 'Version 3.00 (32 bits)';
 {$ELSE}
- WDFUSE_VERSION      = 'Version 2.61 (32 bits)';
+ WDFUSE_VERSION      = 'Version 3.00 (32 bits)';
 {$ENDIF}
 
+ // Please don't go above that...
+ MAP_LIMIT           = 32000;
  MM_SC               = 0;
  MM_WL               = 1;
  MM_VX               = 2;
@@ -61,17 +69,21 @@ CONST
  Cvx_dim_max         = 3;
  Cbigvx_scale        = 13;
  Cbigvx_dim_max      = 5;
- Cob_scale           = 6;
- Cob_dim_max         = 3;
- Cbigob_scale        = 13;
- Cbigob_dim_max      = 5;
- perp_ratio          = 0.25e0;
+ Cob_scale           = 8;
+ Cob_dim_max         = 5;
+ Cbigob_scale        = 15;
+ Cbigob_dim_max      = 7;
+ perp_ratio          = 0.1e0;
  extr_ratio          = 0.25e0;
 
- SEC_SQUARE : TPointArray =  ((X: 1; Y: 1),
-                              (X: 1; Y: -1),
+ MAX_RECENT          = 5;
+
+ SEC_SQUARE : TPointArray =  ((X: -1; Y: 1),
                               (X: -1; Y: -1),
-                              (X: -1; Y: 1));
+                              (X: 1; Y: -1),
+                              (X: 1; Y: 1));
+ // For Showcase synching
+ TEXTURE_OFFSET      = 1;
 
 { DEFAULTS }
 CONST
@@ -86,6 +98,8 @@ CONST
  Ccol_trig           = clAqua;
  Ccol_goal           = clPurple;
  Ccol_secr           = clFuchsia;
+ Ccol_cmpl           = clWebDarkOrange;
+ Ccol_boss           = clWebMediumBlue;
 
  Ccol_dm_low         = clGreen;
  Ccol_dm_high        = clYellow;
@@ -98,6 +112,7 @@ CONST
 
  STEAM_REG           = '\Software\Wow6432Node\Valve\Steam';
  GOG_REG             = '\Software\Wow6432Node\GOG.com\Games\1421404433';
+ ORIGIN_REG          = '\Software\WOW6432Node\LucasArts\STAR WARS Dark Forces';
 
 const rs  = 20; {size of the palette squares}
 const rcs = 12; {size of the colormap squares}
@@ -369,8 +384,14 @@ VAR
  Ini                 : TIniFile;
  WDFUSEdir           : String[255];
  DarkInst            : TFileName;
+ DarkExe             : TFileName;
  RenderInst          : TFileName;
  DarkCD              : String[20];
+ BuildVersion        : String;
+
+ // For global point lookups
+ secPolygon          :  array [0..255] of TPoint;
+ secRegions          :  array [0..64]  of HRGN;
 
  DARKgob,
  SPRITESgob,
@@ -436,11 +457,16 @@ VAR
  MoveYOffset         : Integer;
  MenuYOffset         : Integer;
 
+ PAN_SEL_STATE,
+ MULTI_SEL_STATE      : TShiftState;
+ USE_ALT_PAN         : Boolean;
+
  { History Lists }
  GOB_History         : TStringList;
  LFD_History         : TStringList;
  PAL_History         : TStringList;
  PLT_History         : TStringList;
+ PRJ_History         : TStringList;
 
  FINDSC_VALUE     : String[20];
  RES_PICKER_MODE  : Integer;
@@ -474,6 +500,8 @@ VAR
  col_trig      : TColor;
  col_goal      : TColor;
  col_secr      : TColor;
+ col_cmpl      : TColor;
+ col_boss      : TColor;
 
  col_dm_low    : TColor;
  col_dm_high   : TColor;
@@ -504,6 +532,7 @@ PROJECTFile   : TFileName;
 LEVELName     : String;
 LEVELPath     : TFileName;
 LEVELBNum     : Integer;
+MAXBACKUPS    : Integer;
 LEVELloaded   : Boolean;
 OFILELoaded   : Boolean;
 INFFILELoaded : Boolean;
@@ -537,6 +566,7 @@ SHADOW        : Boolean;
 OBSHADOW      : Boolean;
 SHOW_LENGTHS     : Boolean;
 SHOW_NORMALS     : Boolean;
+NORMALIZE_WALLS  : Boolean;
 OBDIFF        : Integer;
 OBLAYERMODE   : Integer; {0 : no layering, 1 floor, 2 ceiling}
 LAYER         : Integer;
@@ -565,6 +595,8 @@ MAP_GLOBAL_UNDO_INDEX : Integer;
 MAP_SEC_UNDO     : TStringList;
 MAP_OBJ_UNDO     : TStringList;
 MAP_GUI_UNDO     : TStringList;
+MAP_SCMULTI_UNDO : TStringList;
+MAP_OBMULTI_UNDO : TStringList;
 UNDO_LIMIT       : Integer;
 
 { Sometimes there are recursive calls - only store the root Undo }
@@ -588,14 +620,21 @@ MAP_OBJ_CLIP     : TStringList;
 MULTISEL_RECT : Boolean;
 MULTISEL_MODE : String[1];
 MULTISEL_SPC  : Boolean;
+MULTDEL_PROMPT: Boolean;
 FlagEditorVal : LongInt;
 FastSCROLL    : Boolean;
 FastDRAG      : Boolean;
 IsDRAG        : Boolean;
 FirstDRAG     : Boolean;
+AltPanning    : Boolean;
+ObjSnapFloor  : Boolean;
 FirstMDown    : Boolean;
 ORIGIN        : TPoint;
+MOVEPREV      : TPoint;
 DESTIN        : TPoint;
+INSERTX,
+INSERTZ       : Real;
+INSERTOVRD    : Boolean;
 IsFOCUSRECT   : Boolean;
 FOCUSRECT     : TRect;
 IsRULERLINE   : Boolean;
@@ -612,6 +651,10 @@ ORIObject     : TOB;
 TMPHWindow    : HWnd;
 WALL_LENGTH   : Real;
 HEADERS_MAP   : TDictionary<String, Integer>;
+NEWPRJOK      : Boolean;
+NO_INVALIDATE : Boolean;
+SECTOR_COMBINE : BOolean;
+
 
 TheRESOURCE   : TRESOURCE;
 CurFrame      : Integer;
@@ -637,11 +680,45 @@ DUKE_ZOFFSET  : LongInt;
 DUKE_YOFFSET  : LongInt;
 
 DOSBOX_PATH   : String;
+DOSBOX_FLD    : String;
 DOSBOX_CONF   : String;
+
+TFE_FLD       : String;
+TFE_EXE       : String;
 LAUNCHER_TYPE : String;
+ENGINE_TYPE   : String;
 ShortCutProc  : TShortCutEvent;
 
 ZoneInfo : TTimeZoneInformation;
+
+
+ShowCasePortBase,
+ShowCasePort     : Integer;
+
+// On or Off
+UseShowCase,
+
+// For multi updates
+IGNORE_SHOWCASE,
+
+AutoStartShowCase,
+
+// Force a level reload
+ShowCaseReset,
+
+// Sometimes we want a level reloaded but preserve the camera pos
+ShowCaseCameraReset    : Boolean;
+ShowCaseOp       : String;
+
+
+// These hold deletes or adjoin changes for sectors/objects
+ShowCaseDelSC,
+ShowCaseDelOB,
+ShowCaseModSC,
+ShowCaseModOB : TJsonArray;
+
+SHOWCASE_DEBUG : Boolean;
+
 
 Log: ILogWriter;
 LogName : String;
@@ -662,9 +739,12 @@ function S2MZ(z : Real) : Real;
 function M2SX(x : Real) : Integer;
 function M2SZ(z : Real) : Integer;
 
+Procedure RoundVX(Vertex : TVertex);
 function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
 function PosTrim(x : Real) : String;
 function isFileLocked(FileName: String): Boolean; stdcall;
+procedure HandleException(err_info : string; error : Exception; alert : boolean = True);
+
 
 
 {*****************************************************************************}
@@ -802,6 +882,13 @@ begin
   M2SZ := Round( ScreenCenterZ + ((Zoffset - z) * scale) );
 end;
 
+// Rounds to 2 positions to prevent errors
+Procedure RoundVX(Vertex : TVertex);
+begin
+   Vertex.x := RoundTo(Vertex.x, -2);
+   Vertex.z := RoundTo(Vertex.z, -2);
+end;
+
 function SortVX(List: TStringList; idx1, idx2: Integer): Integer;
 var
   s1 : Integer;
@@ -855,6 +942,43 @@ begin
   end;
 end;
 
+function GetExceptionStackInfoProc(P: System.PExceptionRecord): Pointer;
+var
+  LLines: TStringList;
+  LText: String;
+  LResult: PChar;
+begin
+  LLines := TStringList.Create;
+    try
+      // JCL UNCOMMENT
+      //JclLastExceptStackListToStrings(LLines, True, True, True, True);
+      LText := LLines.Text;
+      LResult := StrAlloc(Length(LText));
+      StrCopy(LResult, PChar(LText));
+      Result := LResult;
+    finally
+     LLines.Free;
+  end;
+end;
+
+function GetStackInfoStringProc(Info: Pointer): string;
+begin
+  Result := string(PChar(Info));
+end;
+
+procedure CleanUpStackInfoProc(Info: Pointer);
+begin
+  StrDispose(PChar(Info));
+end;
+
+procedure HandleException(err_info : string; error : Exception; alert : boolean = True);
+begin
+  log.Error('Error: ' + err_info + EOL + ' due to [' + error.Message +
+            '] fullstack = [' + EOL + error.StackTrace + ']', LogName);
+  if alert then
+     showmessage('Error: ' + err_info + EOL + ' due to ' + error.Message)
+
+end;
 
 begin
 
@@ -877,8 +1001,26 @@ begin
   LogFilePath := LogPath + '\' + 'wdfuse32.00.' + LogName + '.log';
   Log.Info('Starting WDFUSE...',LogName);
   Log.info('Will Write Logs to ' + LogFilePath, LogName);
-  log.Info('WDFUSE Compile Timestamp ' + floattostr(PImageNtHeaders(HInstance +
-   Cardinal(PImageDosHeader(HInstance)^._lfanew))^.FileHeader.TimeDateStamp), LogName);
+
+  BuildVersion := floattostr(PImageNtHeaders(HInstance +
+   Cardinal(PImageDosHeader(HInstance)^._lfanew))^.FileHeader.TimeDateStamp);
+  log.Info('WDFUSE Compile Timestamp ' + BuildVersion, LogName);
+
+  { JCL UNCOMMENT
+  if JclStartExceptionTracking then
+    begin
+      Exception.GetExceptionStackInfoProc := GetExceptionStackInfoProc;
+      Exception.GetStackInfoStringProc := GetStackInfoStringProc;
+      Exception.CleanUpStackInfoProc := CleanUpStackInfoProc;
+    end;
+  }
+
+  { The stack trace code only seems to work on init }
+  try
+    raise Exception.Create('Init exceptions');
+  except  on Exception do
+    log.info('Initialized stacktraces', LogName);
+  end;
 
 
 
@@ -904,6 +1046,13 @@ begin
   SUPERHILITE := -1;
   INFRemote   := FALSE;
   INFMisc     := -1;
+
+  ShowCasePortBase := 8080;
+  ShowCasePort := 8080;
+  UseShowCase  := True;
+  ShowCaseReset := True;
+  ShowCaseCameraReset := True;
+  IGNORE_SHOWCASE := False;
 
   SC_MULTIS   := TStringList.Create;
   WL_MULTIS   := TStringList.Create;
@@ -933,6 +1082,7 @@ begin
   FILTER_LIST.Add('MSG');
   FILTER_LIST.Add('TXT');
 
+
   INFSectors := TStringList.Create;
   INFSectors.Sorted := True;
   INFSectors.Duplicates := dupIgnore;
@@ -956,6 +1106,16 @@ begin
   INF_SEP     := StringOfChar('-', 100);
 
   ShortCutProc := NIL;
+
+  Application.UpdateFormatSettings := false;
+  TFormatSettings.Invariant;
+  FormatSettings.DecimalSeparator := '.';
+
+  SHOWCASE_DEBUG := False;
+  NO_INVALIDATE := False;
+  MULTDEL_PROMPT := True;
+  SECTOR_COMBINE := False;
+
 
 end.
 

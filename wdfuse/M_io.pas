@@ -287,10 +287,9 @@ begin
      end;
    try
      TextConf := String(WDFUSEdir);
-     executable := 'C:\Users\Karjala\editor\wdfuse\3drender.bat';
      log.info('Executing ' + executable + ' with params ' + params + ' Result = ' + IntToStr(ExecuteResult), LogName);
 
-     ExecuteResult := ShellExecute(0, 'open', executable, nil, nil, SW_SHOWNORMAL) ;
+     ExecuteResult := ShellExecute(0, 'open', executable, params, nil, SW_SHOWNORMAL) ;
 
    Except
       on E : Exception do
@@ -309,7 +308,8 @@ end;
 procedure Preview_3D_Level;
 var TheGob : TFileName;
     i      : Integer;
-    tmp    : array[0..511] of char;
+    executestring,
+    params    : Pchar;
     returnVal : Integer;
 begin
  if not LEVELLoaded then exit;
@@ -371,9 +371,11 @@ begin
  ShowCaseReset := False;
 
  try
-   strPcopy(tmp, '"' + renderInst + '" -d "' + darkinst + '" "' + TheGOB + '" -t LevelExplorer');
-   log.info('3D Run Command ' + AnsiString(tmp), LogName);
-   returnVal := WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMIZED);
+   executestring := PChar(renderInst);
+   params := PChar(' -d "' + darkinst + '" "' + TheGOB + '" -t LevelExplorer');
+   log.info('3D Run Command ' + AnsiString(executestring) + ' with params ' + AnsiString(params), LogName);
+   //returnVal := WinExec(PAnsiChar(AnsiString(tmp)), SW_SHOWMAXIMZED);
+   returnVal := ShellExecute(0, 'open', executestring, params, nil, SW_SHOWNORMAL) ;
    log.info('Return Value = ' + IntToStr(returnVal), LogName);
   Except
     on E : Exception do

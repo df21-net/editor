@@ -740,7 +740,7 @@ begin
 
 
      // Quick polgygon check
-    if IsPointInSector(s, x, z) then
+    if IsPointInSector(s, x, z) and (s <> SC_HILITE) then
        begin
          its := s;
          break;
@@ -3674,7 +3674,7 @@ begin
      if (NewSector.name <> '') then
         begin
           NewSector.name := NewSEctor.Name + '_' + IntToStr(Random(1000));
-          if length(NewSector.Name) > 16 then
+          if length(NewSector.Name) >= 16 then
              NewSector.name := 'NEWSECTOR_' + IntToStr(Random(1000));
         end;
 

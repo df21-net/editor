@@ -32,7 +32,7 @@ var
   UseNames : Boolean;
 
 implementation
-uses Mapper, M_Util;
+uses Mapper, M_Util, InfEdit2;
 
 {$R *.DFM}
 
@@ -95,6 +95,7 @@ begin
         WL_HILITE := 0;
         VX_HILITE := 0;
         DO_Fill_SectorEditor;
+        INFWindow2.FormActivate(NIL);
         MapWindow.Map.Invalidate;
         break;
        end;

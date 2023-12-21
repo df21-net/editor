@@ -5,7 +5,8 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, ExtCtrls, Buttons, StdCtrls, MPlayer, FileCtrl, IniFiles,
-  M_Global, V_Util, V_Util32, Menus, _Files, G_Util, Spin, StrUtils;
+  M_Global, V_Util, V_Util32, Menus, _Files, G_Util, Spin, StrUtils, M_wledit,
+  M_Scedit;
 
 type
   TResourcePicker = class(TForm)
@@ -122,11 +123,12 @@ implementation
 
 {$R *.DFM}
 
-uses MAPPER;
+uses MAPPER, M_IO;
 
 procedure TResourcePicker.SpeedButtonCommitClick(Sender: TObject);
 begin
   if RES_PICKER_MODE = RST_SND then RPPlayer.Close;
+
   ModalResult := mrOk;
 end;
 
@@ -157,6 +159,13 @@ var f, i, initidx : Integer;
     err_msg : String;
 begin
 
+  if IsFileInUse(DarkInst + '\DARK.GOB') then
+    begin
+      showmessage('Error ! DARK.GOB is locked! Cannot extract data. Is Dark Forces Running? Turn it off first');
+      exit;
+    end;
+
+
   ResourcePicker.Left   := Ini.ReadInteger('WINDOWS', 'Resource Pickr X', 0);
   ResourcePicker.Top    := Ini.ReadInteger('WINDOWS', 'Resource Pickr Y', 0);
   ResourcePicker.Width  := Ini.ReadInteger('WINDOWS', 'Resource Pickr W', 1460);
@@ -170,6 +179,10 @@ begin
  SortByHeight := Ini.ReadBool('RESOURCES', 'SortByHeight', False);
  MapHeights := Ini.ReadBool('RESOURCES', 'MapHeights', False);
  AutoPickList :=  Ini.ReadBool('RESOURCES', 'AutoPickList', True);
+
+ // how????
+ if GraphZoom = 0 then GraphZoom:= 10;
+
 
  FormInit := True;
  ResourceSearch.Text := 'Filter...';
@@ -193,7 +206,6 @@ begin
              SEcontrast.Value := _VGA_MULTIPLIER;
              if not DirectoryExists(WDFUSEdir + '\WDFGRAPH') then
               ForceDirectories(WDFUSEdir + '\WDFGRAPH');
-             GraphZoom  := GraphZoom;
              PanelPercent.Caption  := inttostr(GraphZoom) + '0%';
              PanelSelected.Caption := '';
              TheRPRes := '';
@@ -250,7 +262,7 @@ begin
             end;
  END;
 
-  if isFileLocked(RealGOB) then
+  if IsFileInUse(RealGOB) then
    begin
     err_msg := RealGOB + ' is Locked. Is Dark Forces running?';
     log.Info(err_msg, LogName);
@@ -563,11 +575,8 @@ begin
                 try
                   RPPlayer.Close;
                 except on E: Exception do
-                 begin
-                   Log.error('Failed to Close RPPlayer! ' + E.ClassName +
-                   ' error raised, with message : '+E.Message, LogName);
-                  end;
-                 end;
+                 HandleException('Failed to close RPPlayer', E, False);
+                end;
                MemoRP.Clear;
                MemoRP.Lines.Add(PanelSelected.Caption);
                MemoRP.Lines.Add('');
@@ -585,10 +594,7 @@ begin
                    CopyFile(PanelSelected.Caption, VOCFile);
                   end;
                 except on E: Exception do
-                 begin
-                   Log.error('Failed to Extract Sound! ' + E.ClassName +
-                   ' error raised, with message : '+E.Message, LogName);
-                  end;
+                   HandleException('Failed to Extract Sound', E, False);
                  end;
 
                MemoRP.Lines.Add(Format('WAV length : %d', [GetFileSize(WAVFile)]));
@@ -652,9 +658,7 @@ begin
                     try
                      RPPlayer.Open;
                     except on E: Exception do
-                        begin
                          showmessage('Failed to open RPPlayer!');
-                        end;
                     end;
                   end;
                  end;

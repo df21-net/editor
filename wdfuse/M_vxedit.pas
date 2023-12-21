@@ -48,6 +48,7 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure FormMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure VXEdKeyPress(Sender: TObject; var Key: Char);
   private
     { Private declarations }
   public
@@ -134,6 +135,12 @@ end;
 procedure TVertexEditor.SBCommitClick(Sender: TObject);
 begin
   DO_Commit_VertexEditor;
+end;
+
+procedure TVertexEditor.VXEdKeyPress(Sender: TObject; var Key: Char);
+begin
+   if Integer(Key) = 13 then
+     SBCommitClick(NIL);
 end;
 
 procedure TVertexEditor.VXEdKeyUp(Sender: TObject; var Key: Word;

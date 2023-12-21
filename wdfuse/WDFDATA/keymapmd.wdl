@@ -36,11 +36,23 @@ Shift State	Key/Mouse	Applies in	Function
 [none]		Q		Map SC,WL,OB	Multiselection by Query
 [none]		U		Map WL	        Super Stitch Right
 [none]		Y		Map WL	        Super Stitch Left
+Alt		Up Arrow	Map SC	        Scale Up Twice	
+Alt		Down Arrow	Map SC	        Scale Down Twice
+Alt		Right Arrow	Map SC	        Flip Horizontally
+Alt		Left Arrow	Map SC	        Flip Vertically
 Alt		A		Map WL	        Unadjoin Wall(s)
 Ctrl		C		Map SC, OB	Copy Sectors or Objects
 Ctrl		K		Map SC	        Close Sector
 Ctrl		L		Map OB	        Toggle altitude behavior of objects
 Ctrl		V		Map SC, OB	Paste Sectors or Objects
 Ctrl + Shift	Mouse Left Clck	Map VX		Select Next Nearest VX
+Shift		Up Arrow	Map SC	        Rotate 10 Degrees
+Shift		Down Arrow	Map SC	        Rotate -10 Degrees
+Shift		Right Arrow	Map SC	        Rotate 90 Degrees
+Shift		Left Arrow	Map SC	        Rotate -90 Degrees
 Shift		A		Map WL	        Adjoin Wall(s) in Current Layer
 Shift		L		Map OB	        Set object to floor
+Shift		Up		Map WL, SC 	Move Texture Up
+Shift		Down		Map WL, SC	Move Texture Down
+Shift		Left		Map WL, SC	Move Texture Left
+Shift		Right		Map WL, SC 	Move Texture Right

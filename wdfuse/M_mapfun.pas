@@ -5,7 +5,7 @@ uses
   SysUtils, WinTypes, WinProcs, Graphics, IniFiles, Dialogs, Forms, Classes,
   _Math, _Strings,
   M_Global, M_Util,   M_io, M_Progrs, M_smledt, M_Multi,
-  M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util ;
+  M_Editor, M_SCedit, M_WLedit, M_VXedit, M_OBedit, I_Util, Math ;
 
 
 VAR
@@ -21,6 +21,7 @@ function  MultiUnAdjoin : Integer;
 
 procedure ShellInsertSC(cursX, cursZ : Real);
 function  DeleteSC(sc : Integer) : Boolean;
+procedure CleanEmptySC;
 procedure MultiDeleteSC;
 procedure ShellDeleteSC;
 
@@ -61,7 +62,9 @@ procedure CreatePolygon(Sides : Integer; Radius, CX, CZ : Real; PolyType, sc : I
 procedure CreatePolygonGap(Sides : Integer; Radius, CX, CZ : Real; sc : Integer);
 procedure CreatePolygonSector(Sides : Integer; Radius, CX, CZ : Real; sc : Integer);
 function  GetSectorMaxradius(sc : Integer) : integer;
+function  FillSubsectors(sc : Integer) : Integer;
 function  VerifyPolygonFits(Sides : Integer; Radius, CX, CZ : Real; sc : Integer) : Boolean;
+function  ShapeOverlapRegion(rgn: HRGN; x,z, radius : Real): Boolean;
 
 procedure DO_Distribute(Altitudes : Boolean; FlCe : Integer; Ambient : Boolean);
 
@@ -82,6 +85,7 @@ procedure DO_OffsetAltitude(y : Real; alt : Integer);
 procedure DO_OffsetAmbient(a : Integer);
 
 procedure DO_SplitSector(s, d, n, sc, wl1, wl2 : Integer);
+//procedure DO_CombineSector;
 
 implementation
 uses Mapper, M_Tools, v_util32;
@@ -132,6 +136,7 @@ begin
         TheWall1.Mirror := w;
         TheWall1.Walk   := s;
 
+        ShowCaseModSC.put(s);
         MODIFIED   := TRUE;
         found      := TRUE;
         MakeAdjoin := TRUE;
@@ -141,6 +146,7 @@ begin
      end;
      if found then break;
    end;
+  UpdateShowCase;
 end;
 
 function MakeLayerAdjoin(sc, wl : Integer) : Boolean;
@@ -186,6 +192,7 @@ begin
         TheWall1.Mirror := w;
         TheWall1.Walk   := s;
 
+        ShowCaseModSC.put(s);
         MODIFIED   := TRUE;
         found      := TRUE;
         MakeLayerAdjoin := TRUE;
@@ -195,6 +202,7 @@ begin
      end;
      if found then break;
    end;
+   UpdateShowCase;
 end;
 
 {-----------------------------------------------------------------------------}
@@ -222,6 +230,8 @@ begin
     ShowMessage(Format('Invalid Mirror found in SC : %d WL : %d', [sc, wl]));
     exit;
    end;
+
+  ShowCaseModSC.put(TheWall1.Adjoin);
   TheWall2   := TWall(TheSector2.Wl.Objects[TheWall1.Mirror]);
   TheWall2.Adjoin := -1;
   TheWall2.Mirror := -1;
@@ -229,7 +239,9 @@ begin
   TheWall1.Adjoin := -1;
   TheWall1.Mirror := -1;
   TheWall1.Walk   := -1;
+
   UnAdjoin := TRUE;
+  UpdateShowCase;
 end;
 
 {-----------------------------------------------------------------------------}
@@ -249,6 +261,7 @@ if WL_MULTIS.Count <> 0 then
    if MakeAdjoin(s, w) then Inc(Result);
   end;
 SetCursor(OldCursor);
+ UpdateShowCase;
 end;
 
 {-----------------------------------------------------------------------------}
@@ -268,6 +281,7 @@ if WL_MULTIS.Count <> 0 then
    if UnAdjoin(s, w) then Inc(Result);
   end;
 SetCursor(OldCursor);
+ UpdateShowCase;
 end;
 
 { SECTORS *******************************************************************}
@@ -547,16 +561,34 @@ begin
   WL_HILITE := 0;
   VX_HILITE := 0;
   DeleteSC  := TRUE;
+  MODIFIED := TRUE;
+  if not IGNORE_SHOWCASE then ShowCaseDelSC.put(sc);
+  UpdateShowCase;
 end;
 
 {-----------------------------------------------------------------------------}
+
+// Mark all any SC with less than 3 vertices or walls to delete.
+procedure CleanEmptySC;
+var  TheSector : TSector;
+     i : Integer;
+begin
+  SC_MULTIS.clear;
+  for i := 0 to MAP_SEC.count - 1 do
+      begin
+        TheSector := Tsector(MAP_SEC.Objects[i]);
+        if (TheSector.Vx.count < 3) or (TheSector.wl.count < 3) then
+           SC_MULTIS.Add(Format('%4d%4d', [i, i]));
+      end;
+  MultiDeleteSC;
+end;
 
 procedure MultiDeleteSC;
 var m, s, mm, ss  : Integer;
 begin
 
 {add the Selection to the MultiSelection if necessary}
-if SC_MULTIS.IndexOf(Format('%4d%4d', [SC_HILITE, SC_HILITE])) = -1 then
+if (SC_MULTIS.IndexOf(Format('%4d%4d', [SC_HILITE, SC_HILITE])) = -1) and MULTDEL_PROMPT then
  SC_MULTIS.Add(Format('%4d%4d', [SC_HILITE, SC_HILITE]));
 
 {this is in fact a recheck for the very rare case that every sector
@@ -571,6 +603,19 @@ if SC_MULTIS.Count = MAP_SEC.Count then
   end;
 
 if SC_MULTIS.Count <> 0 then
+ DO_StoreUndo;
+
+ // Hack to add multi deletes because the MULTI value changes in the lower loop
+ for m := 0 to SC_MULTIS.Count - 1 do
+   begin
+     s := StrToInt(Copy(SC_MULTIS[m],1,4));
+     ShowCaseDelSC.put(s);
+   end;
+   UpdateShowCase;
+
+ IGNORE_SHOWCASE := True;
+ IGNORE_UNDO := True;
+
  for m := 0 to SC_MULTIS.Count - 1 do
   begin
    {!!!! deleted sectors will affect multiselection !!!!}
@@ -586,6 +631,9 @@ if SC_MULTIS.Count <> 0 then
       end;
     end;
   end;
+  IGNORE_SHOWCASE := False;
+  IGNORE_UNDO := False;
+
 end;
 
 {-----------------------------------------------------------------------------}
@@ -625,6 +673,7 @@ begin
   end;
 
  OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
+ DO_UpdateShowcaseMultiSCRefs;
 
  {handle the selection only if no multiselection
   if there is a multiselection, it will handle the selection}
@@ -777,6 +826,8 @@ begin
   DO_StoreUndo;
   TheObject := TOB(MAP_OBJ.Objects[ob]);
   TheObject.Free;
+  if not IGNORE_SHOWCASE then  ShowCaseDelOB.Put(ob);
+  UpdateShowCase;
   MAP_OBJ.Delete(ob);
   DeleteOB := TRUE;
 end;
@@ -787,7 +838,7 @@ procedure MultiDeleteOB;
 var m, s, mm, ss  : Integer;
     TheObject : TOB;
 begin
-DO_StoreUndo;
+
 TheObject := TOB(MAP_OBJ.Objects[OB_HILITE]);
 m := OB_MULTIS.IndexOf(Format('%4d%4d', [TheObject.Sec, OB_HILITE]));
 {add the Selection to the MultiSelection if necessary}
@@ -807,6 +858,16 @@ if OB_MULTIS.Count = MAP_OBJ.Count then
    exit;
   end;
 
+DO_StoreUndo;
+for m := 0 to OB_MULTIS.Count - 1 do
+  begin
+    s := StrToInt(Copy(OB_MULTIS[m],5,4));
+    ShowCaseDelOB.put(s);
+  end;
+ UpdateShowCase;
+
+IGNORE_UNDO := True;
+IGNORE_SHOWCASE := True;
 for m := 0 to OB_MULTIS.Count - 1 do
  begin
   s := StrToInt(Copy(OB_MULTIS[m],5,4));
@@ -821,6 +882,8 @@ for m := 0 to OB_MULTIS.Count - 1 do
       end;
     end;
  end;
+ IGNORE_SHOWCASE := False;
+ IGNORE_UNDO := False;
 end;
 
 {-----------------------------------------------------------------------------}
@@ -829,7 +892,6 @@ procedure ShellDeleteOB;
 var
     OldCursor : HCursor;
 begin
-  DO_StoreUndo;
  if (OB_MULTIS.Count = MAP_OBJ.Count) or (MAP_OBJ.Count = 1) then
   begin
    Application.MessageBox('YOU CANNOT DELETE ALL OBJECTS !',
@@ -1043,14 +1105,17 @@ begin
    TheSector2.Wl.AddObject('WL', TheWall2);
   end;
 
+
  MAP_SEC.AddObject('SC', TheSector2);
 
  {make the hilited wall the new sector, wall 0}
+ ShowCaseModSC.put(SC_HILITE);
  SC_HILITE := newsector;
  WL_HILITE := 0;
  DO_Fill_WallEditor;
  MapWindow.Map.Refresh;
  MODIFIED := TRUE;
+ UpdateShowCase;
 end;
 
 {-----------------------------------------------------------------------------}
@@ -1091,8 +1156,17 @@ begin
 
  NEWVertex         := TVertex.Create;
  NEWVertex.Mark    := 0;
- NEWVertex.X       := (LVertex.X + RVertex.X ) / 2;
- NEWVertex.Z       := (LVertex.Z + RVertex.Z ) / 2;
+ if not INSERTOVRD then
+  begin
+     NEWVertex.X       := (LVertex.X + RVertex.X ) / 2;
+     NEWVertex.Z       := (LVertex.Z + RVertex.Z ) / 2;
+   end
+ else
+   begin
+     NEWVertex.X       := INSERTX;
+     NEWVertex.Z       := INSERTZ;
+   end;
+
 
  NEWWall           := TWall.Create;
  NEWWall.Mark      := 0;
@@ -1146,6 +1220,7 @@ begin
    TheWall2.right_vx := TheWall2.right_vx + 1;
   end;
  TheSector.Vx.InsertObject(newvxpos, 'VX', NEWVertex);
+ VX_HILITE := newvxpos;
  TheSector.Wl.InsertObject(wl, 'WL', NEWWall);
  TheWall.Left_vx   := newvxpos;
 
@@ -1177,19 +1252,25 @@ var
 err_msg : String;
 begin
  // Normalize offsets
-
- if isFileLocked(TEXTURESGOB) then
+ if NORMALIZE_WALLS then
    begin
-    err_msg := 'TEXTURES.GOB is Locked. Is Dark Forces running?';
-    log.Info(err_msg, LogName);
-    showmessage(err_msg);
-    Result := AWall;
+
+     if isFileLocked(TEXTURESGOB) then
+       begin
+        err_msg := 'TEXTURES.GOB is Locked. Is Dark Forces running?';
+        log.Info(err_msg, LogName);
+        showmessage(err_msg);
+        Result := AWall;
+       end;
+
+     AWall.Mid := NormalizeOffsets(AWall.Mid);
+     AWall.Top := NormalizeOffsets(AWall.Top);
+     AWall.Bot := NormalizeOffsets(AWall.Bot);
+
+     // Do not normalize signs
+     //AWall.Sign := NormalizeOffsets(AWall.Sign);
    end;
 
- AWall.Mid := NormalizeOffsets(AWall.Mid);
- AWall.Top := NormalizeOffsets(AWall.Top);
- AWall.Bot := NormalizeOffsets(AWall.Bot);
- AWall.Sign := NormalizeOffsets(AWall.Sign);
  Result := AWall;
 end;
 
@@ -1211,10 +1292,8 @@ begin
   except on E: Exception do
     begin
        err_msg := 'Failed to Load texture in SC ' + IntToStr(SC_HILITE) +
-                 ' WL ' + IntToStr(WL_HILITE)+ ' named ' +  WallTexture.name +
-                 ' due to ' + E.Message;
-       Log.error(err_msg, LogName);
-       showmessage(err_msg);
+                 ' WL ' + IntToStr(WL_HILITE)+ ' named ' +  WallTexture.name;
+       HandleException(err_msg, E);
        NormalizeOffsets := WallTexture;
      end;
   end;
@@ -1262,6 +1341,7 @@ begin
 
  MODIFIED := TRUE;
  DO_Fill_WallEditor;
+ UpdateShowCase;
  MapWindow.Map.Invalidate;
 end;
 
@@ -1278,8 +1358,10 @@ var w,k,c      : Integer;
     cyclewalls : Integer;
     delvx      : Integer;
     nxtwl      : Integer;
+    findidx    : Integer;
 begin
  DO_StoreUndo;
+
  seccycles  := SetSectorCycles(sc);
  TheSector  := TSector(MAP_SEC.Objects[sc]);
  TheWall    := TWall(TheSector.Wl.Objects[wl]);
@@ -1287,6 +1369,8 @@ begin
  cyclewalls := GetCycleLen(sc, cycle);
 
  Result     := TRUE;
+
+
 
  if seccycles = 0 then
   begin
@@ -1299,40 +1383,62 @@ begin
 
   end;
 
- if TheSector.Wl.Count < 4 then
+ if TheSector.Wl.Count < 4  then
   begin
-   if Application.MessageBox('YOU CANNOT HAVE LESS THAN 3 WALLS IN A SECTOR - Delete SECTOR ?',
-                          'WDFUSE Mapper - Delete Wall',
-                          mb_YesNo or mb_IconQuestion) = idNo
-   then exit
+   if MULTDEL_PROMPT then
+     begin
+       if Application.MessageBox('YOU CANNOT HAVE LESS THAN 3 WALLS IN A SECTOR - Delete SECTOR ?',
+                            'WDFUSE Mapper - Delete Wall',
+                            mb_YesNo or mb_IconQuestion) = idNo
+          then exit
+       else
+         begin
+           DeleteSC(sc);
+           MapWindow.Map.Invalidate;
+           exit;
+         end;
+     end
    else
-    begin
-     DeleteSC(sc);
-     MapWindow.Map.Invalidate;
-     exit;
-    end;
+     begin
+       // To Delete later
+       if not SC_MULTIS.find(Format('%4d%4d', [sc, sc]), findidx) then
+         SC_MULTIS.Add(Format('%4d%4d', [sc, sc]));
+
+       exit;
+     end;
+
   end;
+
+
 
  if (cycle = 1) and (cyclewalls < 4) then
   begin
    if Application.MessageBox('CANNOT HAVE LESS THAN 3 WALLS IN PRIMARY CYCLE - Delete SECTOR ?',
                             'WDFUSE Mapper - Delete Wall',
-                            mb_YesNo or mb_IconQuestion) = idNo
-    then exit
-    else
-     begin
-      DeleteSC(sc);
-      MapWindow.Map.Invalidate;
-      exit;
-     end;
-  end;
+                            mb_YesNo or mb_IconQuestion) = idNo then
 
+       begin
+        exit;
+       end
+  else
+   begin
+    DeleteSC(sc);
+    MapWindow.Map.Invalidate;
+    IGNORE_UNDO := False;
+    exit;
+   end;
+end;
+
+ IGNORE_UNDO := True;
  if (cycle > 1) and (cyclewalls < 4) then
   begin
    if Application.MessageBox('CANNOT HAVE LESS THAN 3 WALLS IN A CYCLE - Delete CYCLE ?',
                             'WDFUSE Mapper - Delete Wall',
-                            mb_YesNo or mb_IconQuestion) = idNo
-    then exit
+                            mb_YesNo or mb_IconQuestion) = idNo  then
+       begin
+        IGNORE_UNDO := False;
+        exit;
+       end
     else
      begin
       { !!!!!delete cycle!!!!! }
@@ -1383,16 +1489,21 @@ begin
        MODIFIED := TRUE;
        DO_Fill_WallEditor;
        MapWindow.Map.Invalidate;
-      exit;
+       if not SECTOR_COMBINE then IGNORE_UNDO := False;
+       exit;
      end;
+
   end;
 
  if CONFIRMWallDelete then
   begin
    if Application.MessageBox('Confirm WALL DELETE ?',
                              'WDFUSE Mapper - Delete Wall',
-                             mb_YesNo or mb_IconQuestion) = idNo
-    then exit;
+                             mb_YesNo or mb_IconQuestion) = idNo  then
+       begin
+        IGNORE_UNDO := False;
+        exit;
+       end
   end;
 
  delvx := TheWall.right_vx;
@@ -1436,6 +1547,8 @@ begin
  WL_HILITE := 0;
  VX_HILITE := 0;
  DO_Fill_WallEditor;
+ UpdateShowCase;
+ if not SECTOR_COMBINE then IGNORE_UNDO := False;
  MapWindow.Map.Invalidate;
 end;
 
@@ -1510,6 +1623,7 @@ begin
      end;
    end;
   Result := CurCycle - 1;
+   UpdateShowCase;
 end;
 
 {-----------------------------------------------------------------------------}
@@ -1589,6 +1703,10 @@ procedure CreatePolygon(Sides : Integer; Radius, CX, CZ : Real;
                         PolyType, sc : Integer);
 var    i          : Integer;
 begin
+
+ CX := RoundTo(CX,-2);
+ CZ := RoundTo(CZ,-2);
+
  case PolyType of
   0: begin
       CreatePolygonGap(Sides, Radius, CX, CZ, sc);
@@ -1655,6 +1773,9 @@ for i := 0 to Sides - 1 do
       TheVertex.Z    := CZ + Radius * sin(alpha);
       alpha          := alpha + delta;
      end;
+
+  RoundVX(TheVertex);
+
   TheVertex.Mark := 0;
   TMPSector.Vx.AddObject('VX', TheVertex);
  end;
@@ -1782,7 +1903,7 @@ for i := 0 to Sides - 1 do
       TheVertex.Z    := CZ + Radius * sin(alpha);
       alpha          := alpha + delta;
      end;
-
+  RoundVX(TheVertex);
   TheVertex.Mark := 0;
   TMPSector.Vx.AddObject('VX', TheVertex);
  end;
@@ -1877,31 +1998,91 @@ begin
 
 end;
 
+// Fill in global subsestor regions
+function  FillSubsectors(sc : Integer) : Integer;
+var k, j, cyclevxcnt,
+    seccycles: Integer;
+    TheSector : TSector;
+    TheWall : TWall;
+    tmpArray : array[0..255] of TPoint;
+    subrgn : HRGN;
+begin
+  TheSector := TSector(MAP_SEC.Objects[sc]);
+
+
+
+  // Check for exiting subs
+  seccycles  := SetSectorCycles(sc);
+  Result := seccycles;
+
+  // No cycles
+  if seccycles = 1 then exit;
+
+  // 1 is the outer sector cycle
+  for k := 2 to seccycles do
+      begin
+        cyclevxcnt := 0;
+        for j := 0 to TheSector.WL.Count - 1 do
+          begin
+            TheWall := TWall(TheSector.Wl.Objects[j]);
+            if TheWall.Cycle = k then
+               begin
+                 tmpArray[cyclevxcnt] := VxToPoint(TVertex(TheSector.Vx.objects[j]));
+                 Inc(cyclevxcnt);
+               end;
+          end;
+
+        subrgn := CreatePolygonRgn(tmpArray[0], cyclevxcnt, WINDING);
+        secRegions[k] := subrgn;
+     end;
+end;
+
 // Given a point - figure out if it fits inside the sector
 function VerifyPolygonFits(Sides : Integer; Radius, CX, CZ : Real; sc : Integer) : Boolean;
-var    i          : Integer;
+var    i,j,k      : Integer;
        TheVertex  : TVertex;
        TheSector  : TSector;
        TMPSector  : TSector;
        alpha,
        delta     : Real;
-       secPolygon  : array of TPoint;
-       rgn : HRGN;
-begin
+       rgn,
+       subrgn : HRGN;
+       cycle,
+       seccycles,
+       cyclevxcnt,
+       cyclewalls,
+       vxcount  : integer;
+       TheWall : TWall;
+       tmpArray,
+       tmpArray2 : array[0..255] of TPoint;
+       overlap : Boolean;
 
+
+begin
   Result := True;
   TheSector := TSector(MAP_SEC.Objects[sc]);
 
-  // Create region of sector verteces.
-  SetLength(secPolygon, TheSector.Vx.Count);
-  for i:= 0 to TheSector.Vx.Count - 1 do
-    secPolygon[i] := VxToPoint(TVertex(TheSector.Vx.objects[i]));
+  // Check for exiting subs
+  seccycles  := SetSectorCycles(sc);
+  //secRegions
 
-  rgn := CreatePolygonRgn(secPolygon[0], Length(secPolygon), WINDING);
+  // Create region of sector verteces.
+  vxcount := 0;
+  for i:= 0 to TheSector.Vx.Count - 1 do
+    begin
+       TheWall := TWall(TheSector.Wl.Objects[i]);
+       if TheWall.Cycle = 1 then
+         begin
+          secPolygon[i] := VxToPoint(TVertex(TheSector.Vx.objects[i]));
+          Inc(vxcount);
+         end;
+    end;
+
+  // Main outer region
+  rgn := CreatePolygonRgn(secPolygon[0], vxcount, WINDING);
 
   { check if the tmp sector vertices are in region }
   TMPSector := TSector.Create;
-
 
   alpha := 0.0;
   delta := 2 * Pi / Sides;
@@ -1928,8 +2109,79 @@ begin
         Result := False;
         break;
       end;
+
+    overlap := False;
+
+    // Check if the point is are INSIDE existing subsectors
+    for k := 2 to seccycles do
+      begin
+        subrgn := secRegions[k];
+        if PtInRegion(subrgn, trunc(m2sx(TheVertex.X)), trunc(m2sz(TheVertex.Z))) then
+          begin
+            Result := False;
+            overlap := True;
+            break;
+          end;
+      end;
+
+    // Break out of the vector loops
+    if overlap then break;
+
    end;
+
   TMPSector.Free;
+  DeleteObject(rgn);
+
+end;
+
+// Check if the point surrounds an existing subsector region when applying the radius
+
+function ShapeOverlapRegion(rgn: HRGN; x,z, radius : Real): Boolean;
+var
+  d: DWord;
+  Data: PRgnData;
+  Header: PRgnDataHeader;
+  Rects: PRect;
+  Width, Height: Integer;
+  i: Integer;
+  left, right, top, bot : Real;
+  shapergn : HRGN;
+  tmparr : array [0..4] of TPoint;
+begin
+
+  // Build new shape square (make it as wide as the diameter (max  possible distance).
+  tmparr[0] := Point(M2SX(x+radius*2), M2SZ(z+radius*2));
+  tmparr[1] := Point(M2SX(x+radius*2), M2SZ(z-radius*2));
+  tmparr[2] := Point(M2SX(x-radius*2), M2SZ(z-radius*2));
+  tmparr[3] := Point(M2SX(x-radius*2), M2SZ(z+radius*2));
+
+  shapergn := CreatePolygonRgn(tmparr[0], 4, WINDING);
+
+  d := GetRegionData(rgn, 0, nil);
+  Win32Check(d <> 0);
+  GetMem(Data, d);
+  Result := False;
+  try
+    d := GetRegionData(rgn, d, Data);
+    Win32Check(d <> 0);
+    Header := PRgnDataHeader(Data);
+    Assert(Header.iType = rdh_Rectangles);
+
+    Assert(Header.dwSize = SizeOf(Header^));
+    Rects := PRect(Cardinal(Header) + Header.dwSize);
+
+    // check all corners
+    if PtInRegion(shapergn, Rects.left, Rects.top) or
+       PtInRegion(shapergn, Rects.right, Rects.top) or
+       PtInRegion(shapergn, Rects.left, Rects.bottom) or
+       PtInRegion(shapergn, Rects.right, Rects.bottom) then
+         Result := True
+
+  finally
+    FreeMem(Data);
+    DeleteObject(shapergn);
+
+  end;
 
 end;
 
@@ -1977,6 +2229,7 @@ begin
      TheSector.Ambient := first_amb + Round((last_amb - first_amb)* m /(SC_MULTIS.Count -1));
     end;
   end;
+  UpdateShowCase;
 end;
 
 { STITCHING ******************************************************* }
@@ -2046,7 +2299,7 @@ begin
     Bofs       := Bofs + Len;
     TheWall := NormalizeWall(TheWall);
   end;
-
+  UpdateShowCase;
 end;
 
 
@@ -2110,7 +2363,7 @@ begin
     if Bot then TheWall.Bot.f1 := BOfs;
     TheWall := NormalizeWall(TheWall);
   end;
-
+  UpdateShowCase;
 end;
 
 
@@ -2140,6 +2393,7 @@ begin
     if Top then TheWall.Top.f2 := TOfs + TheSector.Floor_Alt - Floor;
     if Bot then TheWall.Bot.f2 := BOfs + TheSector.Floor_Alt - Floor;
   end;
+  UpdateShowCase;
 end;
 
 
@@ -2302,6 +2556,7 @@ var i,j       : Integer;
     rad       : Real;
     oldx      : Real;
 begin
+ DO_STOREUNDO;
  DO_PrepareDeformation;
 
  rad := angle * Pi / 180;
@@ -2352,6 +2607,15 @@ ELSE
     else
      TheObject.Mark := 0;
    end;
+ UpdateShowCase;
+ MODIFIED := TRUE;
+ CASE MAP_MODE OF
+  MM_SC : DO_Fill_SectorEditor;
+  MM_WL : DO_Fill_WallEditor;
+  MM_VX : DO_Fill_VertexEditor;
+  MM_OB : DO_Fill_ObjectEditor;
+ END;
+ MapWindow.Map.Invalidate;
 end;
 
 procedure DO_Scale(factor : Real);
@@ -2360,6 +2624,7 @@ var i,j       : Integer;
     TheVertex : TVertex;
     TheObject : TOB;
 begin
+ DO_STOREUNDO;
  DO_PrepareDeformation;
 
 IF MAP_MODE <> MM_OB THEN
@@ -2392,6 +2657,16 @@ ELSE
     else
      TheObject.Mark := 0;
    end;
+
+ UpdateShowCase;
+ MODIFIED := TRUE;
+ CASE MAP_MODE OF
+  MM_SC : DO_Fill_SectorEditor;
+  MM_WL : DO_Fill_WallEditor;
+  MM_VX : DO_Fill_VertexEditor;
+  MM_OB : DO_Fill_ObjectEditor;
+ END;
+ MapWindow.Map.Invalidate;
 end;
 
 procedure DO_PrepareFlipping;
@@ -2434,7 +2709,8 @@ var i, j, c    : Integer;
     OldCursor : HCursor;
 begin
 OldCursor  := SetCursor(LoadCursor(0, IDC_WAIT));
-
+DO_STOREUNDO;
+IGNORE_UNDO := True;
 DO_PrepareDeformation;
 
 IF MAP_MODE = MM_SC THEN
@@ -2574,7 +2850,15 @@ ELSE
    end;
 
 SetCursor(OldCursor);
+ MODIFIED := TRUE;
+ if MAP_MODE = MM_SC then
+  DO_Fill_SectorEditor
+ else
+  DO_Fill_ObjectEditor;
 
+ IGNORE_UNDO := False;
+ UpdateShowCase;
+ MapWindow.Map.Invalidate;
 end;
 
 procedure SwapWLContents(sc, wl1, wl2 : Integer);
@@ -2713,6 +2997,7 @@ begin
 
 end;
 
+// YVES - You never finished this. Hop on to it! - Karjala 2022
 procedure DO_SplitSector(s, d, n, sc, wl1, wl2 : Integer);
 var TheSector  : TSector;
     TheWall1   : TWall;
@@ -2747,5 +3032,153 @@ begin
       end;
  END;
 end;
+
+{
+// TO DO WHENEVER
+procedure DO_CombineSector;
+var
+   TheSector,
+   TheSector2,
+   NewSector : TSector;
+   TheWall,
+   RightWall,
+   OpWall,
+   OpRightWall : TWall;
+   TheVertex,
+   TheVertex2,
+   OpVertex,
+   NewVertex : TVertex;
+   TheInfCls : TInfClass;
+   i,j,k,s,s2 : Integer;
+   adjoined : Boolean;
+   delprevvx : Boolean;
+   delsetting: Boolean;
+begin
+  if MAP_MODE = MM_SC then
+    begin
+      if SC_MULTIS.count > 2 then
+         begin
+           showmessage('You can only combine two sectors at a time!');
+           exit;
+         end;
+
+      if SC_MULTIS.count < 2 then
+         begin
+           showmessage('You must select another sector to combine!');
+           exit;
+         end;
+
+      // First sector
+      s := StrToInt(Copy(SC_MULTIS[0],1,4));
+      TheSector := TSector(MAP_SEC.Objects[s]);
+
+      // Second Sector
+      s2 := StrToInt(Copy(SC_MULTIS[1],1,4));
+      TheSector2 := TSector(MAP_SEC.Objects[s2]);
+
+     // TmpSector := TSector.Create;
+
+      // Initial Check
+      adjoined := False;
+      for i := 0 to TheSector.wl.count-1 do
+         begin
+           TheWall := TWall(TheSector.wl.objects[i]);
+           if TheWall.adjoin = s2 then
+             begin
+               adjoined := True;
+               continue;
+             end;
+         end;
+
+      if not adjoined  then
+         begin
+           showmessage('The sectors must be adjoined to each other to combine them!');
+           TmpSector.free;
+           exit;
+         end;
+
+      DO_StoreUndo;
+      IGNORE_UNDO := True;
+      delsetting := CONFIRMWallDelete;
+      CONFIRMWallDelete := False;
+      SECTOR_COMBINE := True;
+
+      while adjoined do
+        begin
+
+          //Real Attempt
+           for i := 0 to TheSector2.wl.count-1 do
+             begin
+               if delprevvx then
+                 begin
+                   delprevvx := False;
+                   continue;
+                 end;
+
+               TheWall := TWall(TheSector2.wl.objects[i]);
+               TheVertex := TVertex(TheSector2.vx.objects[i]);
+
+
+               if TheWall.adjoin = s then
+                  begin
+                    // Get opposite right walls
+                    GetWLfromLeftVX(s2, TheWall.Right_vx, j);
+                    RightWall := TWall(TheSector2.WL.Objects[j]);
+
+                    OpWall := TWall(TheSector.WL.Objects[TheWall.mirror]);
+                    GetWLfromLeftVX(s, OpWall.Right_vx, j);
+                    OpRightWall := TWall(TheSector.WL.Objects[j]);
+                    OpVertex := TVertex(TheSector.Vx.objects[OpWall.Left_vx]);
+                    TheVertex2 :=  TVertex(TheSector2.Vx.objects[TheWall.Left_vx]);
+
+                    ShellDeleteWL(s, TheWall.mirror);
+                    ShellDeleteWL(s2, i);
+                    delprevvx := True;
+//                    break;
+                  end;
+
+
+
+               TheSector.Vx.AddObject('VX', TheVertex);
+               TheSector.Wl.AddObject('WL', TheWall);
+             end;
+           //RightWall.Right_vx := OpVertex;
+           //OpRightWall.Right_vx := TheVertex2;
+
+
+            adjoined := False;
+            for i := 0 to TheSector.wl.count-1 do
+              begin
+                 TheWall := TWall(TheSector.wl.objects[i]);
+                 if TheWall.adjoin = s2 then
+                   begin
+                     adjoined := True;
+                     continue;
+                   end;
+              end;
+        end;
+        MAP_SEC.Delete(s2);
+
+         // Clean INFs
+        // for j := 0 to TheSector2.InfClasses.Count - 1 do
+        //    TInfClass(TheSector.InfClasses.Objects[j]).Free;
+
+         //TheSector2.Free;
+         //MAP_SEC.Delete(s2);
+         SECTOR_COMBINE := False;
+         MODIFIED := TRUE;
+         UpdateShowCase;
+
+
+         IGNORE_UNDO:=False;
+         CONFIRMWallDelete := delsetting;
+         SC_MULTIS.Clear;
+         SC_HILITE := s;
+         MapWindow.Invalidate;
+
+    end;
+
+end;}
+
 
 end.

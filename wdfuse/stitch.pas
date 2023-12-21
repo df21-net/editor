@@ -43,6 +43,7 @@ var s, w       : Integer;
     OffsX,
     OffsY      : Real;
 begin
+ DO_StoreUndo;
  {first set all the wall marks to zero, we'll use this to mark
   when a wall already has been stitched so no wall is done more than once}
  for s := 0 to MAP_SEC.Count - 1 do
@@ -125,6 +126,7 @@ begin
 
  MODIFIED := TRUE;
  DO_Fill_WallEditor;
+ UpdateShowCase;
 end;
 
 procedure SuperStitchAWall;
@@ -151,7 +153,6 @@ var s, w, v    : Integer;
     oldbotx    : Real;
     TheSector2 : TSector;
 begin
-
  TheSReq       := TStitchRequest(STITCH_REQUESTS.Objects[0]);
  TheSector     := TSector(MAP_SEC.Objects[TheSReq.sc]);
  TheWall       := TWall(TheSector.Wl.Objects[TheSReq.wl]);

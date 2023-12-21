@@ -3,7 +3,7 @@ unit M_editor;
 interface
 uses
   SysUtils, WinTypes, WinProcs, Graphics, IniFiles, Dialogs, Forms, Controls,
-  _Math, _Strings,
+  _Math, _Strings, strutils,
   M_Global,
   M_SCedit, M_WLedit, M_VXedit, M_OBedit, M_FlagEd, M_Diff,
   M_Resour, M_OBClas, M_ObSeq, M_ObSel, RichEdit, Grids, v_util32, Math;
@@ -40,7 +40,7 @@ procedure DO_WallEditor_Specials(c : Integer);
 function  Check_AllWallEditor : Boolean;
 function  Check_WallEditorField(field : Integer) : Boolean;
 function  CompareTwoWalls(WallA: TWall; WallB: TWall) : Boolean;
-function UpdateWallLengthVX(WallLength : Real) : Boolean;
+function  UpdateWallLengthVX(WallLength : Real; sc : integer; wl : integer) : Boolean;
 procedure DO_Commit_WallEditor;
 procedure DO_Commit_WallEditorField(field : Integer);
 procedure DO_ForceCommit_WallEditorField(field : Integer);
@@ -62,6 +62,9 @@ procedure DO_SelectObject;
 procedure UpdateSectorName(INFSector : Integer);
 
 procedure SetDOOMEditors;
+procedure DO_UpdateShowcaseMultiSCRefs;
+procedure DO_UpdateShowcaseMultiWLRefs;
+procedure DO_UpdateShowcaseRefs(sc : Integer);
 
 implementation
 uses Mapper, M_Util, M_mapfun, InfEdit2;
@@ -231,7 +234,7 @@ begin
   end;
 
  // Reset Focus
- if not AUTOCOMMIT_FLAG and not INF_READ and VertexEditor.visible then
+ if not AUTOCOMMIT_FLAG and not INF_READ and VertexEditor.visible and not APPLYING_UNDO then
    begin
      VertexEditor.FormCreate(NIL);
      VertexEditor.SetFocus;
@@ -375,6 +378,7 @@ begin
 
  TMPVertex.Free;
  ORIVertex.Free;
+ UpdateShowCase;
  MapWindow.Map.Invalidate;
 end;
 
@@ -445,9 +449,12 @@ begin
 
  SectorEditor.PanelVXNum.Caption := IntToStr(numvx);
  SectorEditor.PanelWLNum.Caption := IntToStr(numwl);
+ SectorEditor.PanelSCHeight.Caption := PosTrim(TheSector.Ceili_Alt-TheSector.Floor_Alt);
+
+
 
   // Reset Focus
- if not AUTOCOMMIT_FLAG and not INF_READ and not APPLYING_UNDO and SectorEditor.visible then
+ if not AUTOCOMMIT_FLAG and not INF_READ and not APPLYING_UNDO and SectorEditor.visible and not NO_INVALIDATE then
    begin
      SectorEditor.FormCreate(NIL);
      SectorEditor.SetFocus;
@@ -481,7 +488,7 @@ begin
   end;
 
  // Show it even if no INFs if visible
- if not APPLYING_UNDO and INFWindow2.Visible and INFWindow2.ontop then
+ if not APPLYING_UNDO and INFWindow2.Visible and INFWindow2.ontop and not NO_INVALIDATE then
    begin
      MapWindow.SpeedButtonINFClick(NIL);
      MapWindow.SetFocus;
@@ -894,8 +901,9 @@ begin
  TMPSector.Free;
  ORISector.Free;
 
- DO_Fill_SectorEditor; {for eventual updates of infclasses}
- MapWindow.Map.Invalidate;
+ if not NO_INVALIDATE then DO_Fill_SectorEditor; {for eventual updates of infclasses}
+ UpdateShowCase;
+ if not NO_INVALIDATE then MapWindow.Map.Invalidate;
 end;
 
 procedure DO_Commit_SectorEditorField(field : Integer);
@@ -908,6 +916,7 @@ var
   reset_flag          : LongInt;
   TheInfCls           : TInfClass;
   found               : Boolean;
+  TheWall             : TWall;
 begin
  TheSector     := TSector(MAP_SEC.Objects[SC_HILITE]);
 
@@ -1158,12 +1167,15 @@ begin
          {selection}
          TheSector.Floor_Alt := TMPSector.Floor_Alt;
          {multiselection}
+         
          if SC_MULTIS.Count <> 0 then
-          for m := 0 to SC_MULTIS.Count - 1 do
-           begin
-            TheSectorM   := TSector(MAP_SEC.Objects[StrToInt(Copy(SC_MULTIS[m],1,4))]);
-            TheSectorM.Floor_Alt  := TMPSector.Floor_Alt ;
-           end;
+            for m := 0 to SC_MULTIS.Count - 1 do
+             begin
+              TheSectorM   := TSector(MAP_SEC.Objects[StrToInt(Copy(SC_MULTIS[m],1,4))]);
+              TheSectorM.Floor_Alt  := TMPSector.Floor_Alt ;       
+             end;
+
+         DO_UpdateShowcaseMultiSCRefs;
          MODIFIED := TRUE;
         end;
    6 : if ORISector.Floor.Name <> TMPSector.Floor.Name then
@@ -1232,6 +1244,7 @@ begin
             TheSectorM   := TSector(MAP_SEC.Objects[StrToInt(Copy(SC_MULTIS[m],1,4))]);
             TheSectorM.Ceili_Alt  := TMPSector.Ceili_Alt;
            end;
+         DO_UpdateShowcaseMultiSCRefs;           
          MODIFIED := TRUE;
         end;
   11 : if ORISector.Ceili.Name <> TMPSector.Ceili.Name then
@@ -1936,13 +1949,19 @@ begin
          {selection}
          TheWall.Light := TMPWall.Light;
          {multiselection}
+
          if WL_MULTIS.Count <> 0 then
           for m := 0 to WL_MULTIS.Count - 1 do
            begin
             TheSectorM   := TSector(MAP_SEC.Objects[StrToInt(Copy(WL_MULTIS[m],1,4))]);
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
-            TheWallM.Light := TMPWall.Light;
+            {Flag is updated, not copied !}
+            xor_flag   := ORIWall.Light xor TMPWall.Light;
+            set_flag   := xor_flag and TMPWall.Light;
+            reset_flag := xor_flag and ORIWall.Light;
+            TheWallM.Light := (TheWallM.Light or set_flag) and not reset_flag;
            end;
+         DO_UpdateShowcaseMultiWLRefs;
          MODIFIED := TRUE;
         end;
    4 : if ORIWall.Flag1 <> TMPWall.Flag1 then
@@ -1961,6 +1980,7 @@ begin
             reset_flag := xor_flag and ORIWall.Flag1;
             TheWallM.Flag1 := (TheWallM.Flag1 or set_flag) and not reset_flag;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
    5 : if ORIWall.Flag2 <> TMPWall.Flag2 then
@@ -1979,6 +1999,7 @@ begin
             reset_flag := xor_flag and ORIWall.Flag2;
             TheWallM.Flag2 := (TheWallM.Flag2 or set_flag) and not reset_flag;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
    6 : if ORIWall.Flag3 <> TMPWall.Flag3 then
@@ -1997,6 +2018,7 @@ begin
             reset_flag := xor_flag and ORIWall.Flag3;
             TheWallM.Flag3 := (TheWallM.Flag3 or set_flag) and not reset_flag;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
    7 : if ORIWall.Mid.Name <> TMPWall.Mid.Name then
@@ -2012,6 +2034,7 @@ begin
             TheWallM.Mid.Name := TMPWall.Mid.Name;
            end;
          MODIFIED := TRUE;
+         DO_UpdateShowcaseMultiWLRefs;
          {add to textures}
          if TX_LIST.IndexOf(UpperCase(TMPWall.Mid.Name)) = -1 then
           TX_LIST.Add(UpperCase(TMPWall.Mid.Name));
@@ -2029,6 +2052,7 @@ begin
             TheWallM.Mid.f1 := TMPWall.Mid.f1;
            end;
          MODIFIED := TRUE;
+         DO_UpdateShowcaseMultiWLRefs;
         end;
    9 : if ORIWall.Mid.f2 <> TMPWall.Mid.f2 then
         begin
@@ -2043,6 +2067,7 @@ begin
             TheWallM.Mid.f2 := TMPWall.Mid.f2;
            end;
          MODIFIED := TRUE;
+         DO_UpdateShowcaseMultiWLRefs;
         end;
   10 : if ORIWall.Mid.i <> TMPWall.Mid.i then
         begin
@@ -2056,6 +2081,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Mid.i := TMPWall.Mid.i;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
   11 : if ORIWall.Top.Name <> TMPWall.Top.Name then
@@ -2070,6 +2096,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Top.Name := TMPWall.Top.Name;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
          {add to textures}
          if TX_LIST.IndexOf(UpperCase(TMPWall.Top.Name)) = -1 then
@@ -2087,6 +2114,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Top.f1 := TMPWall.Top.f1;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
   13 : if ORIWall.Top.f2 <> TMPWall.Top.f2 then
@@ -2101,6 +2129,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Top.f2 := TMPWall.Top.f2;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
   14 : if ORIWall.Top.i <> TMPWall.Top.i then
@@ -2115,6 +2144,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Top.i := TMPWall.Top.i;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
   15 : if ORIWall.Bot.Name <> TMPWall.Bot.Name then
@@ -2129,6 +2159,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Bot.Name := TMPWall.Bot.Name;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
          {add to textures}
          if TX_LIST.IndexOf(UpperCase(TMPWall.Bot.Name)) = -1 then
@@ -2146,6 +2177,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Bot.f1 := TMPWall.Bot.f1;
            end;
+         DO_UpdateShowcaseMultiWLRefs;
          MODIFIED := TRUE;
         end;
   17 : if ORIWall.Bot.f2 <> TMPWall.Bot.f2 then
@@ -2160,6 +2192,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Bot.f2 := TMPWall.Bot.f2;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
   18 : if ORIWall.Bot.i <> TMPWall.Bot.i then
@@ -2174,6 +2207,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Bot.i := TMPWall.Bot.i;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
   19 : if ORIWall.Sign.Name <> TMPWall.Sign.Name then
@@ -2188,6 +2222,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Sign.Name := TMPWall.Sign.Name;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
          {add to textures}
          if TX_LIST.IndexOf(UpperCase(TMPWall.Sign.Name)) = -1 then
@@ -2205,6 +2240,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Sign.f1 := TMPWall.Sign.f1;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
   21 : if ORIWall.Sign.f2 <> TMPWall.Sign.f2 then
@@ -2219,6 +2255,7 @@ begin
             TheWallM     := TWall(TheSectorM.Wl.Objects[StrToInt(Copy(WL_MULTIS[m],5,4))]);
             TheWallM.Sign.f2 := TMPWall.Sign.f2;
            end;
+         DO_UpdateShowcaseMultiWLRefs;           
          MODIFIED := TRUE;
         end;
  END;
@@ -2226,9 +2263,13 @@ end;
 
 procedure DO_Commit_WallEditor;
 var
-  TheSector    : TSector;
-  TheWall      : TWall;
-  i, j         : Integer;
+  TheSector,
+  TheSectorM   : TSector;
+  TheWall,
+  TheWallm     : TWall;
+  i, j, m,
+  sc_mult,
+  wl_mult      : Integer;
   AReal        : Real;
   LenUpdated   : Boolean;
 
@@ -2255,13 +2296,27 @@ begin
  Val(WallEditor.WLEd.Cells[1, 22], AReal, j);
  if j = 0 then
    begin
-    LenUpdated := UpdateWallLengthVX(AReal);
+     LenUpdated  := UpdateWallLengthVX(AReal, SC_HILITE, WL_HILITE);
+
+     // If there is a change in the original wall length, recalculate others
+     if (WL_MULTIS.Count <> 0) and LenUpdated then
+          for m := 0 to WL_MULTIS.Count - 1 do
+           begin
+             sc_mult := StrToInt(Copy(WL_MULTIS[m],1,4));
+             wl_mult := StrToInt(Copy(WL_MULTIS[m],5,4));
+
+             // Don't recalculate the original sc / wall length
+             if (sc_mult = SC_HILITE) and (wl_mult = WL_HILITE) then continue;
+                          
+             UpdateWallLengthVX(AReal, sc_mult, wl_mult);
+
+           end
    end
  else
    begin
     Application.MessageBox('Wrong value for Wall length', 'Wall Editor Error', mb_Ok or mb_IconExclamation);
     exit;
-  end;
+   end;
 
  // If length is updated - no need to compare anything
  // or attempt to store anything - we did it in WallLength function
@@ -2304,7 +2359,8 @@ begin
  TMPWall.Free;
  ORIWall.Free;
  { DO_Fill_WallEditor; }
- MapWindow.Map.Invalidate;
+ UpdateShowCase;
+ if not NO_INVALIDATE then MapWindow.Map.Invalidate;
 end;
 
 procedure DO_ForceCommit_WallEditorField(field : Integer);
@@ -2362,7 +2418,7 @@ end;
   We alwyas mod the RIGHT vertex. So a line with vertices  (0,0) (3,4)
   when length is doubled (5->10) becomes (0,0) (6,8). This also handles
   adjoin wall mirror. }
-function  UpdateWallLengthVX(WallLength : Real) : boolean;
+function  UpdateWallLengthVX(WallLength : Real; sc : integer; wl : integer) : Boolean;
 var vx1, vx2 : TVertex;
     orig_length,
     deltax,
@@ -2375,8 +2431,8 @@ var vx1, vx2 : TVertex;
     tempreal : real;
 begin
    Result := False;
-   TheSector := TSector(MAP_SEC.Objects[SC_HILITE]);
-   TheWall   := TWall(TheSector.Wl.Objects[WL_HILITE]);
+   TheSector := TSector(MAP_SEC.Objects[sc]);
+   TheWall   := TWall(TheSector.Wl.Objects[wl]);
    vx1 := TVertex(TheSector.Vx.Objects[TheWall.left_vx]);
    vx2 := TVertex(TheSector.Vx.Objects[TheWall.right_vx]);
    orig_length := sqrt(sqr(vx1.X - vx2.X)+sqr(vx1.Z - vx2.Z));
@@ -2415,9 +2471,9 @@ begin
 
        // Update sector with updated vertex
        TheSector.Vx.Objects[TheWall.Right_vx] := vx2;
-       MAP_SEC.Objects[SC_HILITE] := TheSector;
+       MAP_SEC.Objects[sc] := TheSector;
        MapWindow.invalidate;
-
+       UpdateShowCase;
        Result := True;
      end;
 end;
@@ -2431,6 +2487,7 @@ var
   TheSector : TSector;
   TheObject : TOB;
 begin
+
  TheObject := TOB(MAP_OBJ.Objects[OB_HILITE]);
  if TheObject.Sec <> -1 then
   TheSector := TSector(MAP_SEC.Objects[TheObject.Sec]);
@@ -2498,6 +2555,9 @@ var
   AInt                : Integer;
   ALong               : LongInt;
   Code                : Integer;
+  olen                : Integer;
+  ostr                : String;
+  ocls                : String;
   title               : array[0..60] of char;
 begin
  StrCopy(Title, 'Object Editor Error');
@@ -2519,15 +2579,67 @@ begin
           end;
        end;
    1 : begin
-        if Length(ObjectEditor.OBEd.Cells[1,  1]) < 13 then
+        ocls := ObjectEditor.OBEd.Cells[1,  0];
+
+        // I hope this never happens.
+        if ocls = '' then
+          begin
+            Application.MessageBox('No Objct Class defined! Cannot process Data', Title, mb_Ok or mb_IconExclamation);
+            Check_ObjectEditorField := FALSE;
+            exit;
+          end;
+
+
+        ostr := ObjectEditor.OBEd.Cells[1,  1];
+        olen := Length(ostr);
+        if (olen < 13) or (olen > 0) then
          begin
+
+          // Add class type validation
+          if ocls = 'SPRITE' then
+             begin
+               if UpperCase(RightStr(ostr, 4)) <> '.WAX' then
+                 begin
+                   showmessage('The value ' + ostr + ' is not a valid sprite!');
+                   Check_ObjectEditorField := FALSE;
+                   exit;
+                 end;
+             end;
+          if ocls = 'FRANE' then
+             begin
+               if UpperCase(RightStr(ostr, 4)) <> '.FNE' then
+                 begin
+                   showmessage('The value ' + ostr + ' is not a valid frame!');
+                   Check_ObjectEditorField := FALSE;
+                   exit;
+                 end;
+             end;
+          if ocls = 'SOUND' then
+             begin
+               if UpperCase(RightStr(ostr, 4)) <> '.VOC' then
+                 begin
+                   showmessage('The value ' + ostr + ' is not a valid sound!');
+                   Check_ObjectEditorField := FALSE;
+                   exit;
+                 end;
+             end;
+          if ocls = '3D' then
+             begin
+               if UpperCase(RightStr(ostr, 4)) <> '.3DO' then
+                 begin
+                   showmessage('The value ' + ostr + ' is not a valid 3D Object!');
+                   Check_ObjectEditorField := FALSE;
+                   exit;
+                 end;
+             end;
+
           TMPObject.DataName := ObjectEditor.OBEd.Cells[1,  1];
           {Don't forget to recheck the coloring !}
           DO_FillOBColor;
          end
         else
          begin
-          Application.MessageBox('Name too long', Title, mb_Ok or mb_IconExclamation);
+          Application.MessageBox('Name must be between 1 and 12', Title, mb_Ok or mb_IconExclamation);
           Check_ObjectEditorField := FALSE;
          end;
        end;
@@ -2568,13 +2680,21 @@ begin
         { Yaw }
         Val(ObjectEditor.OBEd.Cells[1,  5], AReal, Code);
         if Code = 0 then
+         begin
+           // Yes seriously - delphi does not support positive modulo ...
+           while(areal < 0) do areal := areal + 360;   
+           TMPObject.Yaw := Trunc(areal) mod 360 ;
+           ObjectEditor.OBEd.Cells[1,  5] := IntToStr(Trunc(TMPObject.Yaw));
+         end
+         {
          if (AReal >= 0) and (AReal < 360) then
           TMPObject.Yaw := AReal
          else
-          begin
+          begin          
            Application.MessageBox('Yaw must be >= 0 and < 360', Title, mb_Ok or mb_IconExclamation);
            Check_ObjectEditorField := FALSE;
           end
+          }
         else
          begin
           Application.MessageBox('Wrong value for Yaw', Title, mb_Ok or mb_IconExclamation);
@@ -2641,12 +2761,15 @@ begin
         { Col }
         Val(ObjectEditor.OBEd.Cells[1, 10], ALong, Code);
         if Code = 0 then
-         if TRUE {test color !} then
-          TMPObject.Col := ALong
-         else
           begin
-           Application.MessageBox('*Color must be a valid color', Title, mb_Ok or mb_IconExclamation);
-           Check_ObjectEditorField := FALSE;
+           // 16777215 = MAX  FFFFFF
+           if (ALong > 0) and (ALong < 16777215)  then
+             TMPObject.Col := ALong
+           else
+            begin
+             Application.MessageBox(PChar('*Color ' + inttostr(ALong) + 'must be a valid color'), Title, mb_Ok or mb_IconExclamation);
+             Check_ObjectEditorField := FALSE;
+            end
           end
         else
          begin
@@ -2726,6 +2849,7 @@ if (ObjectA.ClassName = ObjectB.ClassName) and
    (ObjectA.Special = ObjectB.Special) then
 
     begin
+      Result := True;
       // Need to compare the logic lists as well
       if ObjectA.Seq.Count = ObjectB.Seq.Count  then
         begin
@@ -2735,8 +2859,10 @@ if (ObjectA.ClassName = ObjectB.ClassName) and
                 Result := False;
                 exit;
               end;
-        end;
-      Result := True;
+        end
+      else
+        // You changed something in the logic
+        Result := False;
     end;
 end;
 
@@ -3001,6 +3127,7 @@ begin
 
  TMPObject.Free;
  ORIObject.Free;
+ UpdateShowCase;
  MapWindow.Map.Invalidate;
 end;
 
@@ -3138,6 +3265,37 @@ end;
 procedure DO_FillOBColor;
 var
  COLORini  : TIniFile;
+ colorset  : Integer;
+ o         : Integer;
+ TheObject : TOB;
+begin
+ COLORini := TIniFile.Create(WDFUSEdir + '\WDFDATA\OB_COLS.WDF');
+ colorset := Ini.ReadInteger('OB-COLORS',  ObjectEditor.OBEd.Cells[1, 1], -1);
+ if colorset <> -1 then
+  ObjectEditor.OBEd.Cells[1, 10] :=  IntToStr(colorset)
+ else
+  begin
+     try
+      colorset := COLORini.ReadInteger(ObjectEditor.OBEd.Cells[1, 1], 'COLOR', Ccol_shadow);
+      ObjectEditor.OBEd.Cells[1, 10] := IntToStr(colorset);
+     finally
+      COLORini.Free;
+     end;
+  end;
+
+ // Update all the objects that match that data name to the new color
+ for o := 0 to MAP_OBJ.Count - 1 do
+  begin
+   TheObject := TOB(MAP_OBJ.Objects[o]);
+   if TheObject.DataName = ObjectEditor.OBEd.Cells[1, 1] then
+     TheObject.Col := colorset;
+  end;
+  MapWindow.Invalidate;
+end;
+
+procedure DO_UpdateOBColor;
+var
+ COLORini  : TIniFile;
 begin
  COLORini := TIniFile.Create(WDFUSEdir + '\WDFDATA\OB_COLS.WDF');
  try
@@ -3263,6 +3421,60 @@ begin
     WallEditor.WLEd.Cells[0, 14]   := 'Top Tx #';
     WallEditor.WLEd.Cells[0, 18]   := 'Bot Tx #';
    end
+end;
+
+// For all multi select sectors - update their references
+procedure DO_UpdateShowcaseMultiSCRefs;
+var m ,sc : integer;
+begin
+ if SC_MULTIS.Count <> 0 then
+   for m := 0 to SC_MULTIS.Count - 1 do
+      begin
+        sc := StrToInt(Copy(SC_MULTIS[m],1,4));
+        DO_UpdateShowcaseRefs(sc);
+      end
+ else
+   DO_UpdateShowcaseRefs(SC_HILITE);
+   
+end;
+
+// For all multi select walls - update their references
+procedure DO_UpdateShowcaseMultiWLRefs;
+var m , sc : integer;
+begin
+ 
+  if (WL_MULTIS.Count <> 0) then
+      for m := 0 to WL_MULTIS.Count - 1 do
+       begin
+         sc := StrToInt(Copy(WL_MULTIS[m],1,4));
+         DO_UpdateShowcaseRefs(sc);
+       end
+   else
+       DO_UpdateShowcaseRefs(SC_HILITE);      
+end;
+
+
+
+// Add all the adjoins of a sector
+procedure DO_UpdateShowcaseRefs(sc : Integer);
+var i : integer;
+    TheSector : TSector; 
+    TheWall : TWall;
+begin
+    TheSector   := TSector(MAP_SEC.Objects[sc]);
+
+    // Add the sector itself
+    if not ShowCaseModSC.ContainsInt(sc) then ShowCaseModSC.put(sc);
+    
+    // Now add all the adjoined sectors    
+    for i := 0 to TheSector.Wl.Count - 1 do
+        begin
+         TheWall := TWall(TheSector.Wl.Objects[i]);
+         if TheWall.Adjoin <> -1 then
+          begin
+           if not ShowCaseModSC.ContainsInt(TheWall.Adjoin) then ShowCaseModSC.put(TheWall.Adjoin);
+          end;
+        end;
 end;
 
 

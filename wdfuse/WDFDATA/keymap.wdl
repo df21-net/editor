@@ -26,6 +26,7 @@ Shift State	Key/Mouse	Applies in	Function
 [none]		F8		Map		Tools Dialog Box
 [none]		F9		Map		Options Menu
 [none]		F10		Map		Consistency Checks
+[none]		F11		Map		Refresh 3D Renderer
 [none]		F12		Map		Hot Keys
 [none]		G		Map		Grid On/Off
 [none]		Numpad -        Map             Zoom Out

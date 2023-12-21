@@ -213,6 +213,7 @@ begin
  DO_Fill_WallEditor;
 
  IGNORE_UNDO := False;
+ UpdateShowCase;
  {MapWindow.Map.Invalidate;}
  if not CBPin.Checked then Close;
 end;
@@ -294,6 +295,7 @@ begin
  IGNORE_UNDO := True;
  CreatePolygon(SEPolySides.Value, radius, c_x, c_z, RGPolyAs.ItemIndex, SC_HILITE);
  IGNORE_UNDO := False;
+ UpdateShowCase;
 
  {MODIFIED, Sector Editor are handled by CreatePolygon}
  if not CBPin.Checked then Close;
@@ -339,7 +341,10 @@ begin
   MM_VX : DO_Fill_VertexEditor;
   MM_OB : DO_Fill_ObjectEditor;
  END;
+
+ UpdateShowCase;
  MapWindow.Map.Invalidate;
+
  if not CBPin.Checked then Close;
 end;
 
@@ -477,6 +482,8 @@ begin
   MM_SC : DO_Fill_SectorEditor;
   MM_OB : DO_Fill_ObjectEditor;
  END;
+
+ UpdateShowCase;
  MapWindow.Map.Invalidate;
  if not CBPin.Checked then Close;
 end;
@@ -508,6 +515,7 @@ begin
  else
   DO_Fill_ObjectEditor;
 
+ UpdateShowCase;
  MapWindow.Map.Invalidate;
  if not CBPin.Checked then Close;
 end;

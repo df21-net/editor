@@ -50,6 +50,12 @@ implementation
 
 procedure TAllKeys.FormCreate(Sender: TObject);
 begin
+ if not DirectoryExists(WDFUSEdir + '\WDFDATA\')  then
+    begin
+      log.error('Cannot load help keys because WDFDATA directory is missing!', LogName);
+      exit;
+    end;
+
  MapKeys := LoadKeys('Keymap.wdl');
  MapEditKeys := LoadKeys('Keymapmd.wdl');
  EditorKeys := LoadKeys('Keymaped.wdl');

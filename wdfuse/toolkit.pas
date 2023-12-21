@@ -6,9 +6,9 @@ uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Buttons, ExtCtrls, IniFiles,
   StdCtrls, FileCtrl, Grids, Menus, TabNotBk, System.Strutils,
-  Gobs, Lfds,
+  Gobs, Lfds, ShellApi,
   M_About, M_Global, M_Stat, V_Util, C_Util, R_Util,
-  T_Info, T_Convrt, T_PalOpt,
+  T_Info, T_Convrt, T_PalOpt, M_io,
 {$IFDEF WDF32}
   ComCtrls,
 {$ENDIF}
@@ -39,7 +39,6 @@ type
     ViewerPaletteSelect: TBitBtn;
     LabelViewPalette: TLabel;
     Panel13: TPanel;
-    LabelCMP: TLabel;
     LabelFMESetInsert: TLabel;
     BNInfo: TBitBtn;
     BNConvert: TBitBtn;
@@ -47,7 +46,6 @@ type
     SpeedButtonLfdFM: TSpeedButton;
     BNViewRefresh: TBitBtn;
     LabelDELTSetOffsets: TLabel;
-    LabelSND: TLabel;
     OpenPALorPLTT: TOpenDialog;
     LabelViewFilter: TLabel;
     LabelViewDirectory: TLabel;
@@ -205,6 +203,11 @@ type
     Panel12: TPanel;
     ScrollBox: TScrollBox;
     Image: TImage;
+    StaticText1: TStaticText;
+    ChromMinesButton: TButton;
+    Label2: TLabel;
+    Label1: TLabel;
+    StaticText2: TStaticText;
     procedure FormActivate(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -231,7 +234,6 @@ type
     procedure SBLastFrameClick(Sender: TObject);
     procedure TabbedNotebookChange(Sender: TObject; NewTab: Integer;
       var AllowChange: Boolean);
-    procedure TabbedNotebookClick(Sender: TObject);
     procedure ANIMLabNewAnimClick(Sender: TObject);
     procedure ANIMLabSplitClick(Sender: TObject);
     procedure ANIMLabGroupClick(Sender: TObject);
@@ -262,6 +264,7 @@ type
     procedure FILMLabNewClick(Sender: TObject);
     procedure FILMLabClearClick(Sender: TObject);
     procedure LoadPAL(FileName : String; FilterIndex : Integer);
+    procedure ChromMinesButtonClick(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -439,6 +442,14 @@ begin
  ViewerFile.Update;
 end;
 
+procedure TTktWindow.ChromMinesButtonClick(Sender: TObject);
+var
+  url : string;
+begin
+  url := 'https://www.youtube.com/watch?v=PYlLuws_JQU';
+  ShellExecute(HInstance, 'open', PChar(url), nil, nil, SW_NORMAL);
+end;
+
 procedure TTktWindow.ViewerPaletteSelectClick(Sender: TObject);
 var n : Integer;
 begin
@@ -457,6 +468,7 @@ begin
 end;
 
 
+
 procedure TTktWindow.ViewerFilterClick(Sender: TObject);
 begin
 
@@ -470,7 +482,7 @@ begin
  if ViewerFilter.Mask = '*.3DO' then
    OpenPALorPLTT.FilterIndex := 1;
 
- if ViewerFilter.Mask = '*.ANM' then
+ if (ViewerFilter.Mask = '*.ANM') or (ViewerFilter.Mask = '*.AN*M')then
   begin
    OpenPALorPLTT.FilterIndex := 2;
    SBFirstFrame.Visible := TRUE;
@@ -491,7 +503,7 @@ begin
  if ViewerFilter.Mask = '*.CMP' then
    OpenPALorPLTT.FilterIndex := 1;
 
- if ViewerFilter.Mask = '*.DLT' then
+ if (ViewerFilter.Mask = '*.DLT') or (ViewerFilter.Mask = '*.D*LT')then
    OpenPALorPLTT.FilterIndex := 2;
 
  if ViewerFilter.Mask = '*.FLM' then
@@ -558,9 +570,9 @@ begin
    BNConvert.Enabled := FALSE;
   end;
 
- if ExtractFileExt(TheRes) = '.anm' then
+ if (ExtractFileExt(TheRes) = '.anm') or (ExtractFileExt(TheRes) = '.anim')   then
   begin
-   if LowerCase(ExtractFileExt(ViewerPalette.Text)) = '.plt' then
+   if (LowerCase(ExtractFileExt(ViewerPalette.Text)) = '.plt') or (LowerCase(ExtractFileExt(ViewerPalette.Text)) = '.pltt' )then
     begin
      TheBMP := TBitmap.Create;
      Image.Picture.Graphic := TheBMP;
@@ -621,9 +633,9 @@ begin
     Application.MessageBox(noPAL, TlKit, mb_Ok or mb_IconExclamation);
   end;
 
- if ExtractFileExt(TheRes) = '.dlt' then
+ if (ExtractFileExt(TheRes) = '.dlt') or (ExtractFileExt(TheRes) = '.delt') then
   begin
-   if LowerCase(ExtractFileExt(ViewerPalette.Text)) = '.plt' then
+   if (LowerCase(ExtractFileExt(ViewerPalette.Text)) = '.plt') or (LowerCase(ExtractFileExt(ViewerPalette.Text)) = '.pltt' )then
     begin
      TheBMP := TBitmap.Create;
      Image.Picture.Graphic := TheBMP;
@@ -698,6 +710,12 @@ begin
    DeleteObject(TheBMP.ReleasePalette);
    TheBMP.Free;
    BNConvert.Enabled := TRUE;
+  end;
+
+
+ if (ExtractFileExt(TheRes) = '.wav') or (ExtractFileExt(TheRes) = '.voc')  then
+  begin
+    BNConvert.Enabled := TRUE;
   end;
 
  if ExtractFileExt(TheRes) = '.wax' then
@@ -780,6 +798,9 @@ end;
 
 procedure TTktWindow.TabbedNotebookChange(Sender: TObject;
   NewTab: Integer; var AllowChange: Boolean);
+var
+ exepath : string;
+ ExecuteResult : Integer;
 begin
   AllowChange := FALSE;
   TktHelp    := 'wdftkt_help_viewconvert'; {by default}
@@ -911,14 +932,45 @@ begin
     AllowChange := TRUE;
    end;
 
+   if TabbedNotebook.GetIndexForPage('PAL/PLTT Lab') = NewTab then
+     begin
+        AllowChange := True;
+        exepath := WDFUSEdir + '/WDFTOOLS/cm.exe';
+        if not ProcessRunning('cm.exe') then
+            try
+              if FileExists(exepath) then
+                 begin
+                   ExecuteResult := ShellExecute(0, 'open', PChar(exepath), nil , nil, SW_SHOWNORMAL) ;
+                   log.info('Opening  ' + exepath, LogName);
+                 end;
+            except
+               on E : Exception do
+                 HandleException('Failed opening  ' + exepath, E);
+             end;
+     end;
+
+     if TabbedNotebook.GetIndexForPage('WAX Lab') = NewTab then
+     begin
+        AllowChange := True;
+        exepath := WDFUSEdir + '/WDFTOOLS/WAX converter.exe';
+        if not ProcessRunning('WAX converter.exe') then
+          try
+            if FileExists(exepath) then
+               begin
+                 ExecuteResult := ShellExecute(0, 'open', PChar(exepath), nil , nil, SW_SHOWNORMAL) ;
+                 log.info('Opening  ' + exepath, LogName);
+               end;
+          except
+             on E : Exception do
+                HandleException('Failed opening  ' + exepath, E);
+           end;
+     end;
+
   if not AllowChange then ShowMessage('Not Implemented Yet !')
   else TktPalette.ConvertPalette.Text := ThePAL;
 end;
 
-procedure TTktWindow.TabbedNotebookClick(Sender: TObject);
-begin
- {ShowMessage('Page was clicked');}
-end;
+
 
 { ANIM Lab *************************************************************** }
 

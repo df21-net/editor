@@ -27,6 +27,8 @@ function ConvertPLTT2PAL(PLTTname, PALname : String) : Boolean;
 function ConvertBM2BMP(BMname, PALname, BMPname : String) : Boolean;
 function ConvertFME2BMP(FMEname, PALname, BMPname : String) : Boolean;
 function ConvertANIMDELT2BMP(DELTname, PLTTname, BMPname : String; Frame : Integer) : Boolean;
+function ConvertWAV2VOC(WAVName, VOCName : String) : Boolean;
+function ConvertVOC2WAV(VOCName, WAVName: String) : Boolean;
 
 function ConvertBMP2BM(BMPname, BMname, PALname : String;
                        UsePalette, IsTransparent  : Boolean) : Boolean;
@@ -52,6 +54,8 @@ function BMGroup(BMname, InputDir : String; TheFiles : TStrings) : Boolean;
 
 function FILMDecompile(FILMName : String; Output : TMemo) : Boolean;
 function FILMCompile(FILMName : String; Input : TMemo) : Boolean;
+
+
 
 implementation
 
@@ -856,6 +860,26 @@ begin
  SetCursor(OldCursor);
 end;
 
+{ WAV/ VOC CONVERSIONS *********************************************************}
+
+
+function ConvertWAV2VOC(WAVName, VOCName : String) : Boolean;
+var tmp : array[0..255] of char;
+begin
+   StrPCopy(tmp, '"' + Wav2Voc + '" "' + WAVName +  '" "' + VOCName + '"');
+   SysUtils.DeleteFile(VOCName);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_HIDE);
+   Result := True;
+end;
+
+function ConvertVOC2WAV(VOCName, WAVName: String) : Boolean;
+var tmp : array[0..255] of char;
+begin
+   StrPCopy(tmp, '"' + Voc2Wav + '" "' + VOCName +  '" "' + WAVName + '"');
+   SysUtils.DeleteFile(WAVName);
+   WinExec(PAnsiChar(AnsiString(tmp)), SW_HIDE);
+   Result := True;
+end;
 
 { BMP2 CONVERSIONS *********************************************************}
 
@@ -1828,7 +1852,7 @@ var i         : Integer;
     fin, fout : Integer;
     DataSize  : LongInt;
     TotFrames : Integer;
-    Buffer    : array[0..4095] of Byte;
+    Buffer    : array[0..65535] of Byte;
     OldCursor : HCursor;
 begin
  Result := TRUE;
@@ -1861,7 +1885,7 @@ var i         : Integer;
     fin, fout : Integer;
     DataSize  : LongInt;
     TotFrames : Integer;
-    Buffer    : array[0..4095] of Byte;
+    Buffer    : array[0..65535] of Byte;
     OldCursor : HCursor;
 begin
 
@@ -1907,7 +1931,7 @@ var i         : Integer;
     DataSize  : LongInt;
     BMH       : TBM_HEADER;
     BMSUBH    : TBM_SUBHEADER;
-    Buffer    : array[0..4095] of Byte;
+    Buffer    : array[0..65535] of Byte;
     OldCursor : HCursor;
     FRate     : Byte;
     Transp    : Byte;
@@ -1982,7 +2006,7 @@ var i,j       : Integer;
     BMH0      : TBM_HEADER;
     BMH       : TBM_HEADER;
     BMSUBH    : TBM_SUBHEADER;
-    Buffer    : array[0..4095] of Byte;
+    Buffer    : array[0..65535] of Byte;
     OldCursor : HCursor;
     FRate     : Byte;
     Dummy     : Byte;

@@ -70,6 +70,7 @@ procedure DO_Switch_To_SC_Mode;
 begin
   if MAP_MODE <> MM_SC then
     begin
+      log.info('Switching to SC Mode', LogName);
       MapWindow.SpeedButtonSC.Down := TRUE;
       MAP_MODE  := MM_SC;
       VX_HILITE := 0;
@@ -103,6 +104,7 @@ begin
   { ne pas oublier les transferts de multiselection }
   if MAP_MODE <> MM_WL then
     begin
+       log.info('Switching to WL Mode', LogName);
       { multiselection transfer }
       CASE MAP_MODE of
        MM_SC : DO_Convert_MultiSC_MultiWL;
@@ -152,6 +154,7 @@ var TheSector           : TSector;
 begin
   if MAP_MODE <> MM_VX then
     begin
+       log.info('Switching to VX Mode', LogName);
       { multiselection transfer }
       CASE MAP_MODE of
        MM_SC : DO_Convert_MultiSC_MultiVX;
@@ -192,6 +195,7 @@ procedure DO_Switch_To_OB_Mode;
 begin
   if MAP_MODE <> MM_OB then
     begin
+       log.info('Switching to OB Mode', LogName);
       { multiselection transfer }
       CASE MAP_MODE of
        MM_SC : DO_Convert_MultiSC_MultiOB;
@@ -314,7 +318,7 @@ begin
   OBSHADOW := not OBSHADOW;
   if OBSHADOW then
   {//  MapWindow.PanelOBLayer.Font.Color := clRed }
-  MapWindow.Panel1OBLayer.Font.Color := clRed    {//DL nov/96 }
+    MapWindow.Panel1OBLayer.Font.Color := clRed    {//DL nov/96 }
   else
   {//  MapWindow.PanelOBLayer.Font.Color := clBlack;}
     MapWindow.Panel1OBLayer.Font.Color := clBlack;
@@ -443,10 +447,59 @@ var minX,
     maxX,
     maxY,
     maxZ      : Real;
+    errors    : Boolean;
 begin
   DO_GetMapLimits(minX, minY, minZ, maxX, maxY, maxZ);
-  Xoffset := Round((minX + maxX) / 2);
-  Zoffset := Round((minZ + maxZ) / 2);
+  log.Info('Map Limit Values are ' +
+           ' MinX='+ FloatToStr(minx) +
+           ' MaxX='+ FloatToStr(maxx) +
+           ' MinY='+ FloatToStr(minY) +
+           ' MaxY='+ FloatToStr(maxY) +
+           ' MinZ='+ FloatToStr(minZ) +
+           ' MaxZ='+ FloatToStr(maxZ), LogName);
+
+  errors := False;  
+
+  if (minx < -MAP_LIMIT) then
+    begin
+     log.error('MinX is outside the limit [' + inttostr(-MAP_LIMIT) + ']', LogName);
+     errors := True;    
+    end;
+
+   if (maxx > MAP_LIMIT) then
+    begin
+     log.error('MaxX is outside the limit [' + inttostr(MAP_LIMIT) + ']', LogName);
+     errors := True;    
+    end;
+
+
+   if (minz < -MAP_LIMIT) then
+    begin
+     log.error('MinZ is outside the limit [' + inttostr(-MAP_LIMIT) + ']', LogName);
+     errors := True;    
+    end; 
+
+   if (maxZ > MAP_LIMIT) then
+    begin
+     log.error('MaxZ is outside the limit [' + inttostr(MAP_LIMIT) + ']', LogName);
+     errors := True;    
+    end;
+       
+  if errors then
+   begin
+   
+    Xoffset := 0;
+    ZOffset := 0;
+    showmessage('Warning! This mission has sectors or objects ourside the ' +
+                 inttostr(MAP_LIMIT) + ' unit limit! Please checek the Logs (F5)');
+   end
+  else 
+    begin 
+      Xoffset := Round((minX + maxX) / 2);
+      Zoffset := Round((minZ + maxZ) / 2);    
+    end;
+
+  log.Info('Center Offsets are X = ' + FloatToStr(XOffset) + ' Z = ' + FloatToSTr(ZOffset), LogName);
   // TODO(azurda): This does not play nicely.
   // DO_Set_ScrollBars_Ranges(round(minX), round(maxX), round(minZ), round(maxZ));
   MapWindow.Map.Invalidate;
@@ -484,7 +537,6 @@ begin
   for i := 0 to MAP_SEC.Count - 1 do
     begin
       TheSector := TSector(MAP_SEC.Objects[i]);
-
       if TheSector.Ceili_alt > maxY then maxY := TheSector.Ceili_alt;
       if TheSector.Floor_alt < minY then minY := TheSector.Floor_alt;
 

@@ -41,6 +41,7 @@ type
     Panel1: TPanel;
     SBHelp: TSpeedButton;
     OBStayOnTopCheckBox: TCheckBox;
+    ColorDialog: TColorDialog;
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure SBRollbackClick(Sender: TObject);
@@ -57,6 +58,9 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure FormMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure OBEdMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure OBEdKeyPress(Sender: TObject; var Key: Char);
   private
     { Private declarations }
   public
@@ -76,10 +80,10 @@ var OnTop : Integer;
 begin
   ObjectEditor.Left   := Ini.ReadInteger('WINDOWS', 'Object Editor  X', 0);
   ObjectEditor.Top    := Ini.ReadInteger('WINDOWS', 'Object Editor  Y', 72);
-  ObjectEditor.Width  := Ini.ReadInteger('WINDOWS', 'Object Editor  W', 400);
+  ObjectEditor.Width  := Ini.ReadInteger('WINDOWS', 'Object Editor  W', 600);
   ObjectEditor.Height := Ini.ReadInteger('WINDOWS', 'Object Editor  H', 700);
   OnTop               := Ini.ReadInteger('WINDOWS', 'Object Editor  T', 1);
-  ObEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Object Editor  G', 85);
+  ObEd.ColWidths[0]   := Ini.ReadInteger('WINDOWS', 'Object Editor  G', 100);
   PanelInfoLeft.Width := Ini.ReadInteger('WINDOWS', 'Object Editor  G', 85);
   if OnTop = 0 then
    begin
@@ -156,6 +160,12 @@ begin
 end;
 
 
+procedure TObjectEditor.OBEdKeyPress(Sender: TObject; var Key: Char);
+begin
+   if Integer(Key) = 13 then
+     SBCommitClick(NIL);
+end;
+
 procedure TObjectEditor.OBEdKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
@@ -182,6 +192,19 @@ begin
                    ObEd.ColWidths[0] := ObEd.ColWidths[0] + 1;
                    PanelInfoLeft.Width := PanelInfoLeft.Width + 1;
                   end;
+    end;
+end;
+
+procedure TObjectEditor.OBEdMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  // This is a hack to prevent refocus on own object
+  // Do not autocommit multiple items as it is dangerous
+  if AUTOCOMMIT and (WL_MULTIS.Count = 0) then
+    begin
+      AUTOCOMMIT_FLAG := True;
+      DO_Commit_ObjectEditor;
+      AUTOCOMMIT_FLAG := False;
     end;
 end;
 
@@ -231,6 +254,14 @@ begin
            DO_FillOBColor;
         end;
     8 : Cells[1, 8] := DiffEdit(Cells[1, 8]);
+    10 : begin
+           if ColorDialog.Execute then
+             begin
+               Cells[1, 10] := IntToStr(ColorDialog.Color);
+               Ini.WriteInteger('OB-COLORS',  Cells[1,  1], ColorDialog.Color);
+
+             end;
+         end;
   end;
 end;
 

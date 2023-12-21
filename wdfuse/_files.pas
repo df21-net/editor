@@ -2,7 +2,7 @@ unit _files;
 
 interface
 
-uses SysUtils, WinTypes, WinProcs, Classes, Consts;
+uses SysUtils, WinTypes, WinProcs, Classes, Consts, System.IOUtils, M_Global, vcl.Dialogs;
 
 type
   EInvalidDest = class(EStreamError);
@@ -26,43 +26,58 @@ const
   SFOpenError = 'Cannot open File %s';
   SFCreateError = 'Cannot create File %s';
 
+
+
+procedure CopyFile(const FileName, DestName: TFileName);
+begin
+ try
+   TFile.Copy(FileName, DestName, True);
+ except on E: Exception do
+   begin
+     Log.error('Failed to Copy File from ' + FileName + ' to ' + DestName + ' with error ' + E.ClassName +
+     ' error raised, with message : '+E.Message, LogName);
+     showmessage('Failed to Copy File from ' + FileName + ' to ' + DestName + ' with error ' + E.ClassName +
+     ' error raised, with message : '+E.Message);
+    end;
+ end;
+end;
+
+{       Good God... 1995 go away!
 procedure CopyFile(const FileName, DestName: TFileName);
 var
-  CopyBuffer: Pointer; { buffer for copying }
-  {TimeStamp,} BytesCopied: Longint;
-  Source, Dest: Integer; { handles }
+  CopyBuffer: Pointer;
+   BytesCopied: Longint;
+  Source, Dest: Integer;
   ErrString : String;
-  Destination: TFileName; { holder for expanded destination name }
+  Destination: TFileName;
 const
-  ChunkSize: Longint = 8192; { copy in 8K chunks }
+  ChunkSize: Longint = 8192;
 begin
-  Destination := ExpandFileName(DestName); { expand the destination path }
-  {TimeStamp := FileAge(FileName);} { get source's time stamp }
-  GetMem(CopyBuffer, ChunkSize); { allocate the buffer }
+  Destination := ExpandFileName(DestName);
+  GetMem(CopyBuffer, ChunkSize);
   try
-    Source := FileOpen(FileName, fmShareDenyWrite); { open source file }
+    Source := FileOpen(FileName, fmShareDenyWrite);
     if Source < 0 then raise EFOpenError.CreateFmt(SFOpenError, [Source]);
     try
-      Dest := FileCreate(Destination); { create output file; overwrite existing }
+      Dest := FileCreate(Destination);
       if Dest < 0 then raise EFCreateError.CreateFmt(SFCreateError,[Dest]);
       try
         repeat
-          BytesCopied := FileRead(Source, CopyBuffer^, ChunkSize); { read chunk }
-          if BytesCopied > 0 then { if we read anything... }
-            FileWrite(Dest, CopyBuffer^, BytesCopied); { ...write chunk }
-        until BytesCopied < ChunkSize; { until we run out of chunks }
+          BytesCopied := FileRead(Source, CopyBuffer^, ChunkSize);
+          if BytesCopied > 0 then
+            FileWrite(Dest, CopyBuffer^, BytesCopied);
+        until BytesCopied < ChunkSize;
       finally
-        FileClose(Dest); { close the destination file }
-{        SetFileTimeStamp(Destination, TimeStamp);} { clone source's time stamp }{!!!}
+        FileClose(Dest);
       end;
     finally
-      FileClose(Source); { close the source file }
+      FileClose(Source);
     end;
   finally
-    FreeMem(CopyBuffer, ChunkSize); { free the buffer }
+    FreeMem(CopyBuffer, ChunkSize);
   end;
 end;
-
+   }
 
 { MoveFile procedure }
 {

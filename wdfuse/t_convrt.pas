@@ -42,6 +42,10 @@ type
     OpenPALorPLTT: TOpenDialog;
     ConvertPaletteOptions: TBitBtn;
     ConvertBMCompressed: TRadioGroup;
+    Bevel7: TBevel;
+    Bevel8: TBevel;
+    ConvertWAV: TBitBtn;
+    ConvertVOC: TBitBtn;
     procedure FormActivate(Sender: TObject);
     procedure ConvertPLTTClick(Sender: TObject);
     procedure ConvertPALClick(Sender: TObject);
@@ -51,6 +55,8 @@ type
     procedure ConvertFMEClick(Sender: TObject);
     procedure ConvertPaletteOptionsClick(Sender: TObject);
     procedure BNHelpClick(Sender: TObject);
+    procedure ConvertWAVClick(Sender: TObject);
+    procedure ConvertVOCClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -99,6 +105,8 @@ begin
 
    ConvertPAL.Enabled             := FALSE;
    ConvertPLTT.Enabled            := FALSE;
+   ConvertVOC.Enabled             := FALSE;
+   ConvertWAV.Enabled             := FALSE;
   end;
 
  if ExtractFileExt(TheRes) = '.bmp' then
@@ -129,6 +137,8 @@ begin
 
    ConvertPAL.Enabled             := FALSE;
    ConvertPLTT.Enabled            := FALSE;
+   ConvertVOC.Enabled             := FALSE;
+   ConvertWAV.Enabled             := FALSE;
   end;
 
  if ExtractFileExt(TheRes) = '.dlt' then
@@ -157,6 +167,8 @@ begin
 
    ConvertPAL.Enabled             := FALSE;
    ConvertPLTT.Enabled            := FALSE;
+   ConvertVOC.Enabled             := FALSE;
+   ConvertWAV.Enabled             := FALSE;
   end;
 
  if ExtractFileExt(TheRes) = '.fme' then
@@ -185,6 +197,8 @@ begin
 
    ConvertPAL.Enabled             := FALSE;
    ConvertPLTT.Enabled            := FALSE;
+   ConvertVOC.Enabled             := FALSE;
+   ConvertWAV.Enabled             := FALSE;
   end;
 
  if (ExtractFileExt(TheRes) = '.pal') or
@@ -211,6 +225,8 @@ begin
    ConvertFMEInsertX.Enabled      := FALSE;
    ConvertFMEInsertY.Enabled      := FALSE;
    ConvertFMEFlip.Enabled         := FALSE;
+   ConvertVOC.Enabled             := FALSE;
+   ConvertWAV.Enabled             := FALSE;
 
    if ExtractFileExt(TheRes) = '.pal' then
     begin
@@ -222,8 +238,69 @@ begin
      ConvertPAL.Enabled             := TRUE;
      ConvertPLTT.Enabled            := FALSE;
     end;
-
   end;
+
+ if ExtractFileExt(TheRes) = '.wav' then begin
+
+   TktPalette.ConvertPalette.Enabled  := FALSE;
+   TktPalette.ConvertNoPAL.Enabled    := FALSE;
+   TktPalette.BNChosePalette.Enabled  := FALSE;
+   ConvertPaletteOptions.Enabled  := FALSE;
+
+   ConvertBM.Enabled              := FALSE;
+   ConvertBMTransparent.Enabled   := FALSE;
+
+   ConvertBMP.Enabled             := FALSE;
+
+   ConvertDELT.Enabled            := FALSE;
+   LabelDELTOffset.Enabled        := FALSE;
+   ConvertDELTOffsetX.Enabled     := FALSE;
+   ConvertDELTOffsetY.Enabled     := FALSE;
+
+   ConvertFME.Enabled             := FALSE;
+   ConvertFMECompressed.Enabled   := FALSE;
+   LabelFMEInsertion.Enabled      := FALSE;
+   ConvertFMEInsertX.Enabled      := FALSE;
+   ConvertFMEInsertY.Enabled      := FALSE;
+   ConvertFMEFlip.Enabled         := FALSE;
+
+   ConvertPAL.Enabled             := FALSE;
+   ConvertPLTT.Enabled            := FALSE;
+   ConvertVOC.Enabled             := TRUE;
+   ConvertWAV.Enabled             := FALSE;
+  end;
+
+
+  if ExtractFileExt(TheRes) = '.voc' then begin
+
+   TktPalette.ConvertPalette.Enabled  := FALSE;
+   TktPalette.ConvertNoPAL.Enabled    := FALSE;
+   TktPalette.BNChosePalette.Enabled  := FALSE;
+   ConvertPaletteOptions.Enabled  := FALSE;
+
+   ConvertBM.Enabled              := FALSE;
+   ConvertBMTransparent.Enabled   := FALSE;
+
+   ConvertBMP.Enabled             := FALSE;
+
+   ConvertDELT.Enabled            := FALSE;
+   LabelDELTOffset.Enabled        := FALSE;
+   ConvertDELTOffsetX.Enabled     := FALSE;
+   ConvertDELTOffsetY.Enabled     := FALSE;
+
+   ConvertFME.Enabled             := FALSE;
+   ConvertFMECompressed.Enabled   := FALSE;
+   LabelFMEInsertion.Enabled      := FALSE;
+   ConvertFMEInsertX.Enabled      := FALSE;
+   ConvertFMEInsertY.Enabled      := FALSE;
+   ConvertFMEFlip.Enabled         := FALSE;
+
+   ConvertPAL.Enabled             := FALSE;
+   ConvertPLTT.Enabled            := FALSE;
+   ConvertVOC.Enabled             := FALSE;
+   ConvertWAV.Enabled             := TRUE;
+  end;
+
 
 end;
 
@@ -236,6 +313,30 @@ begin
   Output := ConvertName.Text;
 
  if ConvertPAL2PLTT(TheRES, Output) then
+  ConvertWindow.ModalResult := mrOk;
+end;
+
+procedure TConvertWindow.ConvertVOCClick(Sender: TObject);
+var output : String;
+begin
+ if ExtractFileExt(ConvertName.Text) = '' then
+  Output := ConvertName.Text + '.voc'
+  else
+  Output := ConvertName.Text;
+
+ if ConvertVOC2WAV(TheRES, Output) then
+  ConvertWindow.ModalResult := mrOk;
+end;
+
+procedure TConvertWindow.ConvertWAVClick(Sender: TObject);
+var output : String;
+begin
+ if ExtractFileExt(ConvertName.Text) = '' then
+  Output := ConvertName.Text + '.wav'
+  else
+  Output := ConvertName.Text;
+
+ if ConvertWAV2VOC(TheRES, Output) then
   ConvertWindow.ModalResult := mrOk;
 end;
 
@@ -266,7 +367,7 @@ begin
  else
   Output := ConvertName.Text;
 
- if ExtractFileExt(TheRES) = '.anm' then
+ if (ExtractFileExt(TheRES) = '.anm') or (ExtractFileExt(TheRES) = '.anim') then
   begin
    if ConvertANIMDELT2BMP(TheRES, TktPalette.ConvertPalette.Text, Output, CurFrame) then
     ConvertWindow.ModalResult := mrOk;
@@ -278,7 +379,7 @@ begin
     ConvertWindow.ModalResult := mrOk;
   end;
 
- if ExtractFileExt(TheRES) = '.dlt' then
+ if (ExtractFileExt(TheRES) = '.dlt') or (ExtractFileExt(TheRES) = '.delt') then
   begin
    if ConvertANIMDELT2BMP(TheRES, TktPalette.ConvertPalette.Text, Output, -1) then
     ConvertWindow.ModalResult := mrOk;

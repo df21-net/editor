@@ -6,7 +6,7 @@ uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, TabNotBk, StdCtrls, Buttons, FileCtrl, M_global, ExtCtrls,
   ColorGrd, StrUtils, registry, IOUtils, System.RegularExpressions,
-  System.RegularExpressionsCore,
+  System.RegularExpressionsCore, UrlMon, System.zip,
 {$IFDEF WDF32}
   ComCtrls,
 {$ENDIF}
@@ -24,13 +24,7 @@ type
     ToolsOptionsLabelVOC2WAV: TLabel;
     ToolsOptionsVoc2Wav: TEdit;
     ToolsOptionsBrowseVOC2WAV: TBitBtn;
-    ComboInstall: TDriveComboBox;
-    DirectoryListBox1: TDirectoryListBox;
-    DirectoryListBox2: TDirectoryListBox;
-    LabelDFInstalled: TLabel;
     Panel1: TPanel;
-    Panel2: TPanel;
-    ComboDFCD: TDriveComboBox;
     OpenDialogInfEditor: TOpenDialog;
     OpenDialogVoc2Wav: TOpenDialog;
     RG_Backup: TRadioGroup;
@@ -130,13 +124,7 @@ type
     RenderPath: TLabel;
     OKBtn: TBitBtn;
     GOGButton: TBitBtn;
-    dosboxlabel: TLabel;
     Panel3: TPanel;
-    dosboxdrive: TDriveComboBox;
-    Panel4: TPanel;
-    Panel5: TPanel;
-    Panel6: TPanel;
-    LauncherTypeLabel: TLabel;
     OptionsLaunchPrevPRJChkBox: TCheckBox;
     Label4: TLabel;
     OptionsEnableLogging: TCheckBox;
@@ -150,6 +138,30 @@ type
     Label15: TLabel;
     CBAutoCommit: TCheckBox;
     Label16: TLabel;
+    CBNormalizeWalls: TCheckBox;
+    UseShowCaseCheckBox: TCheckBox;
+    StartShowCaseCheckBox: TCheckBox;
+    CBUseAltPan : TCheckBox;
+    Panel8: TPanel;
+    Label18: TLabel;
+    DarkForcesBrowse: TBitBtn;
+    DosBoxBrowse: TBitBtn;
+    TFEBrowse: TBitBtn;
+    EngineTypeBox: TRadioGroup;
+    LauncherType: TGroupBox;
+    LauncherDarkForcesLabel: TEdit;
+    LauncherDosBoxLabel: TEdit;
+    LauncherTFELabel : TEdit;
+    OriginButton: TBitBtn;
+    GroupBox8: TGroupBox;
+    OpenDialogueTFE: TOpenDialog;
+    OpenDialogueDosBox: TOpenDialog;
+    OpenDialogueDark: TOpenDialog;
+    LauncherTypeLabel: TPanel;
+    BackupLimit: TEdit;
+    Label17: TLabel;
+    RenderDownloading: TImage;
+    Label19: TLabel;
     procedure FormShow(Sender: TObject);
     procedure OkButtonClick(Sender: TObject);
     procedure LBColorsClick(Sender: TObject);
@@ -166,13 +178,20 @@ type
     procedure LBColors2DblClick(Sender: TObject);
     procedure ToolsOptionsBrowseWAV2VOCClick(Sender: TObject);
     procedure RenderDownloadClick(Sender: TObject);
-    procedure RenderBrowseClick(Sender: TObject);
+    procedure DosBoxBrowseClick(Sender: TObject);
+    procedure TfeBrowseClick(Sender: TObject);
     procedure SteamButtonClick(Sender: TObject);
     procedure GOGButtonClick(Sender: TObject);
-    procedure CustomLauncherClick(Sender: TObject);
+    procedure OriginButtonClick(Sender: TObject);
+    procedure RenderBrowseClick(Sender: TObject);
     procedure RenderAbout4Click(Sender: TObject);
+    procedure FindDosBoxConf(DOSBOX_FLD: String);
     procedure OptionsViewLogFolderClick(Sender: TObject);
     procedure OptionsViewLogFileClick(Sender: TObject);
+    procedure DarkForcesBrowseClick(Sender: TObject);
+    procedure EngineTypeBoxClick(Sender: TObject);
+    procedure RefreshFields;
+    procedure BackupLimitChange(Sender: TObject);
   private
     { Private declarations }
   public
@@ -191,16 +210,9 @@ uses Mapper;
 procedure TOptionsDialog.FormShow(Sender: TObject);
 begin
   LoadingForm := True;
-  if TPath.DriveExists(DarkInst[1] + ':') then
-    ComboInstall.Drive := DarkInst[1]
-  else
-    ComboInstall.Drive  := 'C';
-  if DirectoryExists(DarkInst) then
-   DirectoryListBox1.Directory  := DarkInst
-  else
-   DirectoryListBox1.Directory  := 'c:\';
-  ComboDFCD.Drive              := Char(DarkCD[1]);
-  RenderPath.Caption           := RenderInst;
+  RenderPath.Caption            := RenderInst;
+  UseShowCaseCheckBox.Checked   := UseShowCase;
+  StartShowCaseCheckBox.Checked := AutoStartShowCase;
 
   ToolsOptionsInfEditor.Text   := INFEditor;
 
@@ -216,7 +228,9 @@ begin
   if FileExists(WDFUSEdir + '\WDFDATA\external.wdl') then
    MemoLabels.Lines.LoadFromFile(WDFUSEdir + '\WDFDATA\external.wdl')
   else
-   MemoLabels.Clear;
+   begin
+     MemoLabels.Clear;
+   end;
   if FileExists(WDFUSEdir + '\WDFDATA\external.wdn') then
    MemoCmdLines.Lines.LoadFromFile(WDFUSEdir + '\WDFDATA\external.wdn')
   else
@@ -247,12 +261,14 @@ begin
 
   CBFastSCROLL.Checked         := FastSCROLL;
   CBFastDRAG.Checked           := FastDRAG;
+  CBUseAltPan.checked          := USE_ALT_PAN;
 
 
   CBUsePlusVX.Checked          := UsePlusVX;
   CBUsePlusOBShad.Checked      := UsePlusOBShad;
   CBSpecialsVX.Checked         := SpecialsVX;
   CBSpecialsOB.Checked         := SpecialsOB;
+  CBNormalizeWalls.Checked     := NORMALIZE_WALLS;
 
   EDvxscale.Text               := IntToStr(vx_scale);
   EDvxdimmax.Text              := IntToStr(vx_dim_max);
@@ -278,77 +294,125 @@ begin
   CBChecksVOC.Checked          := Ini.ReadBool('CHECKS', 'VOC',      TRUE);
   CBChecksHeaders.Checked      := Ini.ReadBool('CHECKS', 'Headers',  TRUE);
 
-  DOSBOX_PATH   := Ini.ReadString('DARK FORCES', 'DOSBOX_PATH', '');
+
+  DOSBOX_PATH   := Ini.ReadString('DARK FORCES', 'DOSBOX_PATH', 'c:\dark\dosbox.exe');
   DOSBOX_CONF   := Ini.ReadString('DARK FORCES', 'DOSBOX_CONF', '');
   LAUNCHER_TYPE := Ini.ReadString('DARK FORCES', 'LAUNCHER_TYPE', 'Custom');
+  ENGINE_TYPE   := Ini.ReadString('DARK FORCES', 'ENGINE_TYPE', 'JEDI');
+  TFE_FLD       := Ini.ReadString('DARK FORCES', 'TFE_FLD', 'c:\dark');
+  MAXBACKUPS    := Ini.ReadInteger('DARK FORCES', 'MAXBACKUPS', 150);
+
   UseLog        := Ini.ReadBool('DARK FORCES', 'Logger', True);
+  BackupLimit.text := IntToStr(MAXBACKUPS);
+
+  if ENGINE_TYPE = 'JEDI' then
+    EngineTypeBox.ItemIndex := 0
+  else
+    EngineTypeBox.ItemIndex := 1;
+
   OptionsTestLaunchDF.Checked := TestLaunch;
   OptionsEnableLogging.Checked := UseLog;
-  dosboxlabel.Caption := DOSBOX_PATH;
+  LauncherDosBoxLabel.Text := DOSBOX_PATH;
   LoggingPanel.Text := LogPath;
   LoadingForm := False;
-  LabelDFInstalled.Caption := darkinst;
+  darkexe := ExcludeTrailingPathDelimiter(darkinst) + '\Dark.exe';
+  TFE_EXE       := ExcludeTrailingPathDelimiter(TFE_FLD) + '\TheForceEngine.exe';
+  LauncherDarkForcesLabel.Text := darkexe;
+  LauncherDosBoxLabel.Text := DOSBOX_PATH;
+  LauncherTFELabel.Text := TFE_EXE
+end;
+
+procedure TOptionsDialog.RefreshFields;
+begin
+    LauncherTypeLabel.Invalidate;
+    LauncherType.Invalidate;
+    LauncherDosBoxLabel.Invalidate;
+    LauncherTFELabel.Invalidate;
 end;
 
 procedure TOptionsDialog.OkButtonClick(Sender: TObject);
 begin
   Log.Info('Updating Options', LogName);
-  DarkInst      := LabelDFInstalled.Caption;
+  DarkExe       := LauncherDarkForcesLabel.Text;
+  DarkInst      := ExcludeTrailingPathDelimiter(ExtractFileDir(DarkExe));
   RenderInst    := RenderPath.Caption;
-  DOSBOX_PATH   := dosboxlabel.Caption;
-  DarkCD[1]     := AnsiChar(ComboDFCD.Drive);
+  DOSBOX_PATH   := LauncherDosBoxLabel.Text;
+  TFE_EXE       := LauncherTFELabel.Text;
+  TFE_FLD       := ExtractFileDir(TFE_EXE);
 
   Log.Info('Options DarkInst = ' + DarkInst, LogName);
   Log.Info('Options RenderInst = ' + RenderInst, LogName);
   Log.Info('Options DOSBOX_PATH = ' + DOSBOX_PATH, LogName);
 
-  if not FileExists(DarkInst + '\DARK.EXE') then
+  if not FileExists(DarkExe) then
     begin
       log.warn('Options Dark Forces Path is missing DARK.EXE', LogName);
-      showmessage('Warning! Could not find DARK.EXE in this folder ' + EOL  + DarkInst);
+      showmessage('Warning! Could not find DARK.EXE at this path' + EOL  + DarkExe);
     end;
 
-
-  if not FileExists(DOSBOX_PATH) then
+  if (not FileExists(DOSBOX_PATH)) and (ENGINE_TYPE = 'JEDI') then
     begin
       log.warn('Options DOSBOX Path is missing DOSBOX.EXE', LogName);
       showmessage('Warning! Could not find DOSBOX.EXE at this path ' + EOL  + DOSBOX_PATH);
     end;
 
-  INFEditor     := ToolsOptionsINFEditor.Text;
-  Voc2Wav       := ToolsOptionsVoc2Wav.Text;
-  Wav2Voc       := ToolsOptionsWav2Voc.Text;
-  TestLaunch    := OptionsTestLaunchDF.Checked;
-  LOADPREVPRJ   := OptionsLaunchPrevPRJChkBox.Checked;
-  AUTOSAVE      := OptionsAutoSave.Checked;
-  SKIPCUT       := OptionsSkipCutscene.Checked;
-  UseLog        := OptionsEnableLogging.Checked;
-  Backup_Method := RG_Backup.ItemIndex;
+   if (not FileExists(TFE_EXE)) and (ENGINE_TYPE = 'TFE') then
+    begin
+      log.warn('Options TFE executable is missing! ', LogName);
+      showmessage('Warning! Could not find TheForceEngine.exe at this path ' + EOL  + TFE_EXE);
+    end;
+
+  INFEditor         := ToolsOptionsINFEditor.Text;
+  Voc2Wav           := ToolsOptionsVoc2Wav.Text;
+  Wav2Voc           := ToolsOptionsWav2Voc.Text;
+  TestLaunch        := OptionsTestLaunchDF.Checked;
+  LOADPREVPRJ       := OptionsLaunchPrevPRJChkBox.Checked;
+  AUTOSAVE          := OptionsAutoSave.Checked;
+  SKIPCUT           := OptionsSkipCutscene.Checked;
+  UseLog            := OptionsEnableLogging.Checked;
+  Backup_Method     := RG_Backup.ItemIndex;
+  UseShowCase       := UseShowCaseCheckBox.Checked;
+  AutoStartShowCase := StartShowCaseCheckBox.Checked;
+  MAXBACKUPS        := StrToInt(BackupLimit.text);
 
   Ini.WriteString('DARK FORCES', 'Installed', DarkInst);
   Ini.WriteString('DARK FORCES', 'RenderPath', RenderInst);
-  DarkCD    := '?';
-  DarkCD[1] := AnsiChar(ComboDFCD.Drive);
+  Ini.WriteBool('DARK FORCES', 'UseShowCase', UseShowCase);
+  Ini.WriteBool('DARK FORCES', 'AutoStartShowCase', AutoStartShowCase);
+  Ini.WriteInteger('DARK FORCES', 'MAXBACKUPS', MAXBACKUPS);
+
+
+
   Ini.WriteString('DARK FORCES', 'CD_Letter', DarkCD);
 
   Ini.WriteString('TOOLS',   'INF Editor', INFEditor);
   Ini.WriteString('TOOLS',   'VOC2WAV', Voc2Wav);
   Ini.WriteString('TOOLS',   'WAV2VOC', Wav2Voc);
 
+
+  Ini.WriteString('DARK FORCES', 'TFE_FLD', TFE_FLD);
   Ini.WriteString('DARK FORCES', 'DOSBOX_PATH', DOSBOX_PATH);
   Ini.WriteString('DARK FORCES', 'DOSBOX_CONF', DOSBOX_CONF);
-  Ini.WriteString('DARK FORCES', 'LAUNCHER_TYPE',LAUNCHER_TYPE);
+  Ini.WriteString('DARK FORCES', 'LAUNCHER_TYPE', LAUNCHER_TYPE);
+  Ini.WriteString('DARK FORCES', 'ENGINE_TYPE', ENGINE_TYPE);
+
   Ini.WriteInteger('DARK FORCES', 'UNDO_LIMIT', UNDO_LIMIT);
   Ini.WriteBool('DARK FORCES', 'Logger', UseLog);
 
   Log.Info('Options Launcher Type = ' + LAUNCHER_TYPE, LogName);
   Log.Info('Options DOSBOX_CONF  = ' + DOSBOX_CONF, LogName);
+  Log.Info('Options ENGINE_TYPE = ' + ENGINE_TYPE, LogName);
+  Log.Info('Options TFE_FLD = ' + TFE_FLD, LogName);
+
   Ini.WriteBool('DARK FORCES', 'LOADPREVPRJ', LOADPREVPRJ);
   Ini.WriteBool('DARK FORCES', 'PROMPT_SAVE', AUTOSAVE);
   Ini.WriteBool('DARK FORCES', 'SKIP CUTSCENE', SKIPCUT);
 
-  MemoLabels.Lines.SaveToFile(WDFUSEdir + '\WDFDATA\external.wdl');
-  MemoCmdLines.Lines.SaveToFile(WDFUSEdir + '\WDFDATA\external.wdn');
+  if DirectoryExists(WDFUSEdir + '\WDFDATA') then
+    begin
+      MemoLabels.Lines.SaveToFile(WDFUSEdir + '\WDFDATA\external.wdl');
+      MemoCmdLines.Lines.SaveToFile(WDFUSEdir + '\WDFDATA\external.wdn');
+    end;
 
   Ini.WriteBool('TESTING', 'Launch DF', TestLaunch);
 
@@ -367,6 +431,8 @@ begin
   Ini.WriteInteger('MAP-COLORS',  'trig',      col_trig);
   Ini.WriteInteger('MAP-COLORS',  'goal',      col_goal);
   Ini.WriteInteger('MAP-COLORS',  'secr',      col_secr);
+  Ini.WriteInteger('MAP-COLORS',  'cmpl',      col_cmpl);
+  Ini.WriteInteger('MAP-COLORS',  'boss',      col_boss);
 
   Ini.WriteInteger('MAP-COLORS',  'dm_low',    col_dm_low);
   Ini.WriteInteger('MAP-COLORS',  'dm_high',   col_dm_high);
@@ -415,11 +481,30 @@ begin
   UsePlusOBShad := CBUsePlusOBShad.Checked;
   SpecialsVX    := CBSpecialsVX.Checked;
   SpecialsOB    := CBSpecialsOB.Checked;
+  NORMALIZE_WALLS := CBNormalizeWalls.Checked;
+  USE_ALT_PAN  :=  CBUseAltPan.Checked;
 
-  Ini.WriteBool('FINE TUNING',  'UsePlusVX',     CBUsePlusVX.Checked);
-  Ini.WriteBool('FINE TUNING',  'UsePlusOBShad', CBUsePlusOBShad.Checked);
-  Ini.WriteBool('FINE TUNING',  'SpecialsVX',    CBSpecialsVX.Checked);
-  Ini.WriteBool('FINE TUNING',  'SpecialsOB',    CBSpecialsOB.Checked);
+  if USE_ALT_PAN then AltPanning := False;
+
+  Ini.WriteBool('FINE TUNING',  'UsePlusVX',       CBUsePlusVX.Checked);
+  Ini.WriteBool('FINE TUNING',  'UsePlusOBShad',   CBUsePlusOBShad.Checked);
+  Ini.WriteBool('FINE TUNING',  'SpecialsVX',      CBSpecialsVX.Checked);
+  Ini.WriteBool('FINE TUNING',  'SpecialsOB',      CBSpecialsOB.Checked);
+  Ini.WriteBool('FINE TUNING',  'NORMALIZE_WALLS', CBNormalizeWalls.Checked);
+  Ini.WriteBool('FINE TUNING',  'UseAltPan',       CBUseAltPan.Checked);
+
+  if USE_ALT_PAN then
+   begin
+      PAN_SEL_STATE  := [ssAlt] + [ssLeft];
+      MULTI_SEL_STATE := [ssLeft];
+      AltPanning    := False;
+   end
+  else
+   begin
+      PAN_SEL_STATE  := [ssLeft];
+      MULTI_SEL_STATE := [ssLeft] + [ssAlt] ;
+   end;
+
 
 
   vx_scale      := StrToInt(EDvxscale.Text);
@@ -456,8 +541,12 @@ begin
   Ini.WriteBool('CHECKS', 'VOC',      CBChecksVOC.Checked);
   Ini.WriteBool('CHECKS', 'Headers',  CBChecksHeaders.Checked);
 
+
+
   MapWindow.Map.Invalidate;
 end;
+
+
 
 procedure TOptionsDialog.OptionsViewLogFileClick(Sender: TObject);
 begin
@@ -470,10 +559,55 @@ begin
 end;
 
 procedure TOptionsDialog.RenderDownloadClick(Sender: TObject);
-var url : String;
+var url,
+    renderpath,
+    zippath : String;
+    zipfile : TZipFile;
+
 begin
-  url := 'https://github.com/The-MAZZTer/DarkForces/releases/tag/v0.2';
-  ShellExecute(HInstance, 'open', PChar(url), nil, nil, SW_NORMAL);
+    RenderDownload.Visible := False;
+    RenderDownloading.Visible := True;
+    OptionsDialog.Invalidate;
+    OptionsDialog.RePaint;
+    url := 'https://df-21.net/downloads/utilities/renderer/renderer.zip';
+    renderpath :=  WDFUSEdir + '\RENDERER';
+
+    if not DirectoryExists(renderpath) then
+       CreateDir(renderpath);
+
+    zippath := renderpath + '\renderer.zip';
+    log.info('Downloading from ' + url + ' to ' + zippath, LogName);
+    if FileExists(renderpath + '\Dark Forces Showcase.exe') then
+      begin
+        if Application.MessageBox('WARNING: You already have Dark Forces Renderer. Redownload?',
+                                  'WDFUSE 3D Renderer',
+                                   mb_YesNo or mb_IconQuestion) = idNo then
+                                    begin
+                                       RenderDownload.Visible := True;
+                                       RenderDownloading.Visible := False;
+                                       exit
+                                    end;
+      end;
+    // Download showcase
+    try
+      URLDownloadToFile(nil, PChar(url), PChar(zippath), 0, nil);
+
+      zipfile := TZipFile.Create;
+      zipfile.Open(zippath, zmRead);
+      try
+        zipfile.ExtractAll(renderpath);
+        zipfile.Close;
+      finally
+        zipfile.Free;
+      end;
+
+      DeleteFile(PChar(zippath));
+    finally
+      RenderDownload.Visible := True;
+      RenderDownloading.Visible := False;
+    end;
+    showmessage('Downloaded Showcase and Installed.');
+
 end;
 
 { TO DO - handle steam installs on other drives }
@@ -504,6 +638,7 @@ begin
         { Check ACF }
         begin
          darkinst := RegPath + '\steamapps\common\Dark Forces\GAME';
+         DarkExe  := darkinst + 'DARK.EXE';
 
          // Check other Steam Drives
          if not FileExists(RegPath + '\steamapps\appmanifest_32400.acf') then
@@ -535,10 +670,11 @@ begin
               end;
           end;
 
-          LabelDFInstalled.Caption := darkinst;
+          DarkExe := darkinst + '\Dark.exe';
+          LauncherDarkForcesLabel.Text := DarkExe;
           DOSBOX_PATH := ExpandFileName(darkinst + '\..\DOSBOX\DOSBox.exe');
-          dosboxlabel.Caption := DOSBOX_PATH;
-          DOSBOX_CONF := ExpandFileName(darkinst + '\..\dosbox.conf');
+          LauncherDosBoxLabel.Text := DOSBOX_PATH;
+          DOSBOX_CONF := ExpandFileName(ExtractFileDir(darkinst) + '\..\dosbox.conf');
           LAUNCHER_TYPE := 'STEAM';
           Log.Info('Options STEAM darkinst = ' + darkinst, LogName);
           Log.Info('Options STEAM DOSBOX_PATH = ' + DOSBOX_PATH, LogName);
@@ -549,6 +685,7 @@ begin
               log.Info('Options STEAM DOSBOX_PATH does not exist!', LogName );
               showmessage('Could not find Steam DOSBOX at this path ' + DOSBOX_PATH);
             end;
+          OptionsDialog.Invalidate;
           exit;
         end;
      end;
@@ -556,11 +693,9 @@ begin
     showmessage('Could not find DARK.EXE in ' + RegPath + '\Game\DARK.EXe');
   except
     on E : Exception do
-      begin
-        Log.error('Options Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
-        ShowMessage(E.ClassName+' error raised, with message : '+E.Message);
-      end
+       HandleException('Options Error', E);
   end;
+  OptionsDialog.Invalidate;
 end;
 
 procedure TOptionsDialog.GOGButtonClick(Sender: TObject);
@@ -581,13 +716,14 @@ begin
     if FileExists(RegPath + '\DARK.EXE') then
      begin
       darkinst := RegPath;
-      LabelDFInstalled.Caption := darkinst;
+      DarkExe := darkinst + '\Dark.exe';
+      LauncherDarkForcesLabel.Text := DarkExe;
       DOSBOX_PATH := RegPath + '\DOSBOX\DOSBox.exe';
       DOSBOX_CONF := RegPath + '\dosbox_DF_single.conf';
       Log.Info('Options GOG darkinst = ' + darkinst, LogName);
       Log.Info('Options GOG DOSBOX_PATH = ' + DOSBOX_PATH, LogName);
       Log.Info('Options GOG DOSBOX_CONF = ' + DOSBOX_CONF, LogName);
-      dosboxlabel.Caption := DOSBOX_PATH;
+      LauncherDosBoxLabel.Text := DOSBOX_PATH;
       LAUNCHER_TYPE := 'GOG';
       LauncherTypeLabel.Caption := LAUNCHER_TYPE;
       if not FileExists(DOSBOX_PATH) then
@@ -603,13 +739,64 @@ begin
       end;
   except
    on E : Exception do
-      begin
-        Log.error('Options Error ' + E.ClassName+' error raised, with message : '+E.Message, LogName);
-        ShowMessage(E.ClassName+' error raised, with message : '+E.Message);
-      end
+      HandleException('Options Error', E);
   end;
+  OptionsDialog.Invalidate;
 end;
 
+procedure TOptionsDialog.OriginButtonClick(Sender: TObject);
+var
+  RegPath: string;
+  Registry: TRegistry;
+  textTmp : AnsiString;
+  LibPath : String;
+  LibRexStr : String;
+  LibRex : TRegex;
+  LibGroup    : TGroup;
+  LibMatch    : TMatch;
+  LibMatches  : TMatchCollection;
+  fileTmp : TextFile;
+  LibEAPath : String;
+begin
+  RegPath := '';
+  Registry := TRegistry.Create;
+  try
+    Log.Info('Options Loading Origin', LogName);
+    Registry.RootKey := HKEY_LOCAL_MACHINE;
+    if Registry.OpenKeyReadOnly(origin_reg) then
+     begin
+      RegPath := Registry.ReadString('Install Dir');
+      Log.Info('Options REGPATH = ' + RegPath, LogName);
+      if DirectoryExists(RegPath) then
+        begin
+          darkinst := RegPath + 'DOSBOX\GAME';
+          DarkExe  := darkinst + '\DARK.EXE';
+          LauncherDarkForcesLabel.Text := DarkExe;
+          DOSBOX_PATH := ExpandFileName(ExtractFileDir(RegPath) + '\DOSBOX\DOSBox.exe');
+          LauncherDosBoxLabel.Text := DOSBOX_PATH;
+          DOSBOX_CONF := ExpandFileName(ExtractFileDir(DOSBOX_PATH) + '\dosbox.conf');
+          LAUNCHER_TYPE := 'ORIGIN';
+          Log.Info('Options ORIGIN darkinst = ' + darkinst, LogName);
+          Log.Info('Options ORIGIN DOSBOX_PATH = ' + DOSBOX_PATH, LogName);
+          Log.Info('Options ORIGIN DOSBOX_CONF = ' + DOSBOX_CONF, LogName);
+          LauncherTypeLabel.Caption := LAUNCHER_TYPE;
+          if not FileExists(DOSBOX_PATH) then
+            begin
+              log.Info('Options ORIGIN DOSBOX_PATH does not exist!', LogName );
+              showmessage('Could not find Steam DOSBOX at this path ' + DOSBOX_PATH);
+            end;
+          OptionsDialog.Invalidate;
+          exit;
+        end;
+     end;
+    Log.error('Options Coult not find DARK.EXE in = ' + RegPath, LogName);
+    showmessage('Could not find DARK.EXE in ' + RegPath + '\Game\DARK.EXe');
+  except
+    on E : Exception do
+       HandleException('Options Error', E);
+  end;
+   OptionsDialog.Invalidate;
+end;
 
 procedure TOptionsDialog.CancelBtnClick(Sender: TObject);
 begin
@@ -624,50 +811,119 @@ begin
   col_trig   := Ini.ReadInteger('MAP-COLORS',  'trig',   Ccol_trig);
   col_goal   := Ini.ReadInteger('MAP-COLORS',  'goal',   Ccol_goal);
   col_secr   := Ini.ReadInteger('MAP-COLORS',  'secr',   Ccol_secr);
+  col_cmpl   := Ini.ReadInteger('MAP-COLORS',  'cmpl',   Ccol_cmpl);
+  col_boss   := Ini.ReadInteger('MAP-COLORS',  'boss',   Ccol_boss);
   MapWindow.Color := col_back;
   MapWindow.Map.Invalidate;
 end;
 
-procedure TOptionsDialog.CustomLauncherClick(Sender: TObject);
+
+
+procedure TOptionsDialog.FindDosBoxConf(DOSBOX_FLD: String);
 begin
-  if LoadingForm then exit;
+   // Check Dark Forces GOG style
+   if FileExists(DOSBOX_FLD + '\dosbox_DF_single.conf') then
+     DOSBOX_CONF := DOSBOX_FLD + '\dosbox_DF_single.conf'
 
-  if Sender = DirectoryListBox1 then
-    begin
-      if FileExists(ExpandFileName( LabelDFInstalled.Caption + '\DOSBOX\DOSBOX.EXE')) then
-        Dosboxlabel.caption := ExpandFileName(LabelDFInstalled.Caption + '\DOSBOX\DOSBOX.EXE');
-    end;
+   else if FileExists(DOSBOX_FLD + '\..\dosbox_DF_single.conf') then
+     DOSBOX_CONF := DOSBOX_FLD + '\..\dosbox_DF_single.conf'
 
-  Log.Info('Options CUSTOM start', LogName);
-  if StrUtils.RightStr(Dosboxlabel.caption,11) = '\DOSBOX.EXE' then
-    DOSBOX_PATH := Dosboxlabel.caption
-  else
-    DOSBOX_PATH := Dosboxlabel.caption + '\DOSBOX.EXE';
+   // Check dosbox.conf Steam Style
+   else if FileExists(DOSBOX_FLD + '\..\dosbox.conf')  then
+     DOSBOX_CONF := DOSBOX_FLD + '\..\dosbox.conf'
 
-  if FileExists(DOSBOX_PATH) then
-    begin
-      // Check Dark Forces GOG style
-      if FileExists(DarkInst + '\dosbox_DF_single.conf') then
-        DOSBOX_CONF := DarkInst + '\dosbox_DF_single.conf'
+   // Check dosbox.conf Origin Style
+   else if FileExists(DOSBOX_FLD + '\dosbox.conf')  then
+     DOSBOX_CONF := DOSBOX_FLD + '\dosbox.conf'
 
-      // Check dosbox.conf Steam Style
-      else if FileExists(DarkInst + '\..\dosbox.conf')  then
-        DOSBOX_CONF := DarkInst + '\..\dosbox.conf'
+   // Make it blank so it picks up the default one from WDFDATA
+   else
+     begin
+       DOSBOX_CONF := '';
+       showmessage('WARNING! Cannot find Dosbox.conf! Please put Dosbox.conf in same folder as the executable!');
+     end;
+end;
 
-      // Check dosbox.conf Origin Style
-      else if FileExists(DOSBOX_PATH + '\dosbox.conf')  then
-        DOSBOX_CONF := DOSBOX_PATH + '\dosbox.conf'
+procedure TOptionsDialog.TfeBrowseClick(Sender: TObject);
+begin
+ with OpenDialogueTFE do
+  begin
+   InitialDir  := TFE_FLD;
+   if Execute then
+    if not StrUtils.ContainsStr(LowerCase(FileName), 'theforceengine.exe') then
+     begin
+       showmessage('Missing Dark Forces Executable TheForceEngine.exe in [' + FileName +']');
+       exit;
+     end;
+     if FileName = '' then exit;
 
-      // Make it blank so it picks up the default one from WDFDATA
-      else
-        DOSBOX_CONF := '';
+     LauncherTFELabel.Text := FileName;
+     TFE_EXE := LauncherTFELabel.Text;
+     TFE_FLD := ExtractFileDir(TFE_EXE);
+  end;
+  LauncherTFELabel.Text  := TFE_EXE;
+  Log.Info('Options CUSTOM TFE_PATH = ' + TFE_FLD, LogName);
+ // OptionsDialog.Invalidate;
+end;
 
-    end;
-
+procedure TOptionsDialog.DosBoxBrowseClick(Sender: TObject);
+begin
+ with OpenDialogueDosBox do
+  begin
+   InitialDir  := DOSBOX_PATH;
+   if Execute then
+    if not StrUtils.ContainsStr(LowerCase(FileName), 'dosbox.exe') then
+     begin
+       showmessage('Missing Dark Forces Executable DOSBOX.EXE in [' + FileName +']');
+       exit;
+     end;
+     if FileName = '' then exit;
+     DOSBOX_PATH := FileName;
+     FindDosBoxConf(ExtractFileDir(DOSBOX_PATH));
+  end;
+  LauncherDosBoxLabel.Text  := DOSBOX_PATH;
   Log.Info('Options CUSTOM DOSBOX_PATH = ' + DOSBOX_PATH, LogName);
+//  OptionsDialog.Invalidate;
+end;
+
+procedure TOptionsDialog.DarkForcesBrowseClick(Sender: TObject);
+begin
+ with OpenDialogueDark do
+  begin
+   InitialDir  := darkinst;
+   if Execute then
+    if not StrUtils.ContainsStr(LowerCase(FileName), 'dark.exe') then
+     begin
+       showmessage('Missing Dark Forces Executable DARK.EXE in [' + FileName +']');
+       exit;
+     end;
+
+     if FileName = '' then exit;
+
+     LauncherDarkForcesLabel.Text := FileName;
+     DarkExe := LauncherDarkForcesLabel.Text;
+     DarkInst := ExtractFileDir(DarkExe);
+
+     if FileExists(DarkInst + '\DosBox\DOSBOX.EXE') then
+       begin
+         DOSBOX_PATH := DarkInst + '\DosBox\DOSBOX.EXE';
+         FindDosBoxConf(ExtractFileDir(DOSBOX_PATH));
+         LauncherDosBoxLabel.Text  := DOSBOX_PATH;
+       end;
+
+     if FileExists(DarkInst + '\..\DosBox\DOSBOX.EXE') then
+       begin
+         DOSBOX_PATH := ExpandFileName(DarkInst + '\..\DosBox\DOSBOX.EXE');
+         FindDosBoxConf(ExtractFileDir(DOSBOX_PATH));
+         LauncherDosBoxLabel.Text  := DOSBOX_PATH;
+       end;
+
+  end;
+  LauncherDarkForcesLabel.Text := DarkExe;
   LAUNCHER_TYPE := 'Custom';
   LauncherTypeLabel.Caption := LAUNCHER_TYPE;
-  Dosboxlabel.caption := DOSBOX_PATH;
+  Log.Info('Options CUSTOM DARK INST = ' + DarkInst, LogName);
+ // OptionsDialog.Invalidate;
 end;
 
 procedure TOptionsDialog.LBColorsClick(Sender: TObject);
@@ -683,6 +939,8 @@ begin
   7: ShapeColorFore.Pen.Color   := col_trig;
   8: ShapeColorFore.Pen.Color   := col_goal;
   9: ShapeColorFore.Pen.Color   := col_secr;
+  10: ShapeColorFore.Pen.Color  := col_cmpl;
+  11: ShapeColorFore.Pen.Color  := col_boss;
   ELSE ShapeColorFore.Pen.Color := col_back;
  END;
 end;
@@ -718,6 +976,9 @@ begin
   7: TheColor   := col_trig;
   8: TheColor   := col_goal;
   9: TheColor   := col_secr;
+  10: TheColor  := col_cmpl;
+  11: TheColor  := col_boss;
+
  END;
 
  ColorDialog.Color := TheColor;
@@ -735,6 +996,8 @@ begin
     7: col_trig   := TheColor;
     8: col_goal   := TheColor;
     9: col_secr   := TheColor;
+    10: col_cmpl  := TheColor;
+    11: col_boss  := TheColor;
    END;
    ShapeColorFore.Pen.Color := TheColor;
    MapWindow.Map.Invalidate;
@@ -820,6 +1083,14 @@ begin
   end;
 end;
 
+procedure TOptionsDialog.EngineTypeBoxClick(Sender: TObject);
+begin
+  if EngineTypeBox.ItemIndex = 0 then
+    ENGINE_TYPE := 'JEDI'
+  else
+    ENGINE_TYPE := 'TFE';
+end;
+
 procedure TOptionsDialog.RenderAbout4Click(Sender: TObject);
 var url : string;
 begin
@@ -832,7 +1103,7 @@ begin
  with OpenDialogueRender do
   begin
    if Execute then
-    if not StrUtils.ContainsStr(LowerCase(FileName), 'showcase.exe') then
+    if not StrUtils.ContainsStr(LowerCase(FileName), 'dark forces showcase.exe') then
      begin
        showmessage('Missing Dark Forces ShowCase.exe in ' + FileName);
        exit;
@@ -864,6 +1135,22 @@ begin
 end;
 
 
+procedure TOptionsDialog.BackupLimitChange(Sender: TObject);
+var backupnum : integer;
+begin
+  try
+    backupnum := StrToInt(BackupLimit.Text);
+    if (backupnum <1) or (backupnum > 500) then
+        showmessage('# of Backups should be above 1 and less than 500!')
+    else
+        exit;
+  except
+    on E : Exception do
+        ShowMessage('Invalid number provided as a backup! ' + EOL +  E.ClassName+' error raised, with message : '+E.Message);
+    end;
+    BackupLimit.text := IntToStr(MAXBACKUPS);
+end;
+
 procedure TOptionsDialog.BitBtnGrpStartClick(Sender: TObject);
 var cmd : TStringList;
 begin
@@ -889,29 +1176,27 @@ end;
 procedure TOptionsDialog.BitBtnRegWDPClick(Sender: TObject);
 var Key     : HKey;
     Value   : array[0..255] of char;
+    reg : TRegistry;
+    wdppath : string;
+    result : boolean;
 begin
-if RegCreateKey(HKEY_CLASSES_ROOT, '.wdp', Key) = ERROR_SUCCESS then
- begin
-  strPCopy(Value,  'wdp_auto_file');
-  RegSetValue(Key, '', REG_SZ, Value, StrLen(Value));
- end;
 
-if RegCreateKey(HKEY_CLASSES_ROOT, '\wdp_auto_file', Key) = ERROR_SUCCESS then
- begin
-  strPCopy(Value,  'WDFUSE Project Files');
-  RegSetValue(Key, '', REG_SZ, Value, StrLen(Value));
- end;
-
-if RegCreateKey(HKEY_CLASSES_ROOT, '\wdp_auto_file\shell\open\command', Key) = ERROR_SUCCESS then
- begin
-{$IFNDEF WDF32}
-  strPCopy(Value,  WDFUSEdir + '\wdfuse.exe %1');
-{$ELSE}
-  strPCopy(Value,  WDFUSEdir + '\wdfuse32.exe %1');
-{$ENDIF}
-  RegSetValue(Key, '', REG_SZ, Value, StrLen(Value));
- end;
+  with TRegistry.Create do
+    try
+      RootKey := HKEY_CURRENT_USER;
+      if OpenKey('\Software\Classes\.wdp', true) then
+        WriteString('', 'wdpfile');
+      if OpenKey('\Software\Classes\wdpfile', true) then
+        WriteString('', 'WDFUSE Project File');
+      if OpenKey('\Software\Classes\wdpfile\DefaultIcon', true) then
+        WriteString('', 'F:\wdfuse2.6\wdfuse32.exe');
+      if OpenKey('\Software\Classes\wdpfile\shell\open\command', true) then
+        WriteString('', 'F:\wdfuse2.6\wdfuse32.exe "%1"');
+    finally
+      Free;
+    end;
 end;
+
 
 procedure TOptionsDialog.BitBtnRegGOBClick(Sender: TObject);
 var Key     : HKey;

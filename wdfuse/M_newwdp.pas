@@ -22,6 +22,7 @@ type
     BNHelp: TBitBtn;
     OpenWAD: TOpenDialog;
     CBNewLevelChoice: TComboBox;
+    CBNewLevelTutorialBox: TComboBox;
     procedure RGProjectSourceClick(Sender: TObject);
     procedure OKBtnClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -29,6 +30,8 @@ type
     procedure FormKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     function WriteJediLvl(lname: String; jediPath: String) : Boolean;
+    procedure CancelBtnClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
   public
@@ -48,16 +51,25 @@ uses MAPPER;
 procedure TNewProjectDialog.RGProjectSourceClick(Sender: TObject);
 
 begin
-  if RGProjectSource.ItemIndex = 0 then
-     begin
-       CBLevelChoice.Enabled := True;
-      CBNewLevelChoice.Enabled := False ;
-     end
-  else
-     begin
-      CBLevelChoice.Enabled := False;
-      CBNewLevelChoice.Enabled := True ;
-     end;
+  case RGProjectSource.ItemIndex of
+    0: begin
+         CBLevelChoice.Enabled := True;
+         CBNewLevelChoice.Enabled := False ;
+         CBNewLevelTutorialBox.Enabled := False;
+       end;
+    1: begin
+         CBLevelChoice.Enabled := False;
+         CBNewLevelChoice.Enabled := True ;
+         CBNewLevelTutorialBox.Enabled := False;
+       end;
+    2: begin
+         CBLevelChoice.Enabled := False;
+         CBNewLevelChoice.Enabled := False ;
+         CBNewLevelTutorialBox.Enabled := True;
+       end;
+  end;
+
+
 end;
 
 { Write the correct JEDI.LVL file }
@@ -85,27 +97,39 @@ procedure TNewProjectDialog.OKBtnClick(Sender: TObject);
 var pjf    : TIniFile;
     lname  : String;
     i      : Integer;
-    openok : Boolean;
+    openok,
+    done   : Boolean;
     origPRJ: String;
+    GOBNAME: String;
 
 
 begin
+ done := False;
 
  if EDProjectName.Text = '' then
-  begin
-   Application.MessageBox('Project Name MUST be filled', 'WDFUSE Mapper - NEW Project', mb_Ok or mb_IconExclamation);
-   exit;
-  end;
+   begin
+     Application.MessageBox('Project Name MUST be filled', 'WDFUSE Mapper - NEW Project', mb_Ok or mb_IconExclamation);
+     exit;
+   end;
 
  if FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '.wdp') or
     DirectoryExists(WDFUSEdir+ '\' + EDProjectName.Text) then
-  begin
-   Application.MessageBox('Project ALREADY EXISTS', 'WDFUSE Mapper - NEW Project', mb_Ok or mb_IconExclamation);
-   exit;
-  end;
+    begin
+      Application.MessageBox('Project ALREADY EXISTS', 'WDFUSE Mapper - NEW Project', mb_Ok or mb_IconExclamation);
+      exit;
+    end;
+
+
  try
   begin
    openok := FALSE;
+
+  if IsFileInUse(DarkInst + '\DARK.GOB') then
+    begin
+      showmessage('Error ! DARK.GOB is locked! Cannot extract data. Is Dark Forces Running? Turn it off first');
+      exit;
+    end;
+
 
    {create project directory, backups subdirectory}
    ChDir(WDFUSEdir);
@@ -132,16 +156,66 @@ begin
    {then extract accordingly}
     CASE RGProjectSource.ItemIndex of
     0 : begin
-         lname := RTrim(Copy(CBLevelChoice.Items[CBLevelChoice.ItemIndex],1,8));
+
+         lname := RTrim(Copy(CBNewLevelChoice.Items[CBNewLevelChoice.ItemIndex],1,8));
+         {
          HiddenListBox.Clear;
          HiddenListBox.Items.Add(lname + '.LEV');
          HiddenListBox.Items.Add(lname + '.O');
          HiddenListBox.Items.Add(lname + '.INF');
          HiddenListBox.Items.Add(lname + '.GOL');
          HiddenListBox.Items.Add(lname + '.PAL');
-         {special case because NARSHADA.CMP isn't in dark.gob !}
-         if lname <> 'NARSHADA' then
-          HiddenListBox.Items.Add(lname + '.CMP');
+         HiddenListBox.Items.Add(lname + '.CMP');
+         HiddenListBox.Items.Add('JEDI.LVL');
+         HiddenListBox.Items.Add('TEXT.MSG');
+         for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
+         GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
+                   WDFUSEdir + '\WDFDATA\WDFUSE.gob', HiddenListBox, NIL);
+         CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT', WDFUSEdir+ '\' + EDProjectName.Text + '.TXT');
+         WriteJediLvl(lname, WDFUSEdir + '\' + EDProjectName.Text + '\JEDI.LVL');}
+
+         lname := RTrim(Copy(CBNewLevelChoice.Items[CBLevelChoice.ItemIndex],1,8));
+         HiddenListBox.Clear;
+         HiddenListBox.Items.Add('SECBASE.LEV');
+         HiddenListBox.Items.Add('SECBASE.O');
+         HiddenListBox.Items.Add('SECBASE.INF');
+         HiddenListBox.Items.Add(lname + '.GOL');
+         HiddenListBox.Items.Add(lname + '.PAL');
+         HiddenListBox.Items.Add(lname + '.CMP');
+         HiddenListBox.Items.Add('JEDI.LVL');
+         HiddenListBox.Items.Add('TEXT.MSG');
+         for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
+         GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
+                   WDFUSEdir + '\WDFDATA\WDFUSE.gob', HiddenListBox, NIL);
+         CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT', WDFUSEdir+ '\' + EDProjectName.Text + '.TXT');
+         WriteJediLvl(lname, WDFUSEdir + '\' + EDProjectName.Text + '\JEDI.LVL');
+
+         IO_ReplaceFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.LEV', 'SECBASE', lname);
+         IO_ReplaceFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.INF', 'SECBASE', lname);
+         IO_ReplaceFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.O', 'SECBASE', lname);
+         RenameFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.LEV', WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname +'.LEV');
+         RenameFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.INF', WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname +'.INF');
+         RenameFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.O', WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname +'.O');
+
+         pjf := TIniFile.Create(PROJECTFile);
+         try
+          pjf.WriteString('WDFUSE Project', 'LEVELNAME', lname);
+         finally
+          pjf.Free;
+         end;
+         openok := TRUE;
+        end;
+    1 : begin
+         lname := RTrim(Copy(CBLevelChoice.Items[CBNewLevelChoice.ItemIndex],1,8));
+         HiddenListBox.Clear;
+         HiddenListBox.Items.Add(lname + '.LEV');
+         HiddenListBox.Items.Add(lname + '.O');
+         HiddenListBox.Items.Add(lname + '.INF');
+         HiddenListBox.Items.Add(lname + '.GOL');
+         HiddenListBox.Items.Add(lname + '.PAL');
+           {special case because NARSHADA.CMP isn't in dark.gob !}
+           if lname <> 'NARSHADA' then
+            HiddenListBox.Items.Add(lname + '.CMP');
          HiddenListBox.Items.Add('JEDI.LVL');
          HiddenListBox.Items.Add('TEXT.MSG');
          for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
@@ -166,105 +240,101 @@ begin
          end;
          openok := TRUE;
         end;
-    1 : begin
-      
-         lname := RTrim(Copy(CBNewLevelChoice.Items[CBNewLevelChoice.ItemIndex],1,8));
-         HiddenListBox.Clear;
-         HiddenListBox.Items.Add(lname + '.LEV');
-         HiddenListBox.Items.Add(lname + '.O');
-         HiddenListBox.Items.Add(lname + '.INF');
-         HiddenListBox.Items.Add(lname + '.GOL');
-         HiddenListBox.Items.Add(lname + '.PAL');
-         HiddenListBox.Items.Add(lname + '.CMP');
-         HiddenListBox.Items.Add('JEDI.LVL');
-         HiddenListBox.Items.Add('TEXT.MSG');
-         for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
-         GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
-                   WDFUSEdir + '\WDFDATA\WDFUSE.gob', HiddenListBox, NIL);
-         CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT', WDFUSEdir+ '\' + EDProjectName.Text + '.TXT');
-         WriteJediLvl(lname, WDFUSEdir + '\' + EDProjectName.Text + '\JEDI.LVL');
-         pjf := TIniFile.Create(PROJECTFile);
-         try
-          pjf.WriteString('WDFUSE Project', 'LEVELNAME', lname);
-         finally
-          pjf.Free;
-         end;
-         openok := TRUE;
-        end;
     2 : begin
-         with OpenUserGOB do
-          if Execute then
-            if IsGOB(FileName) then
-             begin
-              HiddenListBox.Clear;
-              GOB_GetDirList(FileName, HiddenListBox);
-              for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
-               GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
-                                FileName, HiddenListBox, NIL);
-              OpenUserLEV.InitialDir := WDFUSEdir+ '\' + EDProjectName.Text;
-              if OpenUserLEV.Execute then
-                begin
-                 lname := ExtractFileName(Copy(OpenUserLEV.FileName,1,Length(OpenUserLEV.FileName)-4));
-                 {now, search for O, INF, GOL, PAL, CMP, JEDI.LVL, TEXT.MSG
-                  if any of them is not there, extract it from DARK.GOB}
-                 HiddenListBox.Clear;
-                 if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.O') then
-                  HiddenListBox.Items.Add(lname + '.O');
-                 if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.INF') then
-                  HiddenListBox.Items.Add(lname + '.INF');
-                 if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.GOL') then
-                  HiddenListBox.Items.Add(lname + '.GOL');
-                 if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.PAL') then
-                  HiddenListBox.Items.Add(lname + '.PAL');
-                 if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.CMP') then
-                  begin
-                   if lname <> 'NARSHADA' then
-                    HiddenListBox.Items.Add(lname + '.CMP')
-                   else
-                    HiddenListBox.Items.Add('SECBASE.CMP');
-                  end;
-                 if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\JEDI.LVL') then
-                  HiddenListBox.Items.Add('JEDI.LVL');
-                 if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\TEXT.MSG') then
-                  HiddenListBox.Items.Add('TEXT.MSG');
-                 for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
-                  GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
-                                   DARKgob, HiddenListBox, NIL);
+          GOBNAME := WDFUSEdir+ '\WDFTUTORIAL\' + Copy(CBNewLevelTutorialBox.Items[CBNewLevelTutorialBox.ItemIndex],13) + '.GOB';
+          HiddenListBox.Clear;
+          lname := 'SECBASE';
+          if not FileExists(GOBNAME) then
+            showmessage('Cannot Find the tutorial ' + GOBNAME)
+          else
 
-                 if lname = 'NARSHADA' then
-                  if FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.CMP') then
-                     RenameFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.CMP',
-                                WDFUSEdir+ '\' + EDProjectName.Text + '\NARSHADA.CMP');
-
-                 { ask if the text file exists else create it }
-                 CASE Application.MessageBox('Do you want to Select the Custom GOB ReadMe file as well?', 'Load the ReadMe File',
-                                   mb_YesNo or mb_IconQuestion) OF
-                 idYes    : begin
-                             if OpenUserTXT.Execute then
-                               CopyFile(OpenUserTXT.FileName, WDFUSEdir + '\' + EDProjectName.Text + '.TXT')
-                             else
-                               CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT',WDFUSEdir + '\' + EDProjectName.Text + '.TXT');
-                            end;
-                 idNo     : begin
-                             CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT',WDFUSEdir + '\' + EDProjectName.Text + '.TXT');
-                            end;
-                 END;
-                 pjf := TIniFile.Create(PROJECTFile);
-                 try
-                  pjf.WriteString('WDFUSE Project', 'LEVELNAME', lname);
-                 finally
-                  pjf.Free;
-                 end;
-                 openok := TRUE;
-               end;
-             end
-            else
-             Application.MessageBox('Invalid GOB file',
-                                    'WDFUSE Mapper - NEW Project',
-                                     mb_Ok or mb_IconExclamation)
-           else ;
+            GOB_GetDirList(GOBNAME, HiddenListBox);
+            for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
+            GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
+                              GOBNAME, HiddenListBox, NIL);
+            pjf := TIniFile.Create(PROJECTFile);
+            CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT',WDFUSEdir + '\' + EDProjectName.Text + '.TXT');
+            try
+              pjf.WriteString('WDFUSE Project', 'LEVELNAME', lname);
+            finally
+               pjf.Free;
+            end;
+            openok := TRUE;
         end;
-    3 : begin
+    3 :  begin
+           with OpenUserGOB do
+            if Execute then
+              if IsGOB(FileName) then
+               begin
+                HiddenListBox.Clear;
+                GOB_GetDirList(FileName, HiddenListBox);
+                for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
+                 GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
+                                  FileName, HiddenListBox, NIL);
+                OpenUserLEV.InitialDir := WDFUSEdir+ '\' + EDProjectName.Text;
+                if OpenUserLEV.Execute then
+                  begin
+                   lname := ExtractFileName(Copy(OpenUserLEV.FileName,1,Length(OpenUserLEV.FileName)-4));
+                   {now, search for O, INF, GOL, PAL, CMP, JEDI.LVL, TEXT.MSG
+                    if any of them is not there, extract it from DARK.GOB}
+                   HiddenListBox.Clear;
+                   if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.O') then
+                    HiddenListBox.Items.Add(lname + '.O');
+                   if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.INF') then
+                    HiddenListBox.Items.Add(lname + '.INF');
+                   if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.GOL') then
+                    HiddenListBox.Items.Add(lname + '.GOL');
+                   if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.PAL') then
+                    HiddenListBox.Items.Add(lname + '.PAL');
+                   if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\' + lname + '.CMP') then
+                    begin
+                     if lname <> 'NARSHADA' then
+                      HiddenListBox.Items.Add(lname + '.CMP')
+                     else
+                      HiddenListBox.Items.Add('SECBASE.CMP');
+                    end;
+                   if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\JEDI.LVL') then
+                    HiddenListBox.Items.Add('JEDI.LVL');
+                   if not FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\TEXT.MSG') then
+                    HiddenListBox.Items.Add('TEXT.MSG');
+                   for i := 0 to HiddenListBox.Items.Count - 1 do HiddenListBox.Selected[i] := TRUE;
+                    GOB_ExtractFiles(WDFUSEdir+ '\' + EDProjectName.Text,
+                                     DARKgob, HiddenListBox, NIL);
+
+                   if lname = 'NARSHADA' then
+                    if FileExists(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.CMP') then
+                       RenameFile(WDFUSEdir+ '\' + EDProjectName.Text + '\SECBASE.CMP',
+                                  WDFUSEdir+ '\' + EDProjectName.Text + '\NARSHADA.CMP');
+
+                   { ask if the text file exists else create it }
+                   CASE Application.MessageBox('Do you want to Select the Custom GOB ReadMe file as well?', 'Load the ReadMe File',
+                                     mb_YesNo or mb_IconQuestion) OF
+                   idYes    : begin
+                               if OpenUserTXT.Execute then
+                                 CopyFile(OpenUserTXT.FileName, WDFUSEdir + '\' + EDProjectName.Text + '.TXT')
+                               else
+                                 CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT',WDFUSEdir + '\' + EDProjectName.Text + '.TXT');
+                              end;
+                   idNo     : begin
+                               CopyFile(WDFUSEdir + '\WDFDATA\GOB_AUTH.TXT',WDFUSEdir + '\' + EDProjectName.Text + '.TXT');
+                              end;
+                   END;
+                   pjf := TIniFile.Create(PROJECTFile);
+                   try
+                    pjf.WriteString('WDFUSE Project', 'LEVELNAME', lname);
+                   finally
+                    pjf.Free;
+                   end;
+                   openok := TRUE;
+                 end
+              else
+               Application.MessageBox('Invalid GOB file',
+                                      'WDFUSE Mapper - NEW Project',
+                                       mb_Ok or mb_IconExclamation)
+         end;
+      end;
+
+    4 : begin   // TBD - not implemented.
          with OpenWAD do
           if Execute then
             if IsWAD(FileName) then
@@ -314,12 +384,14 @@ begin
      CopyFile(PROJECTFile,
             WDFUSEdir + '\' + EDProjectName.Text + '\BACKUPS\' + EDProjectName.Text + '.wdp');
      if LEVELLoaded then FreeLevel;
-     if (RGProjectSource.ItemIndex <> 3) then
+     if (RGProjectSource.ItemIndex <> 4) then
       begin
        Ini.WriteString('DARK FORCES',  'PROJECTFile', PROJECTFile);
        DO_LoadLevel;
      end;
-     if (RGProjectSource.ItemIndex = 3) then DO_LoadWAD(OpenWAD.FileName);
+     if (RGProjectSource.ItemIndex = 4) then DO_LoadWAD(OpenWAD.FileName);
+     NEWPRJOK := True;
+     DO_UpdatePRJHistory;
     end
    else
    // If bad load - then reset the project file and wipe what you made.
@@ -333,20 +405,32 @@ begin
 
   except
     on E : Exception do
-      begin
-        Log.error('New Project Error ' + E.ClassName + ' with message : '+E.Message, LogName);
-        ShowMessage(E.ClassName+' error raised, with message : '+E.Message);
-      end
+      HandleException('New Project Error.', E);
   end;
 
 
 end;
 
 
+procedure TNewProjectDialog.CancelBtnClick(Sender: TObject);
+begin
+  NEWPRJOK := True;
+end;
+
+
+procedure TNewProjectDialog.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+var
+  closename : string;
+begin
+ closename := TButton(Sender).name;
+end;
+
 procedure TNewProjectDialog.FormCreate(Sender: TObject);
 begin
  CBLevelChoice.ItemIndex := 0;
  CBNewLevelChoice.ItemIndex := 0;
+ CBNewLevelTutorialBox.ItemIndex := 0;
 end;
 
 procedure TNewProjectDialog.BNHelpClick(Sender: TObject);

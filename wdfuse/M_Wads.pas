@@ -1416,7 +1416,7 @@ begin
       lda.speed := StrToInt(pars[10]);
      lda.speed  := doomdata.ReadInteger('LineDef_Speeds', IntToStr(lda.speed), -1);
      if pars[11] = '-' then
-      lda.hold  := -32000
+      lda.hold  := -MAP_LIMIT
      else
       lda.hold  := StrToInt(pars[11]);
      lda.spec   := pars[12];
@@ -1612,7 +1612,7 @@ begin
                 {with altitudes}
                 begin
                  tmp1 := Format('%5.2f', [GetNearAltitude(secnum, lda.first)]) + ' ';
-                 if lda.hold = -32000 then
+                 if lda.hold = -MAP_LIMIT then
                   tmp1 := tmp1 + 'hold'
                  else
                   if lda.hold < 0 then
@@ -1623,7 +1623,7 @@ begin
                  if MustDone then
                   WI_MESSAGE('0 ' + donename + ' done');
                  tmp1 := Format('%5.2f', [GetNearAltitude(secnum, lda.next)]) + ' ';
-                 if lda.hold = -32000 then
+                 if lda.hold = -MAP_LIMIT then
                   tmp1 := tmp1 + 'hold'
                  else
                   tmp1 := tmp1 + IntToStr(abs(lda.hold));
@@ -1633,7 +1633,7 @@ begin
                 {with lights}
                 begin
                  tmp1 := Format('%d', [GetNearAmbient(secnum, lda.first)]) + ' ';
-                 if lda.hold = -32000 then
+                 if lda.hold = -MAP_LIMIT then
                   tmp1 := tmp1 + 'hold'
                  else
                   if lda.hold < 0 then
@@ -1644,7 +1644,7 @@ begin
                  if MustDone then
                   WI_MESSAGE('0 ' + donename + ' done');
                  tmp1 := Format('%d', [GetNearAmbient(secnum, lda.next)]) + ' ';
-                 if lda.hold = -32000 then
+                 if lda.hold = -MAP_LIMIT then
                   tmp1 := tmp1 + 'hold'
                  else
                   tmp1 := tmp1 + IntToStr(abs(lda.hold));

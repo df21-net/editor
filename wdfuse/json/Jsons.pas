@@ -1,18 +1,14 @@
 {****************************************************************************
 Copyright (c) 2014 Randolph
-
 mail: rilyu@sina.com
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,69 +16,50 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
 201804 - Fiy - VGS - Refactor FixedFloatToStr (best use case and optimization)
 201805 - Add - VGS - Add OBjectToJson and JsonToObject, rtti based, cross platform Delphi10+ and FPC 3+Refactor
 201807 - Fix - VGS - String unicode (\uxxx) encoding and decoding.
-
 ****************************************************************************}
-
 unit Jsons;
-
 {$IFDEF FPC}
 {$MODE Delphi}
 {$ENDIF}
-
 interface
-
 uses Classes, SysUtils, jsonsutilsEx;
-
 type
   TJsonValueType = (jvNone, jvNull, jvString, jvNumber, jvBoolean, jvObject, jvArray);
   TJsonStructType = (jsNone, jsArray, jsObject);
   TJsonNull = (null);
   TJsonEmpty = (empty);
-
 type
   TJsonBase = class(TObject)
   private
     FOwner: TJsonBase;
     function GetOwner: TJsonBase;
-
   protected
     function GetOwnerName: String;
     procedure RaiseError(const Msg: String);
     procedure RaiseParseError(const JsonString: String);
     procedure RaiseAssignError(Source: TJsonBase);
-
   public
     constructor Create(AOwner: TJsonBase);
     destructor Destroy; override;
-
     procedure Parse(JsonString: String); virtual; abstract;
     function Stringify: String; virtual; abstract;
-
     procedure Assign(Source: TJsonBase); virtual; abstract;
-
     function Encode(const S: String): String;
     function Decode(const S: String): String;
-
     procedure Split(const S: String; const Delimiter: Char; Strings: TStrings);
-
     function IsJsonObject(const S: String): Boolean;
     function IsJsonArray(const S: String): Boolean;
     function IsJsonString(const S: String): Boolean;
     function IsJsonNumber(const S: String): Boolean;
     function IsJsonBoolean(const S: String): Boolean;
     function IsJsonNull(const S: String): Boolean;
-
     function AnalyzeJsonValueType(const S: String): TJsonValueType;
-
   public
     property Owner: TJsonBase read GetOwner;
-
   end;
-
   TJsonObject = class;
   TJsonArray = class;
   TJsonValue = class(TJsonBase)
@@ -93,7 +70,6 @@ type
     FBooleanValue: Boolean;
     FObjectValue: TJsonObject;
     FArrayValue: TJsonArray;
-
     function GetAsArray: TJsonArray;
     function GetAsBoolean: Boolean;
     function GetAsInteger: Integer;
@@ -110,21 +86,15 @@ type
     procedure SetAsObject(const Value: TJsonObject);
     function GetIsEmpty: Boolean;
     procedure SetIsEmpty(const Value: Boolean);
-
   protected
     procedure RaiseValueTypeError(const AsValueType: TJsonValueType);
-
   public
     constructor Create(AOwner: TJsonBase);
     destructor Destroy; override;
-
     procedure Parse(JsonString: String); override;
     function Stringify: String; override;
-
     procedure Assign(Source: TJsonBase); override;
-
     procedure Clear;
-
   public
     property ValueType: TJsonValueType read FValueType;
     property AsString: String read GetAsString write SetAsString;
@@ -135,9 +105,7 @@ type
     property AsArray: TJsonArray read GetAsArray write SetAsArray;
     property IsNull: Boolean read GetIsNull write SetIsNull;
     property IsEmpty: Boolean read GetIsEmpty write SetIsEmpty;
-
   end;
-
   TJsonArray = class(TJsonBase)
   private
     FList: TList;
@@ -146,16 +114,13 @@ type
   public
     constructor Create(AOwner: TJsonBase = nil);
     destructor Destroy; override;
-
     procedure Parse(JsonString: String); override;
     function Stringify: String; override;
-
     procedure Assign(Source: TJsonBase); override;
     procedure Merge(Addition: TJsonArray);
-
     function Add: TJsonValue;
     function Insert(const Index: Integer): TJsonValue;
-
+    function ContainsInt(Index: Integer): Boolean;
     function Put(const Value: TJsonEmpty): TJsonValue; overload;
     function Put(const Value: TJsonNull): TJsonValue; overload;
     function Put(const Value: Boolean): TJsonValue; overload;
@@ -165,38 +130,27 @@ type
     function Put(const Value: TJsonArray): TJsonValue; overload;
     function Put(const Value: TJsonObject): TJsonValue; overload;
     function Put(const Value: TJsonValue): TJsonValue; overload;
-
     procedure Delete(const Index: Integer);
     procedure Clear;
-
   public
     property Count: Integer read GetCount;
     property Items[Index: Integer]: TJsonValue read GetItems; default;
-
   end;
-
   TJsonPair = class(TJsonBase)
   private
     FName: String;
     FValue: TJsonValue;
-
     procedure SetName(const Value: String);
-
   public
     constructor Create(AOwner: TJsonBase; const AName: String = '');
     destructor Destroy; override;
-
     procedure Parse(JsonString: String); override;
     function Stringify: String; override;
-
     procedure Assign(Source: TJsonBase); override;
-
   public
     property Name: String read FName write SetName;
     property Value: TJsonValue read FValue;
-
   end;
-
   TJsonObject = class(TJsonBase)
   private
     FList: TList;
@@ -207,16 +161,12 @@ type
   public
     constructor Create(AOwner: TJsonBase = nil);
     destructor Destroy; override;
-
     procedure Parse(JsonString: String); override;
     function Stringify: String; override;
-
     procedure Assign(Source: TJsonBase); override;
     procedure Merge(Addition: TJsonObject);
-
     function Add(const Name: String = ''): TJsonPair;
     function Insert(const Index: Integer; const Name: String = ''): TJsonPair;
-
     function Put(const Name: String; const Value: TJsonEmpty): TJsonValue; overload;
     function Put(const Name: String; const Value: TJsonNull): TJsonValue; overload;
     function Put(const Name: String; const Value: Boolean): TJsonValue; overload;
@@ -227,28 +177,21 @@ type
     function Put(const Name: String; const Value: TJsonObject): TJsonValue; overload;
     function Put(const Name: String; const Value: TJsonValue): TJsonValue; overload;
     function Put(const Value: TJsonPair): TJsonValue; overload;
-
     function Find(const Name: String): Integer;
-
     procedure Delete(const Index: Integer); overload;
     procedure Delete(const Name: String); overload;
-
     procedure Clear;
-
   public
     property Count: Integer read GetCount;
     property Items[Index: Integer]: TJsonPair read GetItems;
     property Values[Name: String]: TJsonValue read GetValues; default;
     property AutoAdd: Boolean read FAutoAdd write FAutoAdd;
-
   end;
-
   TJson = class(TJsonBase)
   private
     FStructType: TJsonStructType;
     FJsonArray: TJsonArray;
     FJsonObject: TJsonObject;
-
     function GetCount: Integer;
     function GetJsonArray: TJsonArray;
     function GetJsonObject: TJsonObject;
@@ -256,31 +199,22 @@ type
   protected
     procedure CreateArrayIfNone;
     procedure CreateObjectIfNone;
-
     procedure RaiseIfNone;
     procedure RaiseIfNotArray;
     procedure RaiseIfNotObject;
-
     procedure CheckJsonArray;
     procedure CheckJsonObject;
-
   public
     constructor Create;
     destructor Destroy; override;
-
     procedure Parse(JsonString: String); override;
     function Stringify: String; override;
-
     procedure Assign(Source: TJsonBase); override;
-
     procedure Delete(const Index: Integer); overload;
     procedure Delete(const Name: String); overload;
-
     procedure Clear;
-
     function Get(const Index: Integer): TJsonValue; overload; //for both
     function Get(const Name: String): TJsonValue; overload; //for JsonObject
-
     //for JsonArray
     function Put(const Value: TJsonEmpty): TJsonValue; overload;
     function Put(const Value: TJsonNull): TJsonValue; overload;
@@ -292,7 +226,6 @@ type
     function Put(const Value: TJsonObject): TJsonValue; overload;
     function Put(const Value: TJsonValue): TJsonValue; overload;
     function Put(const Value: TJson): TJsonValue; overload;
-
     //for JsonObject
     function Put(const Name: String; const Value: TJsonEmpty): TJsonValue; overload;
     function Put(const Name: String; const Value: TJsonNull): TJsonValue; overload;
@@ -305,21 +238,15 @@ type
     function Put(const Name: String; const Value: TJsonValue): TJsonValue; overload;
     function Put(const Name: String; const Value: TJson): TJsonValue; overload;
     function Put(const Value: TJsonPair): TJsonValue; overload;
-
   public
     property StructType: TJsonStructType read FStructType;
     property JsonObject: TJsonObject read GetJsonObject;
     property JsonArray: TJsonArray read GetJsonArray;
-
     property Count: Integer read GetCount;
     property Values[Name: String]: TJsonValue read GetValues; default; //for JsonObject
-
   end;
-
 implementation
-
 { TJsonBase }
-
 function TJsonBase.AnalyzeJsonValueType(const S: String): TJsonValueType;
 var
   Len: Integer;
@@ -338,14 +265,11 @@ begin
   end
   else if FixedTryStrToFloat(S, Number) then Result := jvNumber;
 end;
-
 constructor TJsonBase.Create(AOwner: TJsonBase);
 begin
   FOwner := AOwner;
 end;
-
 function TJsonBase.Decode(const S: String): String;
-
   function HexValue(C: Char): Byte;
   begin
     case C of
@@ -355,7 +279,6 @@ function TJsonBase.Decode(const S: String): String;
       else raise Exception.Create('Illegal hexadecimal characters "' + C + '"');
     end;
   end;
-
 var
   I: Integer;
   C: Char;
@@ -390,12 +313,10 @@ begin
     else Result := Result + C;
   end;
 end;
-
 destructor TJsonBase.Destroy;
 begin
   inherited Destroy;
 end;
-
 function TJsonBase.Encode(const S: String): String;
 var
   I, UnicodeValue : Integer;
@@ -426,16 +347,13 @@ begin
       end
       else
        Result := Result + C;
-
     end;
   end;
 end;
-
 function TJsonBase.GetOwner: TJsonBase;
 begin
   Result := FOwner;
 end;
-
 function TJsonBase.GetOwnerName: String;
 var
   TheOwner: TJsonBase;
@@ -453,7 +371,6 @@ begin
     else TheOwner := TheOwner.Owner;
   end;
 end;
-
 function TJsonBase.IsJsonArray(const S: String): Boolean;
 var
   Len: Integer;
@@ -461,24 +378,20 @@ begin
   Len := Length(S);
   Result := (Len >= 2) and (S[1] = '[') and (S[Len] = ']');
 end;
-
 function TJsonBase.IsJsonBoolean(const S: String): Boolean;
 begin
   Result := SameText(lowercase(S), 'true') or SameText(lowercase(S), 'false');
 end;
-
 function TJsonBase.IsJsonNull(const S: String): Boolean;
 begin
   Result := SameText(S, 'null');
 end;
-
 function TJsonBase.IsJsonNumber(const S: String): Boolean;
 var
   Number: Extended;
 begin
   Result := FixedTryStrToFloat(S, Number);
 end;
-
 function TJsonBase.IsJsonObject(const S: String): Boolean;
 var
   Len: Integer;
@@ -486,7 +399,6 @@ begin
   Len := Length(S);
   Result := (Len >= 2) and (S[1] = '{') and (S[Len] = '}');
 end;
-
 function TJsonBase.IsJsonString(const S: String): Boolean;
 var
   Len: Integer;
@@ -494,7 +406,6 @@ begin
   Len := Length(S);
   Result := (Len >= 2) and (S[1] = '"') and (S[Len] = '"');
 end;
-
 procedure TJsonBase.RaiseAssignError(Source: TJsonBase);
 var
   SourceClassName: String;
@@ -503,7 +414,6 @@ begin
   else SourceClassName := 'nil';
   RaiseError(Format('assign error: %s to %s', [SourceClassName, ClassName]));
 end;
-
 procedure TJsonBase.RaiseError(const Msg: String);
 var
   S: String;
@@ -511,20 +421,16 @@ begin
   S := Format('<%s>%s', [ClassName, Msg]);
   raise Exception.Create(S);
 end;
-
 procedure TJsonBase.RaiseParseError(const JsonString: String);
 begin
   RaiseError(Format('"%s" parse error: %s', [GetOwnerName, JsonString]));
 end;
-
 procedure TJsonBase.Split(const S: String; const Delimiter: Char;
   Strings: TStrings);
-
   function IsPairBegin(C: Char): Boolean;
   begin
     Result := (C = '{') or (C = '[') or (C = '"');
   end;
-
   function GetPairEnd(C: Char): Char;
   begin
     case C of
@@ -534,7 +440,6 @@ procedure TJsonBase.Split(const S: String; const Delimiter: Char;
       else Result := #0;
     end;
   end;
-
   function MoveToPair(P: PChar): PChar;
   var
     PairBegin, PairEnd: Char;
@@ -552,7 +457,6 @@ procedure TJsonBase.Split(const S: String; const Delimiter: Char;
       else if (PairBegin <> '"') and IsPairBegin(C) then Result := MoveToPair(Result);
     end;
   end;
-
 var
   PtrBegin, PtrEnd: PChar;
   C: Char;
@@ -577,9 +481,7 @@ begin
   StrItem := Trim(Copy(PtrBegin, 1, PtrEnd - PtrBegin));
   if StrItem <> '' then Strings.Add(StrItem);
 end;
-
 { TJsonValue }
-
 procedure TJsonValue.Assign(Source: TJsonBase);
 var
   Src: TJsonValue;
@@ -621,7 +523,6 @@ begin
     end;
   end;
 end;
-
 procedure TJsonValue.Clear;
 begin
   case FValueType of
@@ -642,7 +543,6 @@ begin
   end;
   FValueType := jvNone;
 end;
-
 constructor TJsonValue.Create(AOwner: TJsonBase);
 begin
   inherited Create(AOwner);
@@ -653,13 +553,11 @@ begin
   FArrayValue := nil;
   FValueType := jvNone;
 end;
-
 destructor TJsonValue.Destroy;
 begin
   Clear;
   inherited Destroy;
 end;
-
 function TJsonValue.GetAsArray: TJsonArray;
 begin
   if IsEmpty then
@@ -670,7 +568,6 @@ begin
   if FValueType <> jvArray then RaiseValueTypeError(jvArray);
   Result := FArrayValue;
 end;
-
 function TJsonValue.GetAsBoolean: Boolean;
 begin
   Result := False;
@@ -682,7 +579,6 @@ begin
     jvObject, jvArray: RaiseValueTypeError(jvBoolean);
   end;
 end;
-
 function TJsonValue.GetAsInteger: Integer;
 begin
   Result := 0;
@@ -694,7 +590,6 @@ begin
     jvObject, jvArray: RaiseValueTypeError(jvNumber);
   end;
 end;
-
 function TJsonValue.GetAsNumber: Extended;
 begin
   Result := 0;
@@ -706,7 +601,6 @@ begin
     jvObject, jvArray: RaiseValueTypeError(jvNumber);
   end;
 end;
-
 function TJsonValue.GetAsObject: TJsonObject;
 begin
   if IsEmpty then
@@ -717,7 +611,6 @@ begin
   if FValueType <> jvObject then RaiseValueTypeError(jvObject);
   Result := FObjectValue;
 end;
-
 function TJsonValue.GetAsString: String;
 const
   BooleanStr: array[Boolean] of String = ('false', 'true');
@@ -731,17 +624,14 @@ begin
     jvObject, jvArray: RaiseValueTypeError(jvString);
   end;
 end;
-
 function TJsonValue.GetIsEmpty: Boolean;
 begin
   Result := (FValueType = jvNone);
 end;
-
 function TJsonValue.GetIsNull: Boolean;
 begin
   Result := (FValueType = jvNull);
 end;
-
 procedure TJsonValue.Parse(JsonString: String);
 begin
   Clear;
@@ -765,7 +655,6 @@ begin
       end;
   end;
 end;
-
 procedure TJsonValue.RaiseValueTypeError(const AsValueType: TJsonValueType);
 const
   StrJsonValueType: array[TJsonValueType] of String = ('jvNone', 'jvNull', 'jvString', 'jvNumber', 'jvBoolean', 'jvObject', 'jvArray');
@@ -775,7 +664,6 @@ begin
   S := Format('"%s" value type error: %s to %s', [GetOwnerName, StrJsonValueType[FValueType], StrJsonValueType[AsValueType]]);
   RaiseError(S);
 end;
-
 procedure TJsonValue.SetAsArray(const Value: TJsonArray);
 begin
   if FValueType <> jvArray then
@@ -786,7 +674,6 @@ begin
   end;
   FArrayValue.Assign(Value);
 end;
-
 procedure TJsonValue.SetAsBoolean(const Value: Boolean);
 begin
   if FValueType <> jvBoolean then
@@ -796,12 +683,10 @@ begin
   end;
   FBooleanValue := Value;
 end;
-
 procedure TJsonValue.SetAsInteger(const Value: Integer);
 begin
   SetAsNumber(Value);
 end;
-
 procedure TJsonValue.SetAsNumber(const Value: Extended);
 begin
   if FValueType <> jvNumber then
@@ -811,7 +696,6 @@ begin
   end;
   FNumberValue := Value;
 end;
-
 procedure TJsonValue.SetAsObject(const Value: TJsonObject);
 begin
   if FValueType <> jvObject then
@@ -822,7 +706,6 @@ begin
   end;
   FObjectValue.Assign(Value);
 end;
-
 procedure TJsonValue.SetAsString(const Value: String);
 begin
   if FValueType <> jvString then
@@ -832,7 +715,6 @@ begin
   end;
   FStringValue := Value;
 end;
-
 procedure TJsonValue.SetIsEmpty(const Value: Boolean);
 const
   EmptyValueType: array[Boolean] of TJsonValueType = (jvNull, jvNone);
@@ -843,7 +725,6 @@ begin
     FValueType := EmptyValueType[Value];
   end;
 end;
-
 procedure TJsonValue.SetIsNull(const Value: Boolean);
 const
   NullValueType: array[Boolean] of TJsonValueType = (jvNone, jvNull);
@@ -854,7 +735,6 @@ begin
     FValueType := NullValueType[Value];
   end;
 end;
-
 function TJsonValue.Stringify: String;
 const
   StrBoolean: array[Boolean] of String = ('false', 'true');
@@ -869,15 +749,12 @@ begin
     jvArray: Result := FArrayValue.Stringify;
   end;
 end;
-
 { TJsonArray }
-
 function TJsonArray.Add: TJsonValue;
 begin
   Result := TJsonValue.Create(Self);
   FList.Add(Result);
 end;
-
 procedure TJsonArray.Assign(Source: TJsonBase);
 var
   Src: TJsonArray;
@@ -888,7 +765,6 @@ begin
   Src := Source as TJsonArray;
   for I := 0 to Src.Count - 1 do Add.Assign(Src[I]);
 end;
-
 procedure TJsonArray.Clear;
 var
   I: Integer;
@@ -901,13 +777,11 @@ begin
   end;
   FList.Clear;
 end;
-
 constructor TJsonArray.Create(AOwner: TJsonBase);
 begin
   inherited Create(AOwner);
   FList := TList.Create;
 end;
-
 procedure TJsonArray.Delete(const Index: Integer);
 var
   Item: TJsonValue;
@@ -916,37 +790,46 @@ begin
   Item.Free;
   FList.Delete(Index);
 end;
-
 destructor TJsonArray.Destroy;
 begin
   Clear;
   FList.Free;
   inherited;
 end;
-
 function TJsonArray.GetCount: Integer;
 begin
   Result := FList.Count;
 end;
-
+function TJsonArray.ContainsInt(Index: integer): Boolean;
+var i : Integer;
+    j : TJsonvalue;
+begin
+  Result := False;
+  for i := 0 to FList.Count - 1 do
+    begin
+      j := FList[i];
+      if j.GetAsInteger = Index then
+        begin
+          Result :=  True;
+          break;
+        end;
+    end;
+end;
 function TJsonArray.GetItems(Index: Integer): TJsonValue;
 begin
   Result := TJsonValue(FList[Index]);
 end;
-
 function TJsonArray.Insert(const Index: Integer): TJsonValue;
 begin
   Result := TJsonValue.Create(Self);
   FList.Insert(Index, Result);
 end;
-
 procedure TJsonArray.Merge(Addition: TJsonArray);
 var
   I: Integer;
 begin
   for I := 0 to Addition.Count - 1 do Add.Assign(Addition[I]);
 end;
-
 procedure TJsonArray.Parse(JsonString: String);
 var
   I: Integer;
@@ -970,61 +853,51 @@ begin
     List.Free;
   end;
 end;
-
 function TJsonArray.Put(const Value: Boolean): TJsonValue;
 begin
   Result := Add;
   Result.AsBoolean := Value;
 end;
-
 function TJsonArray.Put(const Value: Integer): TJsonValue;
 begin
   Result := Add;
   Result.AsInteger := Value;
 end;
-
 function TJsonArray.Put(const Value: TJsonEmpty): TJsonValue;
 begin
   Result := Add;
   Result.IsEmpty := True;
 end;
-
 function TJsonArray.Put(const Value: TJsonNull): TJsonValue;
 begin
   Result := Add;
   Result.IsNull := True;
 end;
-
 function TJsonArray.Put(const Value: Extended): TJsonValue;
 begin
   Result := Add;
   Result.AsNumber := Value;
 end;
-
 function TJsonArray.Put(const Value: TJsonObject): TJsonValue;
 begin
   Result := Add;
   Result.Assign(Value);
 end;
-
 function TJsonArray.Put(const Value: TJsonValue): TJsonValue;
 begin
   Result := Add;
   Result.Assign(Value);
 end;
-
 function TJsonArray.Put(const Value: String): TJsonValue;
 begin
   Result := Add;
   Result.AsString := Value;
 end;
-
 function TJsonArray.Put(const Value: TJsonArray): TJsonValue;
 begin
   Result := Add;
   Result.Assign(Value);
 end;
-
 function TJsonArray.Stringify: String;
 var
   I: Integer;
@@ -1039,9 +912,7 @@ begin
   end;
   Result := Result + ']';
 end;
-
 { TJsonPair }
-
 procedure TJsonPair.Assign(Source: TJsonBase);
 var
   Src: TJsonPair;
@@ -1051,20 +922,17 @@ begin
   FName := Src.FName;
   FValue.Assign(Src.FValue);
 end;
-
 constructor TJsonPair.Create(AOwner: TJsonBase; const AName: String);
 begin
   inherited Create(AOwner);
   FName := AName;
   FValue := TJsonValue.Create(Self);
 end;
-
 destructor TJsonPair.Destroy;
 begin
   FValue.Free;
   inherited Destroy;
 end;
-
 procedure TJsonPair.Parse(JsonString: String);
 var
   List: TStringList;
@@ -1082,25 +950,20 @@ begin
     List.Free;
   end;
 end;
-
 procedure TJsonPair.SetName(const Value: String);
 begin
   FName := Value;
 end;
-
 function TJsonPair.Stringify: String;
 begin
   Result := Format('"%s":%s', [Encode(FName), FValue.Stringify]);
 end;
-
 { TJsonObject }
-
 function TJsonObject.Add(const Name: String): TJsonPair;
 begin
   Result := TJsonPair.Create(Self, Name);
   FList.Add(Result);
 end;
-
 procedure TJsonObject.Assign(Source: TJsonBase);
 var
   Src: TJsonObject;
@@ -1111,7 +974,6 @@ begin
   Src := Source as TJsonObject;
   for I := 0 to Src.Count - 1 do Add.Assign(Src.Items[I]);
 end;
-
 procedure TJsonObject.Clear;
 var
   I: Integer;
@@ -1124,14 +986,12 @@ begin
   end;
   FList.Clear;
 end;
-
 constructor TJsonObject.Create(AOwner: TJsonBase);
 begin
   inherited Create(AOwner);
   FList := TList.Create;
   FAutoAdd := True;
 end;
-
 procedure TJsonObject.Delete(const Index: Integer);
 var
   Item: TJsonPair;
@@ -1140,7 +1000,6 @@ begin
   Item.Free;
   FList.Delete(Index);
 end;
-
 procedure TJsonObject.Delete(const Name: String);
 var
   Index: Integer;
@@ -1149,14 +1008,12 @@ begin
   if Index < 0 then RaiseError(Format('"%s" not found', [Name]));
   Delete(Index);
 end;
-
 destructor TJsonObject.Destroy;
 begin
   Clear;
   FList.Free;
   inherited Destroy;
 end;
-
 function TJsonObject.Find(const Name: String): Integer;
 var
   I: Integer;
@@ -1173,17 +1030,14 @@ begin
     end;
   end;
 end;
-
 function TJsonObject.GetCount: Integer;
 begin
   Result := FList.Count;
 end;
-
 function TJsonObject.GetItems(Index: Integer): TJsonPair;
 begin
   Result := TJsonPair(FList[Index]);
 end;
-
 function TJsonObject.GetValues(Name: String): TJsonValue;
 var
   Index: Integer;
@@ -1198,21 +1052,18 @@ begin
   else Pair := TJsonPair(FList[Index]);
   Result := Pair.Value;
 end;
-
 function TJsonObject.Insert(const Index: Integer;
   const Name: String): TJsonPair;
 begin
   Result := TJsonPair.Create(Self, Name);
   FList.Insert(Index, Result);
 end;
-
 procedure TJsonObject.Merge(Addition: TJsonObject);
 var
   I: Integer;
 begin
   for I := 0 to Addition.Count - 1 do Add.Assign(Addition.Items[I]);
 end;
-
 procedure TJsonObject.Parse(JsonString: String);
 var
   I: Integer;
@@ -1236,49 +1087,42 @@ begin
     List.Free;
   end;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: Integer): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.AsInteger := Value;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: Extended): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.AsNumber := Value;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: Boolean): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.AsBoolean := Value;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: TJsonEmpty): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.IsEmpty := True;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: TJsonNull): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.IsNull := True;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: TJsonValue): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.Assign(Value);
 end;
-
 function TJsonObject.Put(const Value: TJsonPair): TJsonValue;
 var
   Pair: TJsonPair;
@@ -1287,27 +1131,23 @@ begin
   Pair.Assign(Value);
   Result := Pair.Value;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: TJsonObject): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.Assign(Value);
 end;
-
 function TJsonObject.Put(const Name, Value: String): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.AsString := Value;
 end;
-
 function TJsonObject.Put(const Name: String;
   const Value: TJsonArray): TJsonValue;
 begin
   Result := Add(Name).Value;
   Result.Assign(Value);
 end;
-
 function TJsonObject.Stringify: String;
 var
   I: Integer;
@@ -1322,9 +1162,7 @@ begin
   end;
   Result := Result + '}';
 end;
-
 { TJson }
-
 procedure TJson.Assign(Source: TJsonBase);
 begin
   Clear;
@@ -1370,19 +1208,16 @@ begin
   end
   else RaiseAssignError(Source);
 end;
-
 procedure TJson.CheckJsonArray;
 begin
   CreateArrayIfNone;
   RaiseIfNotArray;
 end;
-
 procedure TJson.CheckJsonObject;
 begin
   CreateObjectIfNone;
   RaiseIfNotObject;
 end;
-
 procedure TJson.Clear;
 begin
   case FStructType of
@@ -1400,7 +1235,6 @@ begin
   end;
   FStructType := jsNone;
 end;
-
 constructor TJson.Create;
 begin
   inherited Create(nil);
@@ -1408,7 +1242,6 @@ begin
   FJsonArray := nil;
   FJsonObject := nil;
 end;
-
 procedure TJson.CreateArrayIfNone;
 begin
   if FStructType = jsNone then
@@ -1417,7 +1250,6 @@ begin
     FJsonArray := TJsonArray.Create(Self);
   end;
 end;
-
 procedure TJson.CreateObjectIfNone;
 begin
   if FStructType = jsNone then
@@ -1426,7 +1258,6 @@ begin
     FJsonObject := TJsonObject.Create(Self);
   end;
 end;
-
 procedure TJson.Delete(const Index: Integer);
 begin
   RaiseIfNone;
@@ -1435,19 +1266,16 @@ begin
     jsObject: FJsonObject.Delete(Index);
   end;
 end;
-
 procedure TJson.Delete(const Name: String);
 begin
   RaiseIfNotObject;
   FJsonObject.Delete(Name);
 end;
-
 destructor TJson.Destroy;
 begin
   Clear;
   inherited Destroy;
 end;
-
 function TJson.Get(const Index: Integer): TJsonValue;
 begin
   Result := nil;
@@ -1457,13 +1285,11 @@ begin
     jsObject: Result := FJsonObject.Items[Index].Value;
   end;
 end;
-
 function TJson.Get(const Name: String): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Values[Name];
 end;
-
 function TJson.GetCount: Integer;
 begin
   case FStructType of
@@ -1472,24 +1298,20 @@ begin
     else Result := 0;
   end;
 end;
-
 function TJson.GetJsonArray: TJsonArray;
 begin
   CheckJsonArray;
   Result := FJsonArray;
 end;
-
 function TJson.GetJsonObject: TJsonObject;
 begin
   CheckJsonObject;
   Result := FJsonObject;
 end;
-
 function TJson.GetValues(Name: String): TJsonValue;
 begin
   Result := Get(Name);
 end;
-
 procedure TJson.Parse(JsonString: String);
 begin
   Clear;
@@ -1506,125 +1328,105 @@ begin
   end
   else RaiseParseError(JsonString);
 end;
-
 function TJson.Put(const Value: Integer): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: Extended): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: Boolean): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: TJsonEmpty): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: TJsonNull): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: String): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: TJsonValue): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: TJsonObject): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Value: TJsonArray): TJsonValue;
 begin
   CheckJsonArray;
   Result := FJsonArray.Put(Value);
 end;
-
 function TJson.Put(const Name: String; const Value: Integer): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Name: String; const Value: Extended): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Name: String; const Value: Boolean): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Name: String;
   const Value: TJsonEmpty): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Name: String; const Value: TJsonNull): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Name: String;
   const Value: TJsonValue): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Value: TJsonPair): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Value);
 end;
-
 function TJson.Put(const Name: String;
   const Value: TJsonObject): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Name, Value: String): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Name: String;
   const Value: TJsonArray): TJsonValue;
 begin
   CheckJsonObject;
   Result := FJsonObject.Put(Name, Value);
 end;
-
 function TJson.Put(const Value: TJson): TJsonValue;
 begin
   CheckJsonArray;
@@ -1634,7 +1436,6 @@ begin
     else Result := nil;
   end;
 end;
-
 function TJson.Put(const Name: String; const Value: TJson): TJsonValue;
 begin
   CheckJsonObject;
@@ -1644,22 +1445,18 @@ begin
     else Result := nil;
   end;
 end;
-
 procedure TJson.RaiseIfNone;
 begin
   if FStructType = jsNone then RaiseError('json struct type is jsNone');
 end;
-
 procedure TJson.RaiseIfNotArray;
 begin
   if FStructType <> jsArray then RaiseError('json struct type is not jsArray');
 end;
-
 procedure TJson.RaiseIfNotObject;
 begin
   if FStructType <> jsObject then RaiseError('json struct type is not jsObject');
 end;
-
 function TJson.Stringify: String;
 begin
   case FStructType of
@@ -1668,5 +1465,4 @@ begin
     else Result := '';
   end;
 end;
-
 end.
